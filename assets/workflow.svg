@@ -1,0 +1,61 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">deep_learning_auto_research workflow diagram</title>
+  <desc id="desc">Workflow from markdown plan through decomposition, research, specs, strict implementation, verification, and final code synthesis.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#f2ead6"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#1d473b"/></marker>
+  </defs>
+  <rect width="1200" height="520" fill="#f6f0e4"/>
+  <text x="60" y="66" font-family="Georgia, 'Times New Roman', serif" font-size="42" font-weight="700" fill="#10231d">Research-gated implementation workflow</text>
+  <text x="62" y="100" font-family="Verdana, sans-serif" font-size="17" fill="#44665a">Each stage produces markdown artifacts Codex can inspect before moving forward.</text>
+  <g font-family="Verdana, sans-serif">
+    <g transform="translate(60 150)">
+      <rect width="155" height="86" rx="18" fill="url(#paper)" stroke="#1d473b" stroke-width="2"/>
+      <text x="78" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#10231d">System Plan</text>
+      <text x="78" y="62" text-anchor="middle" font-size="13" fill="#47645c">plan.md</text>
+    </g>
+    <g transform="translate(260 150)">
+      <rect width="155" height="86" rx="18" fill="#d7f0e5" stroke="#1d473b" stroke-width="2"/>
+      <text x="78" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#10231d">Decompose</text>
+      <text x="78" y="62" text-anchor="middle" font-size="13" fill="#47645c">block.md</text>
+    </g>
+    <g transform="translate(460 150)">
+      <rect width="155" height="86" rx="18" fill="#ffe5b8" stroke="#1d473b" stroke-width="2"/>
+      <text x="78" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#10231d">Research</text>
+      <text x="78" y="56" text-anchor="middle" font-size="13" fill="#47645c">papers.md</text>
+      <text x="78" y="73" text-anchor="middle" font-size="13" fill="#47645c">extracted-research.md</text>
+    </g>
+    <g transform="translate(660 150)">
+      <rect width="155" height="86" rx="18" fill="#f8cfc0" stroke="#1d473b" stroke-width="2"/>
+      <text x="78" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#10231d">Spec</text>
+      <text x="78" y="62" text-anchor="middle" font-size="13" fill="#47645c">spec.md</text>
+    </g>
+    <g transform="translate(860 150)">
+      <rect width="155" height="86" rx="18" fill="#cde4ff" stroke="#1d473b" stroke-width="2"/>
+      <text x="78" y="34" text-anchor="middle" font-size="16" font-weight="700" fill="#10231d">Strict Context</text>
+      <text x="78" y="60" text-anchor="middle" font-size="13" fill="#47645c">dependency gate</text>
+    </g>
+    <g transform="translate(660 320)">
+      <rect width="155" height="86" rx="18" fill="#d7f0e5" stroke="#1d473b" stroke-width="2"/>
+      <text x="78" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#10231d">Implement</text>
+      <text x="78" y="62" text-anchor="middle" font-size="13" fill="#47645c">source files</text>
+    </g>
+    <g transform="translate(860 320)">
+      <rect width="155" height="86" rx="18" fill="#fff0c9" stroke="#1d473b" stroke-width="2"/>
+      <text x="78" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#10231d">Record</text>
+      <text x="78" y="62" text-anchor="middle" font-size="13" fill="#47645c">implementation.md</text>
+    </g>
+    <g transform="translate(1030 235)">
+      <rect width="120" height="86" rx="18" fill="#17392f"/>
+      <text x="60" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#fff7e7">Verify</text>
+      <text x="60" y="62" text-anchor="middle" font-size="13" fill="#d9f3e8">tests pass</text>
+    </g>
+    <path d="M218 193 L252 193" stroke="#1d473b" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M418 193 L452 193" stroke="#1d473b" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M618 193 L652 193" stroke="#1d473b" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M818 193 L852 193" stroke="#1d473b" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M938 240 C938 290 790 286 750 315" stroke="#1d473b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+    <path d="M818 363 L852 363" stroke="#1d473b" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M1018 363 C1080 363 1090 330 1090 324" stroke="#1d473b" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  </g>
+</svg>

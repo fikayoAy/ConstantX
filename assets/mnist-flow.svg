@@ -1,0 +1,28 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">MNIST worked example flow</title>
+  <desc id="desc">MNIST example split into B-001 data pipeline, B-002 CNN training, and B-003 evaluation and inference.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#274438"/></marker></defs>
+  <rect width="1200" height="420" fill="#101916"/>
+  <text x="60" y="62" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="700" fill="#fff7e7">MNIST worked example</text>
+  <text x="62" y="96" font-family="Verdana, sans-serif" font-size="17" fill="#b8d9cb">A small system plan became three research-backed Python/PyTorch implementation blocks.</text>
+  <g font-family="Verdana, sans-serif">
+    <rect x="70" y="150" width="260" height="150" rx="24" fill="#d7f0e5"/>
+    <text x="200" y="188" text-anchor="middle" font-size="20" font-weight="700" fill="#10231d">B-001 Data</text>
+    <text x="200" y="222" text-anchor="middle" font-size="14" fill="#355149">IDX loader</text>
+    <text x="200" y="246" text-anchor="middle" font-size="14" fill="#355149">0..1 normalization</text>
+    <text x="200" y="270" text-anchor="middle" font-size="14" fill="#355149">1 x 28 x 28 tensors</text>
+    <rect x="470" y="150" width="260" height="150" rx="24" fill="#ffe5b8"/>
+    <text x="600" y="188" text-anchor="middle" font-size="20" font-weight="700" fill="#10231d">B-002 Training</text>
+    <text x="600" y="222" text-anchor="middle" font-size="14" fill="#5a4221">compact CNN</text>
+    <text x="600" y="246" text-anchor="middle" font-size="14" fill="#5a4221">Adam + cross entropy</text>
+    <text x="600" y="270" text-anchor="middle" font-size="14" fill="#5a4221">metrics + artifact</text>
+    <rect x="870" y="150" width="260" height="150" rx="24" fill="#cde4ff"/>
+    <text x="1000" y="188" text-anchor="middle" font-size="20" font-weight="700" fill="#10231d">B-003 Eval</text>
+    <text x="1000" y="222" text-anchor="middle" font-size="14" fill="#2d4b63">test loss + accuracy</text>
+    <text x="1000" y="246" text-anchor="middle" font-size="14" fill="#2d4b63">confusion matrix</text>
+    <text x="1000" y="270" text-anchor="middle" font-size="14" fill="#2d4b63">predict digit + score</text>
+    <path d="M335 225 L462 225" stroke="#b8d9cb" stroke-width="5" marker-end="url(#arrow)"/>
+    <path d="M735 225 L862 225" stroke="#b8d9cb" stroke-width="5" marker-end="url(#arrow)"/>
+    <text x="600" y="356" text-anchor="middle" font-size="16" fill="#fff7e7">Implemented in mnist_folder/mnist_pipeline with tests in mnist_folder/tests</text>
+  </g>
+</svg>

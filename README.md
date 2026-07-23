@@ -10,6 +10,12 @@ Use deep_learning_auto_research. <workflow action>
 
 Codex does the reasoning, research, extraction, and implementation work. The MCP server stores workflow state and markdown artifacts.
 
+![deep_learning_auto_research hero](assets/ChatGPT%20Image%20Jul%2023%2C%202026%2C%2001_54_24%20PM.png)
+
+## Visual Overview
+
+![Research-gated implementation workflow](assets/workflow.svg)
+
 ## What It Creates
 
 For each planner project, the tool creates a markdown-first structure:
@@ -247,6 +253,8 @@ Example Windows path:
 ```
 ## MNIST Worked Example
 
+![MNIST worked example flow](assets/mnist-flow.svg)
+
 This repo includes a complete example in [`mnist_folder`](mnist_folder). It demonstrates the full workflow for a Python/PyTorch MNIST classifier.
 
 Final project path:
@@ -376,3 +384,7 @@ python -m unittest discover -s mnist_folder\tests -t mnist_folder -p "test_*.py"
 npm run build
 npm test
 ```
+
+
+
+
