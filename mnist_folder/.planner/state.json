@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "plan_file": "mnist.md",
+  "created_at": "2026-07-21T17:51:54.695Z",
+  "updated_at": "2026-07-23T00:33:25.526Z",
+  "counters": {
+    "blocks": 3,
+    "papers": 5
+  },
+  "implementation_target": {
+    "language": "Python",
+    "framework": "PyTorch"
+  },
+  "blocks": {
+    "B-001": {
+      "id": "B-001",
+      "title": "Data Pipeline and Preprocessing",
+      "slug": "data-pipeline-and-preprocessing",
+      "dir": "blocks/B-001-data-pipeline-and-preprocessing",
+      "status": "implemented",
+      "depends_on": [],
+      "related_blocks": [
+        "B-002",
+        "B-003"
+      ],
+      "source_plan_refs": [
+        "Goal",
+        "System Requirements",
+        "Data Handling",
+        "Inference"
+      ],
+      "paper_ids": [
+        "P-001",
+        "P-002"
+      ],
+      "created_at": "2026-07-21T17:57:47.887Z",
+      "updated_at": "2026-07-22T23:40:40.183Z"
+    },
+    "B-002": {
+      "id": "B-002",
+      "title": "CNN Model Training",
+      "slug": "cnn-model-training",
+      "dir": "blocks/B-002-cnn-model-training",
+      "status": "implemented",
+      "depends_on": [
+        "B-001"
+      ],
+      "related_blocks": [
+        "B-003",
+        "B-001"
+      ],
+      "source_plan_refs": [
+        "Model",
+        "Training",
+        "Outputs"
+      ],
+      "paper_ids": [
+        "P-002",
+        "P-003",
+        "P-004"
+      ],
+      "created_at": "2026-07-21T17:57:47.893Z",
+      "updated_at": "2026-07-23T00:33:25.519Z"
+    },
+    "B-003": {
+      "id": "B-003",
+      "title": "Evaluation, Inference, and Run Instructions",
+      "slug": "evaluation-inference-and-run-instructions",
+      "dir": "blocks/B-003-evaluation-inference-and-run-instructions",
+      "status": "spec_approved",
+      "depends_on": [
+        "B-001",
+        "B-002"
+      ],
+      "related_blocks": [
+        "B-001",
+        "B-002"
+      ],
+      "source_plan_refs": [
+        "Evaluation",
+        "Inference",
+        "Outputs"
+      ],
+      "paper_ids": [
+        "P-001",
+        "P-002",
+        "P-005"
+      ],
+      "created_at": "2026-07-21T17:57:47.898Z",
+      "updated_at": "2026-07-22T18:49:37.798Z"
+    }
+  },
+  "papers": {
+    "P-001": {
+      "id": "P-001",
+      "title": "The MNIST Database of Handwritten Digits",
+      "citation": "LeCun, Y., Cortes, C., and Burges, C. J. C. The MNIST Database of Handwritten Digits.",
+      "authors": [
+        "Yann LeCun",
+        "Corinna Cortes",
+        "Christopher J. C. Burges"
+      ],
+      "year": "1998",
+      "venue": "Official MNIST dataset page",
+      "source_url": "https://yann.lecun.org/exdb/mnist/index.html",
+      "attached_to": [
+        "B-001",
+        "B-003"
+      ],
+      "notes": "Primary dataset source for MNIST. It defines the standard MNIST training/test files, 60,000 training examples, 10,000 test examples, 28x28 centered grayscale images, IDX file format, and the origin of the split from NIST SD-1 and SD-3. Useful for B-003 because evaluation should use the canonical 10,000-example test set.",
+      "abstract": "Official dataset description for MNIST handwritten digits, including file names, dataset sizes, image normalization/centering history, and binary IDX storage format.",
+      "relevant_sections": [
+        "Dataset sizes and train/test file names",
+        "Size-normalized and centered 28x28 image construction",
+        "IDX file format for images and labels",
+        "NIST SD-1/SD-3 split details"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 1,
+      "created_at": "2026-07-21T18:08:00.000Z",
+      "updated_at": "2026-07-21T18:35:00.000Z"
+    },
+    "P-002": {
+      "id": "P-002",
+      "title": "Gradient Based Learning Applied to Document Recognition",
+      "citation": "LeCun, Y., Bottou, L., Bengio, Y., and Haffner, P. Gradient Based Learning Applied to Document Recognition. Proceedings of the IEEE, 86(11):2278-2324, 1998.",
+      "authors": [
+        "Yann LeCun",
+        "Leon Bottou",
+        "Yoshua Bengio",
+        "Patrick Haffner"
+      ],
+      "year": "1998",
+      "venue": "Proceedings of the IEEE",
+      "source_url": "https://leon.bottou.org/papers/lecun-98h",
+      "attached_to": [
+        "B-001",
+        "B-002",
+        "B-003"
+      ],
+      "notes": "Primary paper supporting the MNIST benchmark context, LeNet-style convolutional architecture, gradient-based training, and handwritten digit recognition evaluation. Useful for B-003 because it grounds test-set reporting for the trained digit classifier.",
+      "abstract": "The paper reviews gradient-based learning methods for handwritten character recognition and compares methods on a standard handwritten digit recognition task.",
+      "relevant_sections": [
+        "LeNet-style convolutional network architecture for document recognition",
+        "Gradient-based training for handwritten character recognition",
+        "Standard handwritten digit recognition benchmark context"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.95,
+      "created_at": "2026-07-21T18:08:00.000Z",
+      "updated_at": "2026-07-21T18:35:00.000Z"
+    },
+    "P-003": {
+      "id": "P-003",
+      "title": "Adam: A Method for Stochastic Optimization",
+      "citation": "Kingma, D. P., and Ba, J. Adam: A Method for Stochastic Optimization. International Conference on Learning Representations, 2015. arXiv:1412.6980.",
+      "authors": [
+        "Diederik P. Kingma",
+        "Jimmy Ba"
+      ],
+      "year": "2015",
+      "venue": "International Conference on Learning Representations",
+      "doi": "10.48550/arXiv.1412.6980",
+      "arxiv_id": "1412.6980",
+      "source_url": "https://arxiv.org/abs/1412.6980",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Primary optimizer paper for B-002. It supports using Adam as a computationally efficient stochastic optimizer with adaptive first and second moment estimates, low memory requirements, and default hyperparameters that usually need little tuning.",
+      "abstract": "Introduces Adam, a first-order stochastic optimization algorithm using adaptive estimates of lower-order moments. The method is computationally efficient, has low memory requirements, and is suitable for noisy or sparse-gradient objectives.",
+      "relevant_sections": [
+        "Algorithm definition and adaptive moment estimates",
+        "Default hyperparameters and optimizer behavior",
+        "Empirical neural-network optimization comparisons"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.93,
+      "created_at": "2026-07-21T18:18:00.000Z",
+      "updated_at": "2026-07-21T18:18:00.000Z"
+    },
+    "P-004": {
+      "id": "P-004",
+      "title": "Dropout: A Simple Way to Prevent Neural Networks from Overfitting",
+      "citation": "Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I., and Salakhutdinov, R. Dropout: A Simple Way to Prevent Neural Networks from Overfitting. Journal of Machine Learning Research, 15(56):1929-1958, 2014.",
+      "authors": [
+        "Nitish Srivastava",
+        "Geoffrey Hinton",
+        "Alex Krizhevsky",
+        "Ilya Sutskever",
+        "Ruslan Salakhutdinov"
+      ],
+      "year": "2014",
+      "venue": "Journal of Machine Learning Research",
+      "source_url": "https://www.jmlr.org/papers/v15/srivastava14a.html",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Primary regularization paper for B-002. It supports optional dropout layers in the classifier to reduce overfitting by randomly dropping units during training while using a single unthinned network at test time.",
+      "abstract": "Introduces dropout as a technique for reducing overfitting in neural networks by randomly dropping units during training and approximating model averaging at test time with one unthinned network.",
+      "relevant_sections": [
+        "Dropout training mechanism",
+        "Overfitting reduction motivation",
+        "Test-time unthinned network behavior",
+        "Supervised vision benchmark relevance"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.85,
+      "created_at": "2026-07-21T18:18:00.000Z",
+      "updated_at": "2026-07-21T18:18:00.000Z"
+    },
+    "P-005": {
+      "id": "P-005",
+      "title": "On Calibration of Modern Neural Networks",
+      "citation": "Guo, C., Pleiss, G., Sun, Y., and Weinberger, K. Q. On Calibration of Modern Neural Networks. Proceedings of the 34th International Conference on Machine Learning, PMLR 70:1321-1330, 2017.",
+      "authors": [
+        "Chuan Guo",
+        "Geoff Pleiss",
+        "Yu Sun",
+        "Kilian Q. Weinberger"
+      ],
+      "year": "2017",
+      "venue": "International Conference on Machine Learning",
+      "source_url": "https://proceedings.mlr.press/v70/guo17a.html",
+      "attached_to": [
+        "B-003"
+      ],
+      "notes": "Primary calibration paper for B-003. It supports treating a model's confidence score as a prediction score that may not be a calibrated probability, and it motivates reporting confidence carefully during inference.",
+      "abstract": "Studies confidence calibration in modern neural networks, showing that predicted probability estimates may not match true correctness likelihoods and that temperature scaling is a simple post-processing calibration method.",
+      "relevant_sections": [
+        "Confidence calibration definition",
+        "Modern neural network calibration risk",
+        "Temperature scaling as a post-processing calibration method",
+        "Image and document classification relevance"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.78,
+      "created_at": "2026-07-21T18:35:00.000Z",
+      "updated_at": "2026-07-21T18:35:00.000Z"
+    }
+  }
+}

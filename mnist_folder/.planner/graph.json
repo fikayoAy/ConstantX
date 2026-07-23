@@ -1,0 +1,100 @@
+{
+  "blocks": [
+    {
+      "id": "B-001",
+      "title": "Data Pipeline and Preprocessing",
+      "status": "implemented",
+      "depends_on": [],
+      "related_blocks": [
+        "B-002",
+        "B-003"
+      ],
+      "paper_ids": [
+        "P-001",
+        "P-002"
+      ]
+    },
+    {
+      "id": "B-002",
+      "title": "CNN Model Training",
+      "status": "spec_approved",
+      "depends_on": [
+        "B-001"
+      ],
+      "related_blocks": [
+        "B-003",
+        "B-001"
+      ],
+      "paper_ids": [
+        "P-002",
+        "P-003",
+        "P-004"
+      ]
+    },
+    {
+      "id": "B-003",
+      "title": "Evaluation, Inference, and Run Instructions",
+      "status": "spec_approved",
+      "depends_on": [
+        "B-001",
+        "B-002"
+      ],
+      "related_blocks": [
+        "B-001",
+        "B-002"
+      ],
+      "paper_ids": [
+        "P-001",
+        "P-002",
+        "P-005"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "B-001",
+      "to": "B-002",
+      "type": "related_to"
+    },
+    {
+      "from": "B-001",
+      "to": "B-003",
+      "type": "related_to"
+    },
+    {
+      "from": "B-002",
+      "to": "B-001",
+      "type": "depends_on"
+    },
+    {
+      "from": "B-002",
+      "to": "B-003",
+      "type": "related_to"
+    },
+    {
+      "from": "B-002",
+      "to": "B-001",
+      "type": "related_to"
+    },
+    {
+      "from": "B-003",
+      "to": "B-001",
+      "type": "depends_on"
+    },
+    {
+      "from": "B-003",
+      "to": "B-002",
+      "type": "depends_on"
+    },
+    {
+      "from": "B-003",
+      "to": "B-001",
+      "type": "related_to"
+    },
+    {
+      "from": "B-003",
+      "to": "B-002",
+      "type": "related_to"
+    }
+  ]
+}

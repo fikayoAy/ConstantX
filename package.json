@@ -1,0 +1,27 @@
+{
+  "name": "deep-learning-auto-research-mcp",
+  "version": "0.1.0",
+  "description": "Markdown-backed MCP workflow for deep learning auto research, plan decomposition, and research-approved implementation blocks.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/tests",
+    "verify": "npm run build && npm test"
+  },
+  "keywords": [
+    "mcp",
+    "codex",
+    "planning",
+    "markdown",
+    "research"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "^5.9.2"
+  }
+}
