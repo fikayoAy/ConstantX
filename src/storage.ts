@@ -7,6 +7,7 @@ import type {
   BlockMarkdownMeta,
   BlockRecord,
   BlockStatus,
+  DirectiveRecord,
   ImplementationContextMode,
   ImplementationTarget,
   PaperRecord,
@@ -51,10 +52,12 @@ export class PlannerStore {
       updated_at: now,
       counters: {
         blocks: 0,
-        papers: 0
+        papers: 0,
+        directives: 0
       },
       blocks: {},
-      papers: {}
+      papers: {},
+      directives: {}
     };
 
     await this.saveState(state);
@@ -192,6 +195,7 @@ export class PlannerStore {
     extraction: string;
     spec: string;
     implementation: string;
+    directives: string;
   }> {
     const state = await this.loadState();
     const record = this.requireBlock(state, blockId);
@@ -201,7 +205,124 @@ export class PlannerStore {
       papers: await readIfExists(path.join(this.root, record.dir, "papers.md")),
       extraction: await readIfExists(path.join(this.root, record.dir, "extracted-research.md")),
       spec: await readIfExists(path.join(this.root, record.dir, "spec.md")),
-      implementation: await readIfExists(path.join(this.root, record.dir, "implementation.md"))
+      implementation: await readIfExists(path.join(this.root, record.dir, "implementation.md")),
+      directives: await readIfExists(path.join(this.root, record.dir, "directives.md"))
+    };
+  }
+
+  async prepareAnnotationContext(args: {
+    blockId: string;
+    targetFile: string;
+    topic?: string;
+    sourceFile?: string;
+    annotationSource?: string;
+    onlineResearch?: boolean;
+  }): Promise<{
+    block: BlockRecord;
+    target: AnnotationTargetInfo;
+    targetContent: string;
+    blockPackage: {
+      block: string;
+      papers: string;
+      extraction: string;
+      spec: string;
+      implementation: string;
+    };
+    onlineResearch: AnnotationResearchPlan;
+    annotationTemplate: string;
+    constraints: string[];
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, args.blockId);
+    const target = await this.resolveAnnotationTarget(state, block, args.targetFile);
+    const blockPackage = await this.readBlock(block.id);
+    const annotationRequest = normalizeAnnotationRequest(args);
+
+    return {
+      block,
+      target,
+      targetContent: await fs.readFile(target.absolutePath, "utf8"),
+      blockPackage: {
+        block: blockPackage.block,
+        papers: blockPackage.papers,
+        extraction: blockPackage.extraction,
+        spec: blockPackage.spec,
+        implementation: blockPackage.implementation
+      },
+      onlineResearch: buildAnnotationResearchPlan(block, target, annotationRequest, args.onlineResearch ?? false),
+      annotationTemplate: annotationTemplate(annotationRequest),
+      constraints: annotationConstraints()
+    };
+  }
+
+  async annotateTargetFile(args: {
+    blockId: string;
+    targetFile: string;
+    topic?: string;
+    sourceFile?: string;
+    annotationSource?: string;
+    annotationMarkdown: string;
+    annotatedBy?: string;
+    onlineResearchUsed?: boolean;
+    sourceUrls?: string[];
+  }): Promise<{
+    blockId: string;
+    statusUnchanged: BlockStatus;
+    target: AnnotationTargetInfo;
+    topic: string;
+    sourceFile?: string;
+    annotationSource?: string;
+    annotatedAt: string;
+    bytesAppended: number;
+    sourceUrls: string[];
+    guarantees: string[];
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, args.blockId);
+    const statusBefore = block.status;
+    const target = await this.resolveAnnotationTarget(state, block, args.targetFile);
+    const annotationRequest = normalizeAnnotationRequest(args);
+    validateAnnotationMarkdown(args.annotationMarkdown, annotationRequest);
+
+    const timestamp = nowIso();
+    const sourceUrls = uniqueValues(args.sourceUrls ?? []);
+    const sourceExcerpt = annotationRequest.annotationSource
+      ? ["Annotation source excerpt:", annotationRequest.annotationSource, ""]
+      : [];
+    const section = ensureTrailingNewline([
+      "",
+      `## Annotation: ${annotationRequest.subject}`,
+      `Date: ${timestamp}`,
+      `Block: ${block.id}`,
+      `Target file: ${target.relativePath}`,
+      `Target kind: ${target.kind}`,
+      ...(annotationRequest.sourceFile ? [`Annotation source file: ${annotationRequest.sourceFile}`] : []),
+      `Annotated by: ${args.annotatedBy?.trim() || "codex"}`,
+      `Online research used: ${args.onlineResearchUsed ? "yes" : "no"}`,
+      ...(sourceUrls.length > 0 ? [`Source URLs: ${sourceUrls.join(", ")}`] : []),
+      "",
+      ...sourceExcerpt,
+      args.annotationMarkdown.trim(),
+      ""
+    ].join("\n"));
+
+    await fs.appendFile(target.absolutePath, section, "utf8");
+
+    return {
+      blockId: block.id,
+      statusUnchanged: statusBefore,
+      target,
+      topic: annotationRequest.subject,
+      sourceFile: annotationRequest.sourceFile,
+      annotationSource: annotationRequest.annotationSource,
+      annotatedAt: timestamp,
+      bytesAppended: Buffer.byteLength(section),
+      sourceUrls,
+      guarantees: [
+        "Only the requested target file was appended.",
+        "Block status was not changed.",
+        "No research approval, spec creation, spec approval, implementation recording, verification, or code generation stage was advanced."
+      ]
     };
   }
 
@@ -441,6 +562,94 @@ export class PlannerStore {
     return block;
   }
 
+  async addDirective(args: {
+    blockId: string;
+    instruction: string;
+    inferredImplementation: string;
+    title?: string;
+    sourceFile?: string;
+    sourceEvidence?: string;
+    approvedBy?: string;
+  }): Promise<{
+    block: BlockRecord;
+    directive: DirectiveRecord;
+    path: string;
+    specInvalidated: boolean;
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, args.blockId);
+    const extraction = await readIfExists(path.join(this.root, block.dir, "extracted-research.md"));
+    if (extraction.trim().length === 0) {
+      throw new Error(`Block ${block.id} has no extracted-research.md content. Extract research before adding implementation directives.`);
+    }
+
+    validateDirectiveText(args.instruction, "instruction");
+    validateDirectiveText(args.inferredImplementation, "inferred implementation");
+
+    const id = nextId("D", ++state.counters.directives);
+    const timestamp = nowIso();
+    const directive: DirectiveRecord = {
+      id,
+      block_id: block.id,
+      title: args.title?.trim() || inferDirectiveTitle(args.instruction, id),
+      status: "approved",
+      user_instruction: args.instruction.trim(),
+      source_file: args.sourceFile?.trim() || "extracted-research.md",
+      source_evidence: args.sourceEvidence?.trim(),
+      inferred_implementation: args.inferredImplementation.trim(),
+      approved_by: args.approvedBy?.trim() || "user",
+      created_at: timestamp,
+      updated_at: timestamp
+    };
+
+    state.directives[id] = directive;
+    block.directive_ids = uniqueValues([...(block.directive_ids ?? []), id]);
+
+    const specInvalidated = ["spec_created", "spec_approved", "ready_to_implement", "implementing", "implemented", "verified"].includes(block.status);
+    if (specInvalidated) {
+      block.status = "research_approved";
+    }
+    block.updated_at = timestamp;
+    state.updated_at = timestamp;
+
+    await this.writeDirectivesMarkdown(block, state);
+    await this.writeBlockMarkdown(block, undefined, state);
+    await this.saveState(state);
+    await this.writeGraphFiles(state);
+    await this.audit("directive_added", { blockId: block.id, directiveId: id, specInvalidated });
+
+    return {
+      block,
+      directive,
+      path: relativeToProject(this.root, path.join(this.root, block.dir, "directives.md")),
+      specInvalidated
+    };
+  }
+
+  async listDirectives(blockId?: string): Promise<DirectiveRecord[]> {
+    const state = await this.loadState();
+    if (blockId) {
+      const block = this.requireBlock(state, blockId);
+      return block.directive_ids.map((id) => state.directives[id]).filter(Boolean)
+        .sort((a, b) => a.id.localeCompare(b.id));
+    }
+
+    return Object.values(state.directives).sort((a, b) => a.id.localeCompare(b.id));
+  }
+
+  async readDirectives(blockId: string): Promise<{
+    record: BlockRecord;
+    directives: DirectiveRecord[];
+    markdown: string;
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, blockId);
+    return {
+      record: block,
+      directives: block.directive_ids.map((id) => state.directives[id]).filter(Boolean),
+      markdown: await readIfExists(path.join(this.root, block.dir, "directives.md"))
+    };
+  }
   async createSpec(args: { blockId: string; specMarkdown?: string; generatedBy?: string }): Promise<{
     block: BlockRecord;
     path: string;
@@ -452,11 +661,13 @@ export class PlannerStore {
     }
 
     const implementationTarget = requireImplementationTarget(state);
+    if (!args.specMarkdown || args.specMarkdown.trim().length === 0) {
+      throw new Error(concreteSpecRequiredMessage(block));
+    }
+
     const specPath = path.join(this.root, block.dir, "spec.md");
-    const markdown = ensureSpecImplementationTarget(
-      args.specMarkdown ?? await this.specTemplate(state, block),
-      implementationTarget
-    );
+    const markdown = ensureSpecImplementationTarget(args.specMarkdown, implementationTarget);
+    validateConcreteSpec(markdown, block, implementationTarget, approvedDirectivesForBlock(state, block));
     await fs.writeFile(specPath, ensureTrailingNewline(markdown), "utf8");
     block.status = "spec_created";
     block.updated_at = nowIso();
@@ -479,6 +690,7 @@ export class PlannerStore {
     if (spec.trim().length === 0) {
       throw new Error(`Block ${block.id} has no spec.md to approve.`);
     }
+    validateConcreteSpec(spec, block, requireImplementationTarget(state), approvedDirectivesForBlock(state, block));
 
     block.status = this.dependenciesSatisfied(state, block) ? "ready_to_implement" : "spec_approved";
     block.updated_at = nowIso();
@@ -530,6 +742,7 @@ export class PlannerStore {
       throw new Error(`Block ${block.id} spec.md must include Implementation Target language ${implementationTarget!.language} and framework ${implementationTarget!.framework}.`);
     }
     const papers = await readIfExists(path.join(this.root, block.dir, "papers.md"));
+    const directives = await readIfExists(path.join(this.root, block.dir, "directives.md"));
     const implementation = await readIfExists(path.join(this.root, block.dir, "implementation.md"));
     const dependencySummaries = await this.dependencySummaries(state, block);
     const relatedSummaries = await this.relatedSummaries(state, block);
@@ -566,6 +779,9 @@ export class PlannerStore {
       "",
       "## Attached Papers",
       papers.trim() || "No attached papers recorded.",
+      "",
+      "## Approved Implementation Directives",
+      directives.trim() || "No implementation directives recorded.",
       "",
       "## Previous Implementation Notes",
       implementation.trim() || "No implementation notes recorded.",
@@ -676,6 +892,7 @@ export class PlannerStore {
     const sections = [];
     for (const block of blocks) {
       const spec = await readIfExists(path.join(this.root, block.dir, "spec.md"));
+      const directives = await readIfExists(path.join(this.root, block.dir, "directives.md"));
       const implementation = await readIfExists(path.join(this.root, block.dir, "implementation.md"));
       sections.push([
         `## ${block.id} ${block.title}`,
@@ -683,6 +900,9 @@ export class PlannerStore {
         "",
         "### Spec",
         spec.trim() || "No spec recorded.",
+        "",
+        "### Implementation Directives",
+        directives.trim() || "No directives recorded.",
         "",
         "### Implementation Notes",
         implementation.trim() || "No implementation notes recorded."
@@ -713,6 +933,12 @@ export class PlannerStore {
     const parsed = JSON.parse(await fs.readFile(statePath, "utf8")) as PlannerState;
     if (parsed.version !== STATE_VERSION) {
       throw new Error(`Unsupported planner state version: ${parsed.version}`);
+    }
+
+    parsed.counters.directives ??= 0;
+    parsed.directives ??= {};
+    for (const block of Object.values(parsed.blocks)) {
+      block.directive_ids ??= [];
     }
 
     return parsed;
@@ -750,6 +976,7 @@ export class PlannerStore {
       related_blocks: uniqueValues(block.related_blocks ?? []).map(normalizeId),
       source_plan_refs: uniqueValues(block.source_plan_refs ?? []),
       paper_ids: [],
+      directive_ids: [],
       created_at: now,
       updated_at: now
     };
@@ -760,6 +987,7 @@ export class PlannerStore {
     await fs.writeFile(path.join(this.root, record.dir, "papers.md"), papersMarkdown(record, []), "utf8");
     await fs.writeFile(path.join(this.root, record.dir, "extracted-research.md"), "", "utf8");
     await fs.writeFile(path.join(this.root, record.dir, "spec.md"), "", "utf8");
+    await fs.writeFile(path.join(this.root, record.dir, "directives.md"), directivesMarkdown(record, []), "utf8");
     await fs.writeFile(path.join(this.root, record.dir, "implementation.md"), `# Implementation For ${record.id} ${record.title}\n`, "utf8");
     return record;
   }
@@ -801,6 +1029,10 @@ export class PlannerStore {
   private async writePapersMarkdown(block: BlockRecord, state: PlannerState): Promise<void> {
     const papers = block.paper_ids.map((paperId) => this.requirePaper(state, paperId));
     await fs.writeFile(path.join(this.root, block.dir, "papers.md"), papersMarkdown(block, papers), "utf8");
+  }
+  private async writeDirectivesMarkdown(block: BlockRecord, state: PlannerState): Promise<void> {
+    const directives = block.directive_ids.map((id) => state.directives[id]).filter(Boolean);
+    await fs.writeFile(path.join(this.root, block.dir, "directives.md"), directivesMarkdown(block, directives), "utf8");
   }
 
   private buildOnlineResearchPlan(block: BlockRecord, blockMarkdown: string) {
@@ -889,6 +1121,60 @@ export class PlannerStore {
     }
 
     return summaries.join("\n\n");
+  }
+
+  private async resolveAnnotationTarget(state: PlannerState, block: BlockRecord, targetFile: string): Promise<AnnotationTargetInfo> {
+    const absolutePath = path.isAbsolute(targetFile)
+      ? path.resolve(targetFile)
+      : path.resolve(this.root, targetFile);
+    const relative = path.relative(this.root, absolutePath);
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
+      throw new Error(`Annotation target must stay inside the planner project: ${this.root}`);
+    }
+
+    const stat = await fs.stat(absolutePath).catch(() => undefined);
+    if (!stat || !stat.isFile()) {
+      throw new Error(`Annotation target does not exist or is not a file: ${relativeToProject(this.root, absolutePath)}`);
+    }
+
+    const relativePath = relativeToProject(this.root, absolutePath);
+    if (relativePath.startsWith(".planner/")) {
+      throw new Error("Annotation target must not be an internal .planner state or audit file.");
+    }
+    if (relativePath === "graph.md" || relativePath === state.plan_file || relativePath.startsWith("papers/")) {
+      throw new Error("Annotation target must be a block package file or an implementation source file, not graph/system-plan/paper storage.");
+    }
+
+    const blockDir = path.resolve(this.root, block.dir);
+    const blockRelative = path.relative(blockDir, absolutePath);
+    const inRequestedBlockDir = !blockRelative.startsWith("..") && !path.isAbsolute(blockRelative);
+    if (relativePath.startsWith("blocks/") && !inRequestedBlockDir) {
+      throw new Error(`Annotation target belongs to a different block package than ${block.id}.`);
+    }
+
+    let kind: AnnotationTargetKind = "implementation_source";
+    if (inRequestedBlockDir) {
+      const name = path.basename(absolutePath);
+      if (name === "block.md") {
+        kind = "block_markdown";
+      } else if (name === "extracted-research.md") {
+        kind = "extracted_research";
+      } else if (name === "spec.md") {
+        kind = "spec";
+      } else if (name === "implementation.md") {
+        kind = "implementation_notes";
+      } else {
+        throw new Error("Files inside a block package may only be block.md, extracted-research.md, spec.md, or implementation.md annotation targets.");
+      }
+    }
+
+    return {
+      absolutePath,
+      relativePath,
+      kind,
+      blockId: block.id,
+      blockDir: block.dir
+    };
   }
 
   private async specTemplate(state: PlannerState, block: BlockRecord): Promise<string> {
@@ -1007,6 +1293,384 @@ async function readIfExists(filePath: string): Promise<string> {
   return fs.readFile(filePath, "utf8");
 }
 
+type AnnotationTargetKind = "block_markdown" | "extracted_research" | "spec" | "implementation_notes" | "implementation_source";
+
+type AnnotationTargetInfo = {
+  absolutePath: string;
+  relativePath: string;
+  kind: AnnotationTargetKind;
+  blockId: string;
+  blockDir: string;
+};
+
+type AnnotationResearchPlan = {
+  blockId: string;
+  title: string;
+  topic: string;
+  sourceFile?: string;
+  annotationSource?: string;
+  targetFile: string;
+  targetKind: AnnotationTargetKind;
+  onlineResearchRequested: boolean;
+  queries: string[];
+  instructions: string[];
+};
+
+type AnnotationRequest = {
+  subject: string;
+  sourceFile?: string;
+  annotationSource?: string;
+};
+
+function buildAnnotationResearchPlan(
+  block: BlockRecord,
+  target: AnnotationTargetInfo,
+  request: AnnotationRequest,
+  onlineResearchRequested: boolean
+): AnnotationResearchPlan {
+  const base = block.title.replace(/^\d+(?:\.\d+)*\.?\s+/, "");
+  const sourceTerms = request.annotationSource ? compactAnnotationSource(request.annotationSource, 80) : request.subject;
+  const queries = onlineResearchRequested
+    ? uniqueValues([
+        `${request.subject} primary paper`,
+        `${request.subject} arXiv`,
+        `${sourceTerms} primary source`,
+        `${base} ${request.subject} implementation evidence`
+      ]).filter((query) => query.trim().length > 8)
+    : [];
+
+  return {
+    blockId: block.id,
+    title: block.title,
+    topic: request.subject,
+    sourceFile: request.sourceFile,
+    annotationSource: request.annotationSource,
+    targetFile: target.relativePath,
+    targetKind: target.kind,
+    onlineResearchRequested,
+    queries,
+    instructions: [
+      "Use this context only to annotate the requested target file.",
+      "Base the annotation on the provided source file/excerpt from the block package or implementation record, not on a generic topic.",
+      "If online research is requested, search primary sources before calling planner.annotate_target_file.",
+      "Prefer arXiv, CVF/OpenAccess, ACL Anthology, IEEE, ACM, Springer, Nature, official project pages, or publisher pages.",
+      "Do not approve research, create or replace spec.md, record implementation, verify blocks, or change block status.",
+      "Let Codex choose the annotation structure from the selected source/excerpt; the annotation must remain concrete, traceable, implementation-relevant when applicable, and explicit about boundaries."
+    ]
+  };
+}
+
+function annotationTemplate(request: AnnotationRequest): string {
+  return [
+    `Write a concrete annotation based on: ${request.subject}`,
+    ...(request.sourceFile ? [`Source file: ${request.sourceFile}`] : []),
+    ...(request.annotationSource ? ["Source excerpt:", request.annotationSource] : []),
+    "",
+    "Codex may choose the structure. The annotation must preserve source/provenance, explain the concrete relevance to the target file or block, describe implementation impact if the source affects design, and state what workflow stages or files it must not change.",
+    ""
+  ].join("\n");
+}
+
+function annotationConstraints(): string[] {
+  return [
+    "Append only one dated annotation section to the target file.",
+    "Do not modify .planner state, graph files, papers, specs, implementation records, or block status unless that exact file is the requested target.",
+    "Do not use placeholders such as TBD, TODO, PLACEHOLDER, or angle-bracket template tokens.",
+    "Do not approve research or spec, create spec.md, record implementation, verify blocks, or implement code.",
+    "Keep annotation claims traceable to sources or to the approved local block artifacts."
+  ];
+}
+
+function normalizeAnnotationRequest(args: { topic?: string; sourceFile?: string; annotationSource?: string }): AnnotationRequest {
+  const topic = args.topic?.trim();
+  const sourceFile = args.sourceFile?.trim();
+  const annotationSource = args.annotationSource?.trim();
+  if (!topic && !annotationSource) {
+    throw new Error("Annotation requires either annotationSource from an existing artifact or a backward-compatible topic.");
+  }
+  if (annotationSource && annotationSource.length < 20) {
+    throw new Error("annotationSource must include a concrete excerpt or instruction from block.md, extracted-research.md, spec.md, or implementation.md.");
+  }
+
+  return {
+    subject: topic || inferAnnotationSubject(annotationSource ?? "", sourceFile),
+    sourceFile,
+    annotationSource
+  };
+}
+
+function inferAnnotationSubject(annotationSource: string, sourceFile?: string): string {
+  const cleaned = compactAnnotationSource(annotationSource, 96);
+  if (cleaned.length > 0) {
+    return cleaned;
+  }
+  return sourceFile ? `Evidence from ${path.basename(sourceFile)}` : "Selected project evidence";
+}
+
+function compactAnnotationSource(value: string, maxLength: number): string {
+  const cleaned = value
+    .replace(/[`*_>#\-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (cleaned.length <= maxLength) {
+    return cleaned;
+  }
+  return `${cleaned.slice(0, maxLength - 3).trim()}...`;
+}
+
+function validateAnnotationMarkdown(markdown: string, request: AnnotationRequest): void {
+  const problems: string[] = [];
+  const trimmed = markdown.trim();
+  const lower = trimmed.toLowerCase();
+  if (trimmed.length < 400) {
+    problems.push("annotation is too short to be concrete");
+  }
+
+  const sourceTerms = importantAnnotationTerms(request.annotationSource ?? request.subject);
+  const matchedTerms = sourceTerms.filter((term) => lower.includes(term.toLowerCase()));
+  if (sourceTerms.length > 0 && matchedTerms.length < Math.min(2, sourceTerms.length)) {
+    problems.push("annotation must explicitly discuss the selected annotation source/excerpt");
+  }
+
+  const placeholderPattern = new RegExp("(^|\\n)\\s*(?:[-*]\\s*)?(TBD|TODO|PLACEHOLDER|FILL ME|TO BE DECIDED|N/A\\s*FOR\\s*NOW)\\s*($|\\n)|:\\s*(TBD|TODO|PLACEHOLDER)\\s*($|\\n)|<(?:TOPIC|TARGET_FILE|BLOCK_ID|PROJECT_PATH|ANNOTATION|ANNOTATION_SOURCE_OR_EXCERPT|TODO|PLACEHOLDER|[^>]*HERE[^>]*)>", "i");
+  if (placeholderPattern.test(trimmed)) {
+    problems.push("annotation contains placeholder text");
+  }
+
+  if (!/\b(must not|do not|does not|non-scope|out of scope|boundary|boundaries)\b/i.test(trimmed)) {
+    problems.push("annotation must state explicit boundaries or non-scope");
+  }
+  if (!/\b(source|sources|provenance|evidence|excerpt|citation|url|paper|local context|source lineage)\b/i.test(trimmed)) {
+    problems.push("annotation must preserve source or provenance context");
+  }
+  if (!/\b(impact|relevance|affects|clarifies|changes|contract|interface|adapter|implementation|block|target file|design)\b/i.test(trimmed)) {
+    problems.push("annotation must explain concrete relevance to the block, target file, or implementation design");
+  }
+  if (problems.length > 0) {
+    throw new Error(`Annotation is not concrete enough: ${problems.join("; ")}.`);
+  }
+}
+
+function importantAnnotationTerms(value: string): string[] {
+  const stopWords = new Set([
+    "from", "with", "that", "this", "should", "would", "could", "there", "their", "about", "into", "only", "must", "have", "been", "where", "when", "then", "than", "using", "evidence", "source", "selected", "implementation", "research"
+  ]);
+  const terms = value
+    .replace(/[^a-zA-Z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .map((term) => term.trim())
+    .filter((term) => term.length >= 4 && !stopWords.has(term.toLowerCase()));
+  return uniqueValues(terms).slice(0, 6);
+}
+
+function validateDirectiveText(value: string, label: string): void {
+  const trimmed = value.trim();
+  if (trimmed.length < 40) {
+    throw new Error(`Directive ${label} is too short to be implementation-relevant.`);
+  }
+  const placeholderPattern = /(^|\n)\s*(?:[-*]\s*)?(TBD|TODO|PLACEHOLDER|FILL ME|TO BE DECIDED|N\/A\s*FOR\s*NOW)\s*($|\n)|:\s*(TBD|TODO|PLACEHOLDER)\s*($|\n)|<(?:[^>]*HERE|TODO|PLACEHOLDER)[^>]*>/i;
+  if (placeholderPattern.test(trimmed)) {
+    throw new Error(`Directive ${label} contains placeholder text.`);
+  }
+}
+
+function inferDirectiveTitle(instruction: string, id: string): string {
+  const cleaned = instruction
+    .replace(/\s+/g, " ")
+    .replace(/[.#:;!?]+$/g, "")
+    .trim();
+  const words = cleaned.split(" ").slice(0, 10).join(" ");
+  return words || `${id} Implementation Directive`;
+}
+
+function approvedDirectivesForBlock(state: PlannerState, block: BlockRecord): DirectiveRecord[] {
+  return block.directive_ids
+    .map((id) => state.directives[id])
+    .filter((directive): directive is DirectiveRecord => Boolean(directive) && directive.status === "approved")
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+function concreteSpecRequiredMessage(block: BlockRecord): string {
+  return [
+    `Block ${block.id} requires concrete specMarkdown.`,
+    "planner.create_spec no longer creates placeholder spec.md files.",
+    "Codex must first read block.md, papers.md, extracted-research.md, dependency summaries, and the implementation target, then pass a complete specMarkdown value.",
+    "The spec must state exactly what to implement for this block, what not to implement, files/artifacts to create or modify, artifacts to remove or replace, data contracts, implementation steps, acceptance criteria, verification plan, traceability back to block/research evidence, and a Paper Model Fit And Adapter Map explaining how every attached paper maps to implementation behavior."
+  ].join(" ");
+}
+
+function validateConcreteSpec(markdown: string, block: BlockRecord, target: ImplementationTarget, directives: DirectiveRecord[] = []): void {
+  const problems: string[] = [];
+  const trimmed = markdown.trim();
+  if (trimmed.length < 1200) {
+    problems.push("spec is too short to be an implementation-ready block specification");
+  }
+  if (!trimmed.includes(block.id)) {
+    problems.push(`spec must explicitly reference block id ${block.id}`);
+  }
+  if (!specHasImplementationTarget(trimmed, target)) {
+    problems.push(`spec must include Implementation Target language ${target.language} and framework ${target.framework}`);
+  }
+
+  const placeholderPattern = new RegExp("(^|\\n)\\s*(?:[-*]\\s*)?(TBD|TODO|PLACEHOLDER|FILL ME|TO BE DECIDED|N/A\\s*FOR\\s*NOW)\\s*($|\\n)|:\\s*(TBD|TODO|PLACEHOLDER)\\s*($|\\n)|<(?:BLOCK_ID|PROJECT_PATH|LANGUAGE|FRAMEWORK|TODO|PLACEHOLDER|[^>]*HERE[^>]*)>", "i");
+  if (placeholderPattern.test(trimmed)) {
+    problems.push("spec contains placeholder text such as TBD/TODO/<placeholder>");
+  }
+
+  const requiredSectionGroups: Array<{ label: string; patterns: RegExp[] }> = [
+    { label: "block identity and source scope", patterns: [/^##\s+.*(block identity|scope|source)/im] },
+    { label: "implementation target", patterns: [/^##\s+implementation target\s*$/im] },
+    { label: "concrete implementation requirements", patterns: [/^##\s+.*(implementation requirements|implementation objective|what to implement|data model|processing flow)/im] },
+    { label: "interfaces or data contracts", patterns: [/^##\s+.*(interfaces|data contracts|data model|output contract|api contract)/im] },
+    { label: "files or artifacts to create or modify", patterns: [/^##\s+.*(files|artifacts).*(create|modify|change)/im, /^##\s+.*(create|modify|change).*(files|artifacts)/im] },
+    { label: "artifacts to remove or replace", patterns: [/^##\s+.*(artifacts|files).*(remove|delete|replace|deprecate|cleanup)/im, /^##\s+.*(remove|delete|replace|deprecate|cleanup).*(artifacts|files)/im] },
+    { label: "non-goals or boundaries", patterns: [/^##\s+.*(non-goals|boundaries|does not own|do not implement|out of scope)/im] },
+    { label: "implementation steps", patterns: [/^##\s+.*implementation steps/im, /^##\s+.*processing flow/im] },
+    { label: "acceptance criteria", patterns: [/^##\s+.*acceptance criteria/im] },
+    { label: "verification plan", patterns: [/^##\s+.*verification/im] },
+    { label: "paper model fit and adapter map", patterns: [/^##\s+.*paper.*model.*fit.*adapter.*map/im] },
+    { label: "traceability to block and research", patterns: [/^##\s+.*(traceability|research basis|evidence map|source evidence)/im] }
+  ];
+
+  for (const group of requiredSectionGroups) {
+    if (!group.patterns.some((pattern) => pattern.test(trimmed))) {
+      problems.push(`missing required section: ${group.label}`);
+    }
+  }
+
+  if (!/\b(remove|delete|replace|deprecate|cleanup|no artifacts to remove)\b/i.test(trimmed)) {
+    problems.push("spec must explicitly say which stale/generated artifacts to remove/replace, or state that there are no artifacts to remove");
+  }
+  if (!/\b(do not implement|must not|out of scope|non-goal)\b/i.test(trimmed)) {
+    problems.push("spec must include block boundaries/non-goals to prevent over-implementation");
+  }
+  if (!/\b(test|verify|verification|build|unit|integration)\b/i.test(trimmed)) {
+    problems.push("spec must include concrete verification/test expectations");
+  }
+  if (!/\b(block\.md|extracted-research\.md|papers\.md|P-\d{3}|source plan|research)\b/i.test(trimmed)) {
+    problems.push("spec must cite source block/research evidence, not just generic implementation text");
+  }
+  if (/^#\\s*(foundation|data pipeline|training|evaluation|deployment)\\s*$/im.test(trimmed)) {
+    problems.push("spec appears to describe a generic phase instead of the exact block implementation");
+  }
+
+  validatePaperModelFitSection(trimmed, block, problems);
+  validateApprovedDirectivesInSpec(trimmed, directives, problems);
+
+  if (problems.length > 0) {
+    throw new Error(`Spec for ${block.id} is not concrete enough: ${problems.join("; ")}.`);
+  }
+}
+
+function validateApprovedDirectivesInSpec(markdown: string, directives: DirectiveRecord[], problems: string[]): void {
+  if (directives.length === 0) {
+    return;
+  }
+
+  const sectionText = extractTopLevelSection(markdown, /^##\s+.*(user directives|implementation directives|directives.*overrides|approved directives)\s*$/i);
+  if (!sectionText) {
+    problems.push("spec must include a User Directives / Implementation Directives section when approved directives exist");
+    return;
+  }
+
+  for (const directive of directives) {
+    if (!sectionText.includes(directive.id) && !markdown.includes(directive.id)) {
+      problems.push(`spec must cite approved directive ${directive.id}`);
+    }
+    const instructionKeywords = directive.user_instruction
+      .toLowerCase()
+      .match(/[a-z][a-z0-9-]{4,}/g)?.filter((word) => !["research", "evidence", "extracted", "implementation", "directive", "inputs", "model"].includes(word))
+      .slice(0, 4) ?? [];
+    const missingKeywords = instructionKeywords.filter((word) => !markdown.toLowerCase().includes(word));
+    if (instructionKeywords.length > 0 && missingKeywords.length === instructionKeywords.length) {
+      problems.push(`spec must reflect the concrete user instruction for ${directive.id}`);
+    }
+    if (!/\b(must|use|apply|preferred|selected|implementation effect|implementation direction|honor|obey)\b/i.test(sectionText)) {
+      problems.push("directive section must state implementation effect, not only list directive ids");
+    }
+    if (!/\b(must not|do not|does not|boundary|boundaries|non-goal|out of scope|not final)\b/i.test(sectionText)) {
+      problems.push("directive section must preserve directive boundaries/non-goals");
+    }
+  }
+}
+function validatePaperModelFitSection(markdown: string, block: BlockRecord, problems: string[]): void {
+  const sectionText = extractTopLevelSection(markdown, /^##\s+.*paper.*model.*fit.*adapter.*map\s*$/i);
+  if (!sectionText) {
+    return;
+  }
+
+  const paperIds = block.paper_ids;
+  if (paperIds.length === 0) {
+    if (!/\b(no attached papers|no papers attached|no paper model adapters required)\b/i.test(sectionText)) {
+      problems.push("paper model fit section must state that no paper model adapters are required when the block has no attached papers");
+    }
+    return;
+  }
+
+  for (const paperId of paperIds) {
+    const paperEntry = extractPaperEntry(sectionText, paperId);
+    if (!paperEntry) {
+      problems.push(`paper model fit section must include an implementation mapping for ${paperId}`);
+      continue;
+    }
+
+    const requiredEntryFields: Array<{ label: string; pattern: RegExp }> = [
+      { label: "implementation role", pattern: /\b(implementation role|role)\b/i },
+      { label: "processing step", pattern: /\b(processing step|fits in|used in|stage)\b/i },
+      { label: "adapter or interface", pattern: /\b(adapter|interface)\b/i },
+      { label: "consumed inputs", pattern: /\b(consumes|input|inputs|reads)\b/i },
+      { label: "produced outputs", pattern: /\b(produces|output|outputs|emits|writes)\b/i },
+      { label: "provenance", pattern: /\b(provenance|source_model|paper_support|producer_name)\b/i },
+      { label: "confidence or uncertainty handling", pattern: /\b(confidence|uncertainty|score|ambiguity|risk)\b/i },
+      { label: "boundaries", pattern: /\b(must not|mustn't|not used for|does not|boundary|boundaries|non-goal|non-goals)\b/i }
+    ];
+
+    for (const field of requiredEntryFields) {
+      if (!field.pattern.test(paperEntry)) {
+        problems.push(`${paperId} paper model fit entry is missing ${field.label}`);
+      }
+    }
+  }
+}
+
+function extractTopLevelSection(markdown: string, headingPattern: RegExp): string | undefined {
+  const lines = markdown.split(/\r?\n/);
+  const start = lines.findIndex((line) => headingPattern.test(line.trim()));
+  if (start < 0) {
+    return undefined;
+  }
+
+  const sectionLines: string[] = [];
+  for (let index = start + 1; index < lines.length; index += 1) {
+    if (/^##\s+/.test(lines[index])) {
+      break;
+    }
+    sectionLines.push(lines[index]);
+  }
+
+  return sectionLines.join("\n").trim();
+}
+
+function extractPaperEntry(sectionText: string, paperId: string): string | undefined {
+  const lines = sectionText.split(/\r?\n/);
+  const start = lines.findIndex((line) => new RegExp(`(^|\\b)${escapeRegExp(paperId)}(\\b|$)`).test(line));
+  if (start < 0) {
+    return undefined;
+  }
+
+  const entryLines: string[] = [];
+  for (let index = start; index < lines.length; index += 1) {
+    if (index > start && /^#{3,6}\s+/.test(lines[index]) && /\bP-\d{3}\b/.test(lines[index])) {
+      break;
+    }
+    entryLines.push(lines[index]);
+  }
+
+  return entryLines.join("\n").trim();
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 function ensureTrailingNewline(value: string): string {
   return value.endsWith("\n") ? value : `${value}\n`;
 }
@@ -1072,7 +1736,7 @@ function specHasImplementationTarget(spec: string, target: ImplementationTarget)
   return language === target.language && framework === target.framework;
 }
 
-function nextId(prefix: "B" | "P", value: number): string {
+function nextId(prefix: "B" | "P" | "D", value: number): string {
   return `${prefix}-${String(value).padStart(3, "0")}`;
 }
 
@@ -1122,6 +1786,38 @@ function papersMarkdown(block: BlockRecord, papers: PaperRecord[]): string {
   return ensureTrailingNewline(body);
 }
 
+function directivesMarkdown(block: BlockRecord, directives: DirectiveRecord[]): string {
+  const body = [
+    `# Implementation Directives For ${block.id} ${block.title}`,
+    "",
+    "Implementation directives are approved user decisions that convert research evidence into implementation direction. They must be reflected in the next spec.md and included in strict implementation context.",
+    "",
+    ...(directives.length === 0
+      ? ["No implementation directives recorded yet."]
+      : directives.flatMap((directive) => [
+          `## ${directive.id} ${directive.title}`,
+          "",
+          `Status: ${directive.status}`,
+          `Approved by: ${directive.approved_by ?? "user"}`,
+          `Created at: ${directive.created_at}`,
+          `Updated at: ${directive.updated_at}`,
+          `Source file: ${directive.source_file ?? "extracted-research.md"}`,
+          ...(directive.source_evidence ? [`Source evidence: ${directive.source_evidence}`] : []),
+          "",
+          "### User Instruction",
+          directive.user_instruction,
+          "",
+          "### Inferred Implementation Direction",
+          directive.inferred_implementation,
+          "",
+          "### Spec Requirement",
+          `The next spec.md must cite ${directive.id}, preserve the user instruction, and explain how this directive changes implementation behavior.`,
+          ""
+        ]))
+  ].join("\n");
+
+  return ensureTrailingNewline(body);
+}
 function researchExtractionTemplate(block: BlockRecord, state: PlannerState): string {
   const papers = block.paper_ids.map((paperId) => state.papers[paperId]).filter(Boolean);
   return [

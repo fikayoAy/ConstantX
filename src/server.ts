@@ -8,6 +8,13 @@ import { toJsonText } from "./utils.js";
 
 const projectPath = z.string().optional().describe("Project directory relative to the MCP server working directory.");
 const blockId = z.string().describe("Block id such as B-001.");
+const targetFile = z.string().min(1).describe("Target file to annotate. May be absolute inside projectPath or relative to projectPath.");
+const annotationMarkdown = z.string().min(1).describe("Concrete annotation body derived from the selected source/excerpt. The tool wraps it in a dated Annotation section.");
+const annotationSource = z.string().min(20).optional().describe("Concrete source excerpt or instruction from block.md, extracted-research.md, spec.md, implementation.md, or an implementation file. Prefer this over topic.");
+const annotationSourceFile = z.string().min(1).optional().describe("File containing the source evidence for the annotation, for example extracted-research.md or spec.md.");
+const annotationTopic = z.string().min(1).optional().describe("Backward-compatible short annotation title. Prefer annotationSource plus sourceFile for new prompts.");
+const directiveInstruction = z.string().min(40).describe("The exact user instruction describing what evidence to use and how it should affect implementation.");
+const inferredImplementation = z.string().min(80).describe("Codex-inferred implementation relevance from block.md, papers.md, extracted-research.md, spec.md, and the user instruction.");
 const stringList = z.array(z.string()).optional();
 const implementationContextMode = z.enum(["implement", "reimplement"]).optional()
   .describe("Default implement only allows ready blocks. Use reimplement only when the user explicitly requests reimplementation of an implemented or verified block.");
@@ -150,6 +157,98 @@ export function createPlannerServer(): McpServer {
       }
     },
     async ({ projectPath: pathArg, blockId: id }) => ok(await new PlannerStore(pathArg).readBlock(id))
+  );
+
+  server.registerTool(
+    "planner.prepare_annotation_context",
+    {
+      title: "Prepare Annotation Context",
+      description: "Read the exact target file and block package context before Codex annotates block.md, extracted-research.md, spec.md, implementation.md, or an implementation source file. This is read-only and must not approve, create specs, or implement.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        targetFile,
+        topic: annotationTopic,
+        sourceFile: annotationSourceFile,
+        annotationSource,
+        onlineResearch: z.boolean().optional()
+      },
+      annotations: {
+        readOnlyHint: true
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).prepareAnnotationContext(args))
+  );
+
+  server.registerTool(
+    "planner.annotate_target_file",
+    {
+      title: "Annotate Target File",
+      description: "Append one dated annotation section to a validated target file inside the planner project. This does not change block status, approve research/specs, create specs, record implementation, or modify any file except the target file.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        targetFile,
+        topic: annotationTopic,
+        sourceFile: annotationSourceFile,
+        annotationSource,
+        annotationMarkdown,
+        annotatedBy: z.string().optional(),
+        onlineResearchUsed: z.boolean().optional(),
+        sourceUrls: z.array(z.string()).optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).annotateTargetFile(args))
+  );
+  server.registerTool(
+    "planner.add_directive",
+    {
+      title: "Add Approved Implementation Directive",
+      description: "Store an approved user implementation directive for a block. The user gives a natural instruction, and Codex must infer the concrete implementation relevance from block.md, papers.md, extracted-research.md, and spec.md before calling this tool. Adding a directive invalidates an existing spec/implementation status and returns the block to research_approved so spec.md must be recreated.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        instruction: directiveInstruction,
+        inferredImplementation,
+        title: z.string().optional(),
+        sourceFile: z.string().optional(),
+        sourceEvidence: z.string().optional(),
+        approvedBy: z.string().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).addDirective(args))
+  );
+
+  server.registerTool(
+    "planner.list_directives",
+    {
+      title: "List Implementation Directives",
+      description: "List approved implementation directives, optionally only for one block.",
+      inputSchema: {
+        projectPath,
+        blockId: z.string().optional()
+      },
+      annotations: {
+        readOnlyHint: true
+      }
+    },
+    async ({ projectPath: pathArg, blockId: id }) => ok(await new PlannerStore(pathArg).listDirectives(id))
+  );
+
+  server.registerTool(
+    "planner.read_directives",
+    {
+      title: "Read Block Directives",
+      description: "Read directives.md and structured approved implementation directives for one block.",
+      inputSchema: {
+        projectPath,
+        blockId
+      },
+      annotations: {
+        readOnlyHint: true
+      }
+    },
+    async ({ projectPath: pathArg, blockId: id }) => ok(await new PlannerStore(pathArg).readDirectives(id))
   );
 
   server.registerTool(
@@ -308,7 +407,7 @@ export function createPlannerServer(): McpServer {
     "planner.create_spec",
     {
       title: "Create Block Spec",
-      description: "Create spec.md for a block from block.md, papers.md, and extracted-research.md. Research must be approved first.",
+      description: "Store a concrete spec.md after research approval. The server rejects placeholder or underspecified specs and enforces implementation target, approved directives, artifact scope, verification, traceability, and per-paper/model implementation fit.",
       inputSchema: {
         projectPath,
         blockId,
@@ -323,7 +422,7 @@ export function createPlannerServer(): McpServer {
     "planner.approve_spec",
     {
       title: "Approve Block Spec",
-      description: "Approve spec.md and make the block eligible for implementation if dependencies are done.",
+      description: "Approve spec.md and make the block eligible for implementation if dependencies are done. The server rejects placeholder or underspecified specs.",
       inputSchema: {
         projectPath,
         blockId,

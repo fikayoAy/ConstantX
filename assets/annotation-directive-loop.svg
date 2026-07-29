@@ -1,0 +1,116 @@
+<svg width="1180" height="620" viewBox="0 0 1180 620" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Annotation and implementation directive loop</title>
+  <desc id="desc">Workflow from extracted research to annotations, implementation directives, spec approval, implementation, verification, and looping across blocks.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1180" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8F2E7"/>
+      <stop offset="0.55" stop-color="#EEF4EA"/>
+      <stop offset="1" stop-color="#E8F0F5"/>
+    </linearGradient>
+    <linearGradient id="research" x1="70" y1="100" x2="310" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#315C49"/>
+      <stop offset="1" stop-color="#4F8A66"/>
+    </linearGradient>
+    <linearGradient id="spec" x1="490" y1="100" x2="730" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#193B59"/>
+      <stop offset="1" stop-color="#2D6D8C"/>
+    </linearGradient>
+    <linearGradient id="implementation" x1="850" y1="100" x2="1090" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#593B19"/>
+      <stop offset="1" stop-color="#A56A2A"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#1D2B24" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2L10 6L2 10" stroke="#304038" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrowLight" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2L10 6L2 10" stroke="#F8F2E7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <rect width="1180" height="620" rx="34" fill="url(#bg)"/>
+  <path d="M74 525C190 468 283 565 407 508C534 449 592 505 722 468C859 429 922 516 1100 446" stroke="#C9D8CD" stroke-width="2" stroke-dasharray="8 12"/>
+  <path d="M91 86C211 54 314 82 417 52C541 17 668 86 794 54C910 24 1010 58 1093 34" stroke="#D7C9A7" stroke-width="2" stroke-dasharray="6 10"/>
+
+  <text x="70" y="58" fill="#1C2D26" font-family="Georgia, 'Times New Roman', serif" font-size="32" font-weight="700">Research notes, directives, and spec approval loop</text>
+  <text x="70" y="86" fill="#52635B" font-family="Verdana, sans-serif" font-size="14">Implementation starts only after research, directives, and spec review are settled for the block.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="126" width="250" height="128" rx="24" fill="url(#research)"/>
+    <text x="96" y="166" fill="#F8F2E7" font-family="Verdana, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2">RESEARCH PACKAGE</text>
+    <text x="96" y="197" fill="#FFFFFF" font-family="Georgia, 'Times New Roman', serif" font-size="25" font-weight="700">extracted-research.md</text>
+    <text x="96" y="224" fill="#E4F0E7" font-family="Verdana, sans-serif" font-size="13">Block-specific evidence from papers and user uploads.</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="480" y="126" width="250" height="128" rx="24" fill="url(#spec)"/>
+    <text x="506" y="166" fill="#E9F5FA" font-family="Verdana, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2">SPEC GATE</text>
+    <text x="506" y="197" fill="#FFFFFF" font-family="Georgia, 'Times New Roman', serif" font-size="25" font-weight="700">spec.md</text>
+    <text x="506" y="224" fill="#E1EFF5" font-family="Verdana, sans-serif" font-size="13">Concrete implementation scope and paper/model fit.</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="850" y="126" width="250" height="128" rx="24" fill="url(#implementation)"/>
+    <text x="876" y="166" fill="#FFF4E5" font-family="Verdana, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2">IMPLEMENTATION</text>
+    <text x="876" y="197" fill="#FFFFFF" font-family="Georgia, 'Times New Roman', serif" font-size="25" font-weight="700">strict context</text>
+    <text x="876" y="224" fill="#F7E5CA" font-family="Verdana, sans-serif" font-size="13">Code only after approval gates succeed.</text>
+  </g>
+
+  <path d="M332 190H458" stroke="#304038" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="354" y="176" fill="#304038" font-family="Verdana, sans-serif" font-size="13" font-weight="700">approve research</text>
+  <path d="M742 190H828" stroke="#304038" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="755" y="176" fill="#304038" font-family="Verdana, sans-serif" font-size="13" font-weight="700">approve spec</text>
+
+  <g filter="url(#shadow)">
+    <rect x="118" y="342" width="250" height="110" rx="22" fill="#FFF9ED" stroke="#D8B865" stroke-width="2"/>
+    <text x="146" y="378" fill="#6B511C" font-family="Verdana, sans-serif" font-size="13" font-weight="700" letter-spacing="1">ANNOTATION</text>
+    <text x="146" y="407" fill="#24372F" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="700">add notes</text>
+    <text x="146" y="432" fill="#56625C" font-family="Verdana, sans-serif" font-size="13">Source-based clarification. No status advance.</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="438" y="342" width="306" height="110" rx="22" fill="#F1F7FF" stroke="#6C9FC3" stroke-width="2"/>
+    <text x="466" y="378" fill="#1F5A7A" font-family="Verdana, sans-serif" font-size="13" font-weight="700" letter-spacing="1">IMPLEMENTATION DIRECTIVE</text>
+    <text x="466" y="407" fill="#24372F" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="700">change design decision</text>
+    <text x="466" y="432" fill="#56625C" font-family="Verdana, sans-serif" font-size="13">Example: use SAM 2 for video masks.</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="820" y="342" width="250" height="110" rx="22" fill="#FDF2EC" stroke="#D38A5D" stroke-width="2"/>
+    <text x="848" y="378" fill="#864C25" font-family="Verdana, sans-serif" font-size="13" font-weight="700" letter-spacing="1">VERIFY BLOCK</text>
+    <text x="848" y="407" fill="#24372F" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="700">tests succeed</text>
+    <text x="848" y="432" fill="#56625C" font-family="Verdana, sans-serif" font-size="13">Then move to the next block until all pass.</text>
+  </g>
+
+  <path d="M210 258C210 294 210 312 210 331" stroke="#304038" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="85" y="305" fill="#304038" font-family="Verdana, sans-serif" font-size="13" font-weight="700">needs clarification</text>
+
+  <path d="M365 398C407 398 410 398 428 398" stroke="#304038" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="372" y="384" fill="#304038" font-family="Verdana, sans-serif" font-size="13" font-weight="700">affects implementation?</text>
+
+  <path d="M591 338C591 306 591 286 591 260" stroke="#304038" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="610" y="309" fill="#304038" font-family="Verdana, sans-serif" font-size="13" font-weight="700">recreate spec</text>
+
+  <path d="M245 342C245 300 305 286 380 286C468 286 528 286 556 258" stroke="#8B6A20" stroke-width="2.5" stroke-dasharray="7 8" marker-end="url(#arrow)"/>
+  <text x="300" y="275" fill="#6B511C" font-family="Verdana, sans-serif" font-size="13" font-weight="700">note can inform spec review</text>
+
+  <path d="M975 258V331" stroke="#304038" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="996" y="305" fill="#304038" font-family="Verdana, sans-serif" font-size="13" font-weight="700">implement</text>
+
+  <path d="M820 397C785 397 777 397 754 397" stroke="#304038" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="758" y="382" fill="#304038" font-family="Verdana, sans-serif" font-size="13" font-weight="700">failure or mismatch</text>
+
+  <path d="M945 454C945 510 838 536 690 536H264C162 536 114 496 128 454" stroke="#304038" stroke-width="2.5" stroke-dasharray="8 8" marker-end="url(#arrow)"/>
+  <text x="425" y="559" fill="#304038" font-family="Verdana, sans-serif" font-size="13" font-weight="700">loop per block until every required block is implemented and verified</text>
+
+  <g>
+    <rect x="70" y="488" width="262" height="36" rx="18" fill="#23352E"/>
+    <text x="92" y="511" fill="#F8F2E7" font-family="Verdana, sans-serif" font-size="13" font-weight="700">Annotation: adds evidence notes only</text>
+    <rect x="356" y="488" width="356" height="36" rx="18" fill="#233A54"/>
+    <text x="378" y="511" fill="#F8F2E7" font-family="Verdana, sans-serif" font-size="13" font-weight="700">Directive: approved decision that must shape spec/code</text>
+    <rect x="736" y="488" width="330" height="36" rx="18" fill="#5A371B"/>
+    <text x="758" y="511" fill="#F8F2E7" font-family="Verdana, sans-serif" font-size="13" font-weight="700">Implementation: allowed only after strict context</text>
+  </g>
+</svg>

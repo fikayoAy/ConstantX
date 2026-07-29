@@ -24,6 +24,10 @@ test("planner MCP server supports the full research-gated block workflow", async
     assert.ok(tools.tools.some((tool) => tool.name === "planner.create_project"));
     assert.ok(tools.tools.some((tool) => tool.name === "planner.set_implementation_target"));
     assert.ok(tools.tools.some((tool) => tool.name === "planner.prepare_implementation_context"));
+    assert.ok(tools.tools.some((tool) => tool.name === "planner.prepare_annotation_context"));
+    assert.ok(tools.tools.some((tool) => tool.name === "planner.annotate_target_file"));
+    assert.ok(tools.tools.some((tool) => tool.name === "planner.add_directive"));
+    assert.ok(tools.tools.some((tool) => tool.name === "planner.read_directives"));
 
     const created = await call(client, "planner.create_project", { projectPath });
     assert.equal(created.version, 1);
@@ -86,6 +90,9 @@ test("planner MCP server supports the full research-gated block workflow", async
     });
     assert.equal(written.written, true);
     assert.equal(written.blocks.length, 2);
+    const b001Block = written.blocks.find((block: { id: string }) => block.id === "B-001");
+    assert.ok(b001Block);
+    const b001Dir = b001Block.dir;
 
     const blockedBeforeApproval = await client.callTool({
       name: "planner.prepare_implementation_context",
@@ -150,6 +157,66 @@ test("planner MCP server supports the full research-gated block workflow", async
       ].join("\n")
     });
 
+    const annotationTarget = path.join(b001Dir, "extracted-research.md");
+    const annotationSource = "Stable block ids preserve traceability and should be retained as source evidence when appending scene discovery research notes.";
+    const annotationContext = await call(client, "planner.prepare_annotation_context", {
+      projectPath,
+      blockId: "B-001",
+      targetFile: annotationTarget,
+      sourceFile: "extracted-research.md",
+      annotationSource,
+      onlineResearch: true
+    });
+    assert.equal(annotationContext.block.id, "B-001");
+    assert.equal(annotationContext.target.kind, "extracted_research");
+    assert.match(annotationContext.targetContent, /Stable block ids preserve traceability/);
+    assert.equal(annotationContext.onlineResearch.sourceFile, "extracted-research.md");
+    assert.match(annotationContext.onlineResearch.annotationSource, /Stable block ids/);
+    assert.ok(annotationContext.onlineResearch.queries.length > 0);
+    assert.match(annotationContext.constraints.join("\n"), /Do not approve research/i);
+
+    const annotated = await call(client, "planner.annotate_target_file", {
+      projectPath,
+      blockId: "B-001",
+      targetFile: annotationTarget,
+      sourceFile: "extracted-research.md",
+      annotationSource,
+      annotationMarkdown: concreteAnnotation("Stable block ids preserve traceability"),
+      annotatedBy: "node:test",
+      onlineResearchUsed: true,
+      sourceUrls: ["https://arxiv.org/abs/0000.00000"]
+    });
+    assert.equal(annotated.statusUnchanged, "research_extracted");
+    assert.equal(annotated.target.kind, "extracted_research");
+    assert.equal(annotated.sourceFile, "extracted-research.md");
+    assert.ok(annotated.bytesAppended > 0);
+    const annotatedResearch = await fs.readFile(path.join(projectPath, annotationTarget), "utf8");
+    assert.match(annotatedResearch, /## Annotation: Stable block ids preserve traceability/);
+    assert.match(annotatedResearch, /Annotation source file: extracted-research\.md/);
+    assert.match(annotatedResearch, /Annotation source excerpt:/);
+    assert.match(annotatedResearch, /Online research used: yes/);
+    assert.match(annotatedResearch, /Implementation relevance/i);
+
+    const stillResearchExtracted = await call(client, "planner.read_block", {
+      projectPath,
+      blockId: "B-001"
+    });
+    assert.equal(stillResearchExtracted.record.status, "research_extracted");
+
+    const badAnnotation = await client.callTool({
+      name: "planner.annotate_target_file",
+      arguments: {
+        projectPath,
+        blockId: "B-001",
+        targetFile: annotationTarget,
+        sourceFile: "extracted-research.md",
+        annotationSource,
+        annotationMarkdown: "### Sources\n- TBD"
+      }
+    });
+    assert.equal("isError" in badAnnotation ? badAnnotation.isError : false, true);
+    assert.match(getText(badAnnotation), /placeholder|not concrete/i);
+
     const approved = await call(client, "planner.approve_research", {
       projectPath,
       blockId: "B-001",
@@ -157,28 +224,84 @@ test("planner MCP server supports the full research-gated block workflow", async
     });
     assert.equal(approved.status, "research_approved");
 
+    const directive = await call(client, "planner.add_directive", {
+      projectPath,
+      blockId: "B-001",
+      title: "Use traceability evidence for source intake behavior",
+      instruction: "Take the Traceable Planning Notes evidence from extracted-research.md and use it as the required source-reference preservation behavior for markdown plan inputs.",
+      inferredImplementation: "The implementation direction is that B-001 must treat the Traceable Planning Notes evidence as the selected behavior for preserving stable block ids and exact source references during markdown source intake. The next spec must cite D-001, describe how this changes source intake behavior, preserve provenance for the directive, and state that this directive must not implement unrelated blocks or final code before strict implementation context.",
+      sourceFile: "extracted-research.md",
+      sourceEvidence: "P-001 Stable identifiers",
+      approvedBy: "test-user"
+    });
+    assert.equal(directive.directive.id, "D-001");
+    assert.equal(directive.block.status, "research_approved");
+    assert.equal(directive.specInvalidated, false);
+
+    const readDirectives = await call(client, "planner.read_directives", {
+      projectPath,
+      blockId: "B-001"
+    });
+    assert.match(readDirectives.markdown, /D-001/);
+    assert.match(readDirectives.markdown, /Traceable Planning Notes/);
+
     const blockedBeforeSpec = await client.callTool({
       name: "planner.prepare_implementation_context",
       arguments: { projectPath, blockId: "B-001" }
     });
     assert.equal("isError" in blockedBeforeSpec ? blockedBeforeSpec.isError : false, true);
 
+    const defaultSpecAttempt = await client.callTool({
+      name: "planner.create_spec",
+      arguments: { projectPath, blockId: "B-001" }
+    });
+    assert.equal("isError" in defaultSpecAttempt ? defaultSpecAttempt.isError : false, true);
+    assert.match(getText(defaultSpecAttempt), /requires concrete specMarkdown/i);
+
+    const broadResearchOnlySpecAttempt = await client.callTool({
+      name: "planner.create_spec",
+      arguments: {
+        projectPath,
+        blockId: "B-001",
+        specMarkdown: concreteSpecWithoutPaperModelFit(
+          "B-001",
+          "Source Document Intake",
+          "Implement traceable source document intake for markdown plans and preserve exact source references for downstream block packages."
+        )
+      }
+    });
+    assert.equal("isError" in broadResearchOnlySpecAttempt ? broadResearchOnlySpecAttempt.isError : false, true);
+    assert.match(getText(broadResearchOnlySpecAttempt), /paper model fit/i);
+
+    const directiveIgnoredSpecAttempt = await client.callTool({
+      name: "planner.create_spec",
+      arguments: {
+        projectPath,
+        blockId: "B-001",
+        specMarkdown: concreteSpec(
+          "B-001",
+          "Source Document Intake",
+          "Implement traceable source document intake for markdown plans and preserve exact source references for downstream block packages."
+        )
+      }
+    });
+    assert.equal("isError" in directiveIgnoredSpecAttempt ? directiveIgnoredSpecAttempt.isError : false, true);
+    assert.match(getText(directiveIgnoredSpecAttempt), /directive/i);
+
     const spec = await call(client, "planner.create_spec", {
       projectPath,
       blockId: "B-001",
       generatedBy: "test",
-      specMarkdown: [
-        "# Implementation Spec For B-001 Source Document Intake",
-        "",
-        "## Implementation Objective",
-        "Implement traceable source document intake.",
-        "",
-        "## Verification Plan",
-        "Run the MCP workflow test."
-      ].join("\n")
+      specMarkdown: concreteSpec(
+        "B-001",
+        "Source Document Intake",
+        "Implement traceable source document intake for markdown plans and preserve exact source references for downstream block packages.",
+        ["P-001", "P-002"],
+        ["D-001"]
+      )
     });
     assert.equal(spec.block.status, "spec_created");
-    const generatedSpec = await fs.readFile(path.join(projectPath, "blocks", "B-001-source-document-intake", "spec.md"), "utf8");
+    const generatedSpec = await fs.readFile(path.join(projectPath, b001Dir, "spec.md"), "utf8");
     assert.match(generatedSpec, /## Implementation Target/);
     assert.match(generatedSpec, /Language: TypeScript/);
     assert.match(generatedSpec, /Framework: Node\.js/);
@@ -202,6 +325,8 @@ test("planner MCP server supports the full research-gated block workflow", async
     assert.match(implementationContext.context, /## Implementation Target/);
     assert.match(implementationContext.context, /Language: TypeScript/);
     assert.match(implementationContext.context, /Stable block ids preserve traceability/);
+    assert.match(implementationContext.context, /Approved Implementation Directives/);
+    assert.match(implementationContext.context, /D-001/);
 
     const implemented = await call(client, "planner.record_implementation", {
       projectPath,
@@ -255,7 +380,12 @@ test("planner MCP server supports the full research-gated block workflow", async
     await call(client, "planner.create_spec", {
       projectPath,
       blockId: "B-002",
-      specMarkdown: "# Spec\n\nImplement block-specific extraction storage."
+      specMarkdown: concreteSpec(
+        "B-002",
+        "Research Evidence Mapping",
+        "Implement block-specific research evidence mapping so papers and extracted claims stay attached to the exact active block.",
+        ["P-003"]
+      )
     });
     const approvedDependentSpec = await call(client, "planner.approve_spec", {
       projectPath,
@@ -284,6 +414,98 @@ test("planner MCP server supports the full research-gated block workflow", async
     await client.close();
   }
 });
+
+
+function concreteSpec(blockId: string, title: string, objective: string, paperIds = ["P-001", "P-002"], directiveIds: string[] = []): string {
+  return [
+    `# Implementation Spec For ${blockId} ${title}`,
+    "",
+    "## Block Identity And Source Scope",
+    `This specification is only for ${blockId}: ${title}. It must implement the exact behavior described by block.md and the approved extracted-research.md. The scope is limited to this block package and must not advance unrelated blocks. Source evidence comes from block.md, papers.md, extracted-research.md, and P-001/P-002 where attached in this test fixture.`,
+    "",
+    "## Concrete Implementation Requirements",
+    objective,
+    "The implementation must preserve stable block ids, source references, and evidence links. It must turn the approved research into explicit implementation behavior rather than generic project scaffolding. It must be deterministic for the same input markdown and stored state.",
+    "",
+    "## Interfaces And Data Contracts",
+    "Expose persisted markdown artifacts with stable paths, JSON state records with block id, status, dependency references, research references, and implementation records. Inputs are projectPath, blockId, markdown content, source references, and approved reviewer metadata. Outputs are updated state.json, block markdown files, graph exports, and implementation context strings.",
+    "",
+    "## Files And Artifacts To Create Or Modify",
+    "Modify the block package files that are owned by this block: block.md when state changes, spec.md for this approved specification, implementation.md when implementation is recorded, graph.md/graph.json when dependencies or status change, and .planner/state.json for persistent workflow state. Modify source files only when strict implementation context is later requested.",
+    "",
+    "## Artifacts To Remove Or Replace",
+    "No artifacts to remove for this test fixture. If stale generated specs, placeholder spec sections, or obsolete block outputs exist during real implementation, replace them with concrete approved files rather than leaving duplicate placeholder artifacts in the project.",
+    "",
+    "## Non-Goals And Boundaries",
+    "Do not implement unrelated blocks. Do not create generic foundation phases. Do not invent unapproved research. Do not remove user-authored files outside this block package. Do not mark implementation complete until record_implementation is called after actual code changes.",
+    "",
+    "## Implementation Steps",
+    "1. Read block.md and approved extracted-research.md for the active block. 2. Preserve the implementation target language and framework. 3. Update only the block-owned artifacts and state transitions required by the requested MCP stage. 4. Keep dependency and related-block references intact. 5. Produce implementation context that includes approved spec, approved research, papers, dependency summaries, and related block summaries.",
+    "",
+    "## Paper Model Fit And Adapter Map",
+    ...paperModelFitEntries(paperIds),
+    "",
+    ...implementationDirectiveSection(directiveIds),
+    "## Acceptance Criteria",
+    "The block spec references the exact block id. The spec has no placeholder text. The spec states implementation boundaries, artifacts to create or modify, artifacts to remove or replace, data contracts, implementation steps, and verification requirements. The ready-block gate still prevents implementation before research/spec approval.",
+    "",
+    "## Verification Plan",
+    "Run npm run build and node --test dist/tests. Verify strict implementation context fails before spec approval and succeeds after approval. Verify implementation target text appears in spec.md and implementation context. Verify graph export still contains dependency edges.",
+    "",
+    "## Traceability To Block And Research",
+    "Trace this spec to block.md responsibilities, extracted-research.md relevant claims, papers.md attached evidence, and source plan references. In this test fixture P-001 and P-002 demonstrate attached-paper and online-paper reference handling for block-specific evidence.",
+    ""
+  ].join("\n");
+}
+function implementationDirectiveSection(directiveIds: string[]): string[] {
+  if (directiveIds.length === 0) {
+    return [];
+  }
+
+  return [
+    "## Implementation Directives",
+    ...directiveIds.flatMap((directiveId) => [
+      `### ${directiveId} Approved Directive`,
+      `${directiveId} must be honored as an approved implementation directive. The spec must use the Traceable Planning Notes evidence from extracted-research.md as the selected source-reference preservation behavior for markdown plan inputs.`,
+      "Implementation effect: source intake must preserve stable block ids, exact source references, directive provenance, and downstream traceability instead of treating the evidence as a loose research note.",
+      "Boundary: this directive must not implement unrelated blocks, must not bypass strict implementation context, and does not create final code before the approved implementation stage.",
+      ""
+    ]),
+    ""
+  ];
+}
+function concreteSpecWithoutPaperModelFit(blockId: string, title: string, objective: string): string {
+  return concreteSpec(blockId, title, objective).replace(/\n## Paper Model Fit And Adapter Map\n[\s\S]*?\n## Acceptance Criteria\n/, "\n## Acceptance Criteria\n");
+}
+
+function paperModelFitEntries(paperIds: string[]): string[] {
+  if (paperIds.length === 0) {
+    return ["No attached papers. No paper model adapters required for this block."];
+  }
+
+  return paperIds.flatMap((paperId) => [
+    `### ${paperId} Test Paper Model Fit`,
+    "Implementation role: supplies block-specific evidence behavior for the active workflow stage.",
+    "Processing step: used in the implementation steps that read block.md, papers.md, and extracted-research.md before producing state transitions.",
+    "Adapter/interface: ResearchEvidenceAdapter converts paper-backed claims into explicit planner records.",
+    "Consumes: block id, source plan references, papers.md entries, extracted research claims, and implementation target records.",
+    "Produces: updated spec.md requirements, provenance records, graph/state updates, and implementation context text.",
+    "Provenance: records paper_support, producer_name, source_model or algorithm source, and source block references for every derived behavior.",
+    "Confidence and uncertainty handling: keeps confidence, score, ambiguity, and risk notes explicit instead of treating research claims as final implementation truth.",
+    "Boundaries: must not implement unrelated blocks, must not invent unapproved research, and does not produce final code until strict implementation context is requested.",
+    ""
+  ]);
+}
+
+function concreteAnnotation(topic: string): string {
+  return [
+    `This annotation is based on the selected source excerpt: ${topic}. The source evidence is the local extracted-research.md entry plus the supplied source URL https://arxiv.org/abs/0000.00000, so provenance remains attached to the block package instead of being treated as an approved design change.`,
+    "",
+    "Implementation relevance: the note clarifies that traceability evidence can inform future research notes and source-linked implementation decisions, but it does not itself create a model adapter, data contract, command, API, or implementation file. Any later spec must still decide exact adapter names, consumed records, produced records, provenance fields, confidence handling, and test evidence before code is written.",
+    "",
+    "Boundary: this annotation must not approve research, create or replace spec.md, approve a spec, implement code, record implementation, verify a block, or change block status. It does not replace papers.md and does not mark any source as accepted without review. The annotation only appends traceable context to the requested target file."
+  ].join("\n");
+}
 
 async function call(client: Client, name: string, args: Record<string, unknown>): Promise<any> {
   const result = await client.callTool({ name, arguments: args });

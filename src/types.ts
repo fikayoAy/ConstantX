@@ -36,6 +36,8 @@ export type ImplementationTarget = {
 
 export type ImplementationContextMode = "implement" | "reimplement";
 
+export type DirectiveStatus = "approved";
+
 export type BlockRecord = {
   id: string;
   title: string;
@@ -46,10 +48,24 @@ export type BlockRecord = {
   related_blocks: string[];
   source_plan_refs: string[];
   paper_ids: string[];
+  directive_ids: string[];
   created_at: string;
   updated_at: string;
 };
 
+export type DirectiveRecord = {
+  id: string;
+  block_id: string;
+  title: string;
+  status: DirectiveStatus;
+  user_instruction: string;
+  source_file?: string;
+  source_evidence?: string;
+  inferred_implementation: string;
+  approved_by?: string;
+  created_at: string;
+  updated_at: string;
+};
 export type PaperRecord = {
   id: string;
   title: string;
@@ -80,10 +96,12 @@ export type PlannerState = {
   counters: {
     blocks: number;
     papers: number;
+    directives: number;
   };
   implementation_target?: ImplementationTarget;
   blocks: Record<string, BlockRecord>;
   papers: Record<string, PaperRecord>;
+  directives: Record<string, DirectiveRecord>;
 };
 
 export type BlockMarkdownMeta = BlockRecord & {
