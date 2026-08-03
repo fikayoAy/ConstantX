@@ -1,4 +1,4 @@
-import fs from "node:fs/promises";
+﻿import fs from "node:fs/promises";
 import path from "node:path";
 import { blockDirectoryName, decomposePlanText } from "./decompose.js";
 import type { DecomposeOptions } from "./decompose.js";
@@ -7,11 +7,15 @@ import type {
   BlockMarkdownMeta,
   BlockRecord,
   BlockStatus,
+  DesignDecisionStatus,
+  DesignSessionRecord,
+  DesignTurnRecord,
   DirectiveRecord,
   EvidenceType,
   ImplementationContextMode,
   ImplementationTarget,
   PaperRecord,
+  PinRecord,
   PlanBlockInput,
   PlannerState
 } from "./types.js";
@@ -68,11 +72,16 @@ export class PlannerStore {
       counters: {
         blocks: 0,
         papers: 0,
-        directives: 0
+        directives: 0,
+        pins: 0,
+        designTurns: 0
       },
       blocks: {},
       papers: {},
-      directives: {}
+      directives: {},
+      pins: {},
+      design_turns: {},
+      design_sessions: {}
     };
 
     await this.saveState(state);
@@ -372,6 +381,237 @@ export class PlannerStore {
     };
   }
 
+  async startBlockDesignSession(args: { blockId: string; focus?: string }): Promise<{
+    block: BlockRecord;
+    session: DesignSessionRecord;
+    pins: PinRecord[];
+    files: Record<string, string>;
+    context: string;
+    questions: string[];
+    nextActions: string[];
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, args.blockId);
+    const blockMarkdown = await readIfExists(path.join(this.root, block.dir, "block.md"));
+    const extraction = await readIfExists(path.join(this.root, block.dir, "extracted-research.md"));
+    const papers = await readIfExists(path.join(this.root, block.dir, "papers.md"));
+    const spec = await readIfExists(path.join(this.root, block.dir, "spec.md"));
+    const directives = await readIfExists(path.join(this.root, block.dir, "directives.md"));
+    const planText = await readIfExists(path.join(this.root, state.plan_file));
+    const timestamp = nowIso();
+
+    let session = state.design_sessions[block.id];
+    if (!session) {
+      const pins = deriveDesignPins(block, {
+        planFile: state.plan_file,
+        planText,
+        blockMarkdown,
+        extraction,
+        papers,
+        spec,
+        directives
+      }, timestamp);
+      for (const pin of pins) {
+        state.pins[pin.id] = pin;
+      }
+      state.counters.pins = Math.max(state.counters.pins, pins.length);
+      session = {
+        block_id: block.id,
+        status: "active",
+        pin_ids: pins.map((pin) => pin.id),
+        turn_ids: [],
+        created_at: timestamp,
+        updated_at: timestamp
+      };
+      state.design_sessions[block.id] = session;
+    } else {
+      session.status = "active";
+      session.updated_at = timestamp;
+      delete session.finalized_at;
+      delete session.finalized_by;
+      if (session.pin_ids.length === 0) {
+        const pins = deriveDesignPins(block, {
+          planFile: state.plan_file,
+          planText,
+          blockMarkdown,
+          extraction,
+          papers,
+          spec,
+          directives
+        }, timestamp);
+        for (const pin of pins) {
+          state.pins[pin.id] = pin;
+        }
+        session.pin_ids = pins.map((pin) => pin.id);
+        state.counters.pins = Math.max(state.counters.pins, pins.length);
+      }
+    }
+
+    const pins = session.pin_ids.map((id) => state.pins[id]).filter(Boolean);
+    await this.writeDesignSessionFiles(block, state, session);
+    await this.saveState(state);
+    await this.audit("block_design_session_started", { blockId: block.id, focus: args.focus });
+
+    return {
+      block,
+      session,
+      pins,
+      files: this.designSessionFiles(block),
+      context: designSessionContext(block, pins, { blockMarkdown, extraction, papers, spec, directives, focus: args.focus }),
+      questions: designSessionQuestions(pins, args.focus),
+      nextActions: [
+        "Discuss the block changes naturally with the user and compare every requested change against block.md, extracted-research.md, directives.md, and the generated pins.",
+        "After each substantive user decision, Codex should call workflow.record_block_design_turn internally to append the decision to annotation-<BLOCK_ID>.md and design-session.md.",
+        "When the user says the redesign is done, run workflow.finalize_block_design_session with approved directives and concrete specMarkdown. Do not approve spec or implement."
+      ]
+    };
+  }
+
+  async recordBlockDesignTurn(args: {
+    blockId: string;
+    userNote: string;
+    agentInterpretation?: string;
+    relatedPinIds?: string[];
+    status?: DesignDecisionStatus;
+    questions?: string[];
+  }): Promise<{
+    block: BlockRecord;
+    session: DesignSessionRecord;
+    turn: DesignTurnRecord;
+    relatedPins: PinRecord[];
+    annotationPath: string;
+    designSessionPath: string;
+    nextActions: string[];
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, args.blockId);
+    const session = state.design_sessions[block.id];
+    if (!session || session.status !== "active") {
+      throw new Error(`Start an active design session for ${block.id} before recording design turns.`);
+    }
+    if (args.userNote.trim().length < 20) {
+      throw new Error("Design turn userNote must contain a concrete user decision, question, or requested change.");
+    }
+
+    const pins = session.pin_ids.map((id) => state.pins[id]).filter(Boolean);
+    const relatedPinIds = normalizeDesignTurnPins(args.relatedPinIds, pins, args.userNote);
+    const timestamp = nowIso();
+    const turn: DesignTurnRecord = {
+      id: nextId("T", ++state.counters.designTurns),
+      block_id: block.id,
+      user_note: args.userNote.trim(),
+      agent_interpretation: args.agentInterpretation?.trim() || inferDesignTurnInterpretation(args.userNote, pins, relatedPinIds),
+      related_pin_ids: relatedPinIds,
+      status: args.status ?? "open",
+      questions: uniqueValues(args.questions?.map((question) => question.trim()).filter(Boolean) ?? []),
+      created_at: timestamp,
+      updated_at: timestamp
+    };
+
+    state.design_turns[turn.id] = turn;
+    session.turn_ids.push(turn.id);
+    session.updated_at = timestamp;
+    state.updated_at = timestamp;
+    await this.writeDesignSessionFiles(block, state, session);
+    await this.saveState(state);
+    await this.audit("block_design_turn_recorded", { blockId: block.id, turnId: turn.id, status: turn.status });
+
+    return {
+      block,
+      session,
+      turn,
+      relatedPins: relatedPinIds.map((id) => state.pins[id]).filter(Boolean),
+      annotationPath: relativeToProject(this.root, path.join(this.root, block.dir, `annotation-${block.id}.md`)),
+      designSessionPath: relativeToProject(this.root, path.join(this.root, block.dir, "design-session.md")),
+      nextActions: turn.status === "approved"
+        ? ["Continue the design conversation or finalize the session when all decisions are approved."]
+        : ["Ask the user the unresolved questions, then record the next turn with candidate or approved status before finalizing."]
+    };
+  }
+
+  async finalizeBlockDesignSession(args: {
+    blockId: string;
+    directives?: Array<{
+      instruction: string;
+      inferredImplementation: string;
+      title?: string;
+      sourceFile?: string;
+      sourceEvidence?: string;
+      approvedBy?: string;
+    }>;
+    approvedBy?: string;
+    approvalNotes?: string;
+    specMarkdown?: string;
+    generatedBy?: string;
+  }): Promise<{
+    block: BlockRecord;
+    session: DesignSessionRecord;
+    approvedTurns: DesignTurnRecord[];
+    directives: Array<Awaited<ReturnType<PlannerStore["addDirective"]>>>;
+    researchApproval?: BlockRecord;
+    spec?: Awaited<ReturnType<PlannerStore["createSpec"]>>;
+    blockPackage: Awaited<ReturnType<PlannerStore["readBlock"]>>;
+    nextActions: string[];
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, args.blockId);
+    const session = state.design_sessions[block.id];
+    if (!session) {
+      throw new Error(`No design session exists for ${block.id}. Start a block design session before finalizing.`);
+    }
+
+    const timestamp = nowIso();
+    session.status = "finalized";
+    session.finalized_at = timestamp;
+    session.finalized_by = args.approvedBy?.trim() || "user";
+    session.updated_at = timestamp;
+    state.updated_at = timestamp;
+    await this.writeDesignSessionFiles(block, state, session);
+    await this.saveState(state);
+
+    const storedDirectives = [];
+    for (const directive of args.directives ?? []) {
+      storedDirectives.push(await this.addDirective({
+        blockId: block.id,
+        instruction: directive.instruction,
+        inferredImplementation: directive.inferredImplementation,
+        title: directive.title,
+        sourceFile: directive.sourceFile,
+        sourceEvidence: directive.sourceEvidence,
+        approvedBy: directive.approvedBy ?? args.approvedBy
+      }));
+    }
+
+    const current = this.requireBlock(await this.loadState(), block.id);
+    const researchApproval = current.status === "research_approved" || current.status === "spec_created" || current.status === "spec_approved" || current.status === "ready_to_implement"
+      ? current
+      : await this.approveResearch({ blockId: block.id, approvedBy: args.approvedBy, notes: args.approvalNotes });
+
+    const spec = args.specMarkdown
+      ? await this.createSpec({ blockId: block.id, specMarkdown: args.specMarkdown, generatedBy: args.generatedBy })
+      : undefined;
+
+    await this.audit("block_design_session_finalized", { blockId: block.id, generatedBy: args.generatedBy });
+
+    return {
+      block: this.requireBlock(await this.loadState(), block.id),
+      session: (await this.loadState()).design_sessions[block.id],
+      approvedTurns: this.designTurnsForBlock(await this.loadState(), block).filter((turn) => turn.status === "approved"),
+      directives: storedDirectives,
+      researchApproval,
+      spec,
+      blockPackage: await this.readBlock(block.id),
+      nextActions: spec
+        ? [
+            "Review spec.md. It now includes finalized design-session decisions, approved implementation directives, research basis, and implementation target.",
+            "Do not approve spec or implement until the user explicitly runs the implementation command."
+          ]
+        : [
+            "Codex must convert approved design-session decisions into concrete directives and a complete specMarkdown value.",
+            "Call workflow.finalize_block_design_session again with directives and specMarkdown. Do not approve spec or implement."
+          ]
+    };
+  }
   async implementAndVerifyBlock(args: {
     blockId: string;
     approvedBy?: string;
@@ -537,6 +777,9 @@ export class PlannerStore {
     spec: string;
     implementation: string;
     directives: string;
+    pins: string;
+    designSession: string;
+    designAnnotation: string;
   }> {
     const state = await this.loadState();
     const record = this.requireBlock(state, blockId);
@@ -547,7 +790,10 @@ export class PlannerStore {
       extraction: await readIfExists(path.join(this.root, record.dir, "extracted-research.md")),
       spec: await readIfExists(path.join(this.root, record.dir, "spec.md")),
       implementation: await readIfExists(path.join(this.root, record.dir, "implementation.md")),
-      directives: await readIfExists(path.join(this.root, record.dir, "directives.md"))
+      directives: await readIfExists(path.join(this.root, record.dir, "directives.md")),
+      pins: await readIfExists(path.join(this.root, record.dir, "pins.md")),
+      designSession: await readIfExists(path.join(this.root, record.dir, "design-session.md")),
+      designAnnotation: await readIfExists(path.join(this.root, record.dir, `annotation-${record.id}.md`))
     };
   }
 
@@ -1010,7 +1256,7 @@ export class PlannerStore {
 
     const specPath = path.join(this.root, block.dir, "spec.md");
     const markdown = ensureSpecImplementationTarget(args.specMarkdown, implementationTarget);
-    validateConcreteSpec(markdown, block, implementationTarget, approvedDirectivesForBlock(state, block));
+    validateConcreteSpec(markdown, block, implementationTarget, approvedDirectivesForBlock(state, block), finalizedDesignPinsForBlock(state, block));
     await fs.writeFile(specPath, ensureTrailingNewline(markdown), "utf8");
     block.status = "spec_created";
     block.updated_at = nowIso();
@@ -1033,7 +1279,7 @@ export class PlannerStore {
     if (spec.trim().length === 0) {
       throw new Error(`Block ${block.id} has no spec.md to approve.`);
     }
-    validateConcreteSpec(spec, block, requireImplementationTarget(state), approvedDirectivesForBlock(state, block));
+    validateConcreteSpec(spec, block, requireImplementationTarget(state), approvedDirectivesForBlock(state, block), finalizedDesignPinsForBlock(state, block));
 
     block.status = this.dependenciesSatisfied(state, block) ? "ready_to_implement" : "spec_approved";
     block.updated_at = nowIso();
@@ -1086,6 +1332,9 @@ export class PlannerStore {
     }
     const papers = await readIfExists(path.join(this.root, block.dir, "papers.md"));
     const directives = await readIfExists(path.join(this.root, block.dir, "directives.md"));
+    const pins = await readIfExists(path.join(this.root, block.dir, "pins.md"));
+    const designSession = await readIfExists(path.join(this.root, block.dir, "design-session.md"));
+    const designAnnotation = await readIfExists(path.join(this.root, block.dir, `annotation-${block.id}.md`));
     const implementation = await readIfExists(path.join(this.root, block.dir, "implementation.md"));
     const dependencySummaries = await this.dependencySummaries(state, block);
     const relatedSummaries = await this.relatedSummaries(state, block);
@@ -1125,6 +1374,15 @@ export class PlannerStore {
       "",
       "## Approved Implementation Directives",
       directives.trim() || "No implementation directives recorded.",
+      "",
+      "## Finalized Design Pins",
+      pins.trim() || "No design pins recorded.",
+      "",
+      "## Block Design Session",
+      designSession.trim() || "No design session recorded.",
+      "",
+      "## Design Annotation Log",
+      designAnnotation.trim() || "No design annotation log recorded.",
       "",
       "## Previous Implementation Notes",
       implementation.trim() || "No implementation notes recorded.",
@@ -1279,7 +1537,12 @@ export class PlannerStore {
     }
 
     parsed.counters.directives ??= 0;
+    parsed.counters.pins ??= 0;
+    parsed.counters.designTurns ??= 0;
     parsed.directives ??= {};
+    parsed.pins ??= {};
+    parsed.design_turns ??= {};
+    parsed.design_sessions ??= {};
     for (const block of Object.values(parsed.blocks)) {
       block.directive_ids ??= [];
     }
@@ -1378,6 +1641,32 @@ export class PlannerStore {
     await fs.writeFile(path.join(this.root, block.dir, "directives.md"), directivesMarkdown(block, directives), "utf8");
   }
 
+  private designSessionFiles(block: BlockRecord): Record<string, string> {
+    return {
+      pins: relativeToProject(this.root, path.join(this.root, block.dir, "pins.md")),
+      designSession: relativeToProject(this.root, path.join(this.root, block.dir, "design-session.md")),
+      annotation: relativeToProject(this.root, path.join(this.root, block.dir, `annotation-${block.id}.md`))
+    };
+  }
+
+  private designTurnsForBlock(state: PlannerState, block: BlockRecord): DesignTurnRecord[] {
+    const session = state.design_sessions[block.id];
+    if (!session) {
+      return [];
+    }
+
+    return session.turn_ids.map((id) => state.design_turns[id]).filter(Boolean);
+  }
+
+  private async writeDesignSessionFiles(block: BlockRecord, state: PlannerState, session: DesignSessionRecord): Promise<void> {
+    const pins = session.pin_ids.map((id) => state.pins[id]).filter(Boolean);
+    const turns = session.turn_ids.map((id) => state.design_turns[id]).filter(Boolean);
+    await fs.writeFile(path.join(this.root, block.dir, "pins.md"), pinsMarkdown(block, pins), "utf8");
+    await fs.writeFile(path.join(this.root, block.dir, "design-session.md"), designSessionMarkdown(block, session, pins, turns), "utf8");
+
+    const annotationPath = path.join(this.root, block.dir, `annotation-${block.id}.md`);
+    await fs.writeFile(annotationPath, designAnnotationMarkdown(block, session, pins, turns), "utf8");
+  }
   private buildOnlineResearchPlan(block: BlockRecord, blockMarkdown: string) {
     const keywords = extractKeywords(`${block.title}\n${blockMarkdown}`);
     const base = block.title.replace(/^\d+(?:\.\d+)*\.?\s+/, "");
@@ -1841,7 +2130,7 @@ function concreteSpecRequiredMessage(block: BlockRecord): string {
   ].join(" ");
 }
 
-function validateConcreteSpec(markdown: string, block: BlockRecord, target: ImplementationTarget, directives: DirectiveRecord[] = []): void {
+function validateConcreteSpec(markdown: string, block: BlockRecord, target: ImplementationTarget, directives: DirectiveRecord[] = [], designPins: PinRecord[] = []): void {
   const problems: string[] = [];
   const trimmed = markdown.trim();
   if (trimmed.length < 1200) {
@@ -1904,6 +2193,28 @@ function validateConcreteSpec(markdown: string, block: BlockRecord, target: Impl
   }
 }
 
+function validateDesignPinsInSpec(markdown: string, designPins: PinRecord[], problems: string[]): void {
+  if (designPins.length === 0) {
+    return;
+  }
+
+  const sectionText = extractTopLevelSection(markdown, /^##\s+.*(design session|design pins|source pins|checkpoints|annotation decisions)\s*$/i);
+  if (!sectionText) {
+    problems.push("spec must include a Design Session Pins / Checkpoints section when a block design session has been finalized");
+    return;
+  }
+
+  for (const pin of designPins) {
+    const pinMentioned = markdown.includes(pin.id) || markdown.toLowerCase().includes(pin.title.toLowerCase());
+    if (!pinMentioned) {
+      problems.push(`spec must cite finalized design pin ${pin.id} (${pin.title}) or explicitly state how it is unaffected`);
+    }
+  }
+
+  if (!/\b(preserve|replace|reject|unaffected|implementation effect|scope|boundary|decision)\b/i.test(sectionText)) {
+    problems.push("design session pin section must explain implementation effect, scope, or boundary decisions for the cited pins");
+  }
+}
 function validateApprovedDirectivesInSpec(markdown: string, directives: DirectiveRecord[], problems: string[]): void {
   if (directives.length === 0) {
     return;
@@ -2079,7 +2390,7 @@ function specHasImplementationTarget(spec: string, target: ImplementationTarget)
   return language === target.language && framework === target.framework;
 }
 
-function nextId(prefix: "B" | "P" | "D", value: number): string {
+function nextId(prefix: "B" | "P" | "D" | "T", value: number): string {
   return `${prefix}-${String(value).padStart(3, "0")}`;
 }
 
@@ -2093,6 +2404,276 @@ function numericSuffix(id: string): number {
   return match ? Number.parseInt(match[1], 10) : 0;
 }
 
+function deriveDesignPins(
+  block: BlockRecord,
+  sources: {
+    planFile: string;
+    planText: string;
+    blockMarkdown: string;
+    extraction: string;
+    papers: string;
+    spec: string;
+    directives: string;
+  },
+  timestamp: string
+): PinRecord[] {
+  const candidates = [
+    {
+      title: "Original Plan Scope",
+      source_file: sources.planFile,
+      source_ref: block.source_plan_refs.join(", ") || block.title,
+      source_excerpt: compactExcerpt(findRelevantExcerpt(sources.planText, block.title) || sources.planText),
+      checkpoint: `Keep ${block.id} grounded in the original plan language and source references; do not drift into generic phases.`,
+      related_files: [sources.planFile, "block.md"]
+    },
+    {
+      title: "Block Responsibilities And Boundaries",
+      source_file: "block.md",
+      source_ref: "Purpose, Responsibilities, Inputs, Outputs, Implementation Criteria",
+      source_excerpt: compactExcerpt(sources.blockMarkdown),
+      checkpoint: "When redesigning this block, preserve its responsibilities, inputs, outputs, dependencies, related blocks, and non-goal boundaries.",
+      related_files: ["block.md"]
+    },
+    {
+      title: "Extracted Evidence Claims",
+      source_file: "extracted-research.md",
+      source_ref: "Relevant Claims, Methods To Use, Evidence Map",
+      source_excerpt: compactExcerpt(sources.extraction),
+      checkpoint: "Only evidence that is specific to this block can influence the spec; broad or unrelated evidence must stay out of implementation scope.",
+      related_files: ["extracted-research.md", "papers.md"]
+    },
+    {
+      title: "Attached Evidence And Model Fit",
+      source_file: "papers.md",
+      source_ref: block.paper_ids.join(", ") || "No attached evidence ids yet",
+      source_excerpt: compactExcerpt(sources.papers),
+      checkpoint: "Each attached evidence item must have an implementation role, processing step, adapter/interface, consumed records, produced records, provenance, confidence handling, and boundary in spec.md.",
+      related_files: ["papers.md", "extracted-research.md", "spec.md"]
+    },
+    {
+      title: "Approved Implementation Directives",
+      source_file: "directives.md",
+      source_ref: block.directive_ids.join(", ") || "No approved directives yet",
+      source_excerpt: compactExcerpt(sources.directives),
+      checkpoint: "Approved directives override loose research interpretation and must be carried into the next spec without expanding scope beyond the block.",
+      related_files: ["directives.md", "spec.md"]
+    },
+    {
+      title: "Existing Spec Scope",
+      source_file: "spec.md",
+      source_ref: "Existing implementation scope if present",
+      source_excerpt: compactExcerpt(sources.spec),
+      checkpoint: "If spec.md already exists, redesign decisions must explicitly preserve, replace, or reject existing spec scope and stale artifacts.",
+      related_files: ["spec.md"]
+    }
+  ];
+
+  return candidates
+    .filter((candidate) => candidate.source_excerpt || candidate.title === "Original Plan Scope" || candidate.title === "Block Responsibilities And Boundaries")
+    .slice(0, 8)
+    .map((candidate, index) => ({
+      id: `PIN-${block.id.replace(/-/g, "")}-${String(index + 1).padStart(3, "0")}`,
+      block_id: block.id,
+      title: candidate.title,
+      source_file: candidate.source_file,
+      source_ref: candidate.source_ref,
+      source_excerpt: candidate.source_excerpt || "No source excerpt recorded yet; revisit this checkpoint when the related artifact is populated.",
+      checkpoint: candidate.checkpoint,
+      related_files: candidate.related_files,
+      created_at: timestamp,
+      updated_at: timestamp
+    }));
+}
+
+function designSessionContext(
+  block: BlockRecord,
+  pins: PinRecord[],
+  sources: { blockMarkdown: string; extraction: string; papers: string; spec: string; directives: string; focus?: string }
+): string {
+  return [
+    `# Design Session Context For ${block.id} ${block.title}`,
+    "",
+    sources.focus ? `Focus: ${sources.focus}` : "Focus: Review any part of the block or evidence that may need redesign before spec generation.",
+    "",
+    "## Internal Pins",
+    ...pins.map((pin) => `- ${pin.id}: ${pin.title} (${pin.source_file}) - ${pin.checkpoint}`),
+    "",
+    "## Block Snapshot",
+    compactExcerpt(sources.blockMarkdown, 1800) || "No block.md content recorded.",
+    "",
+    "## Evidence Snapshot",
+    compactExcerpt(sources.extraction, 1800) || "No extracted-research.md content recorded.",
+    "",
+    "## Directive Snapshot",
+    compactExcerpt(sources.directives, 1200) || "No directives.md content recorded.",
+    "",
+    "## Existing Spec Snapshot",
+    compactExcerpt(sources.spec, 1200) || "No spec.md content recorded."
+  ].join("\n");
+}
+
+function designSessionQuestions(pins: PinRecord[], focus?: string): string[] {
+  const firstPins = pins.slice(0, 4).map((pin) => `${pin.title}: ${pin.checkpoint}`);
+  return uniqueValues([
+    focus ? `Confirm whether the requested focus should replace existing behavior, add a new behavior, or only constrain the current spec: ${focus}` : "Which part of this block should be redesigned before the spec is generated?",
+    ...firstPins.map((pin) => `Should this checkpoint change, stay as-is, or be marked out of scope? ${pin}`),
+    "Are there user-provided files, code snippets, model choices, datasets, or constraints that must become approved implementation directives?"
+  ]);
+}
+
+function normalizeDesignTurnPins(provided: string[] | undefined, pins: PinRecord[], note: string): string[] {
+  const validIds = new Set(pins.map((pin) => pin.id));
+  if (provided && provided.length > 0) {
+    const ids = uniqueValues(provided.map((id) => id.trim()).filter(Boolean));
+    const invalid = ids.filter((id) => !validIds.has(id));
+    if (invalid.length > 0) {
+      throw new Error(`Unknown design pin id(s): ${invalid.join(", ")}.`);
+    }
+    return ids;
+  }
+
+  const noteWords = new Set(extractKeywords(note));
+  const scored = pins
+    .map((pin) => {
+      const text = `${pin.title} ${pin.source_file} ${pin.source_ref ?? ""} ${pin.checkpoint} ${pin.source_excerpt ?? ""}`;
+      const score = extractKeywords(text).filter((word) => noteWords.has(word)).length;
+      return { pin, score };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.pin.id.localeCompare(b.pin.id));
+
+  const inferred = scored.slice(0, 3).map((entry) => entry.pin.id);
+  return inferred.length > 0 ? inferred : pins.slice(0, 2).map((pin) => pin.id);
+}
+
+function inferDesignTurnInterpretation(note: string, pins: PinRecord[], relatedPinIds: string[]): string {
+  const related = relatedPinIds.map((id) => pins.find((pin) => pin.id === id)).filter(Boolean) as PinRecord[];
+  const relatedTitles = related.map((pin) => pin.title).join(", ") || "the active block checkpoints";
+  return `The user note should be evaluated against ${relatedTitles}. It may become an implementation directive only after the user confirms the decision and Codex checks it against block.md, extracted-research.md, directives.md, and the original plan pins. User note: ${note.trim()}`;
+}
+
+function pinsMarkdown(block: BlockRecord, pins: PinRecord[]): string {
+  const body = [
+    `# Design Pins For ${block.id} ${block.title}`,
+    "",
+    "Pins are internal checkpoints derived from the original plan, block package, extracted evidence, directives, and spec. The user does not manage these ids directly; Codex uses them to keep redesign discussions anchored before spec generation.",
+    "",
+    ...(pins.length === 0
+      ? ["No design pins generated yet."]
+      : pins.flatMap((pin) => [
+          `## ${pin.id} ${pin.title}`,
+          "",
+          `Source file: ${pin.source_file}`,
+          `Source reference: ${pin.source_ref ?? "Not recorded"}`,
+          `Related files: ${pin.related_files.join(", ")}`,
+          "",
+          "### Checkpoint",
+          pin.checkpoint,
+          "",
+          "### Source Excerpt",
+          pin.source_excerpt ?? "No source excerpt recorded.",
+          ""
+        ]))
+  ].join("\n");
+  return ensureTrailingNewline(body);
+}
+
+function designSessionMarkdown(block: BlockRecord, session: DesignSessionRecord, pins: PinRecord[], turns: DesignTurnRecord[]): string {
+  const body = [
+    `# Block Design Session For ${block.id} ${block.title}`,
+    "",
+    `Status: ${session.status}`,
+    `Created at: ${session.created_at}`,
+    `Updated at: ${session.updated_at}`,
+    ...(session.finalized_at ? [`Finalized at: ${session.finalized_at}`, `Finalized by: ${session.finalized_by ?? "user"}`] : []),
+    "",
+    "## Internal Pins",
+    ...(pins.length > 0 ? pins.map((pin) => `- ${pin.id}: ${pin.title} - ${pin.checkpoint}`) : ["- No pins generated."]),
+    "",
+    "## Conversation Decisions",
+    ...(turns.length === 0
+      ? ["No design turns recorded yet."]
+      : turns.flatMap((turn) => [
+          `### ${turn.id}`,
+          `Status: ${turn.status}`,
+          `Related pins: ${turn.related_pin_ids.length > 0 ? turn.related_pin_ids.join(", ") : "none"}`,
+          `Created at: ${turn.created_at}`,
+          "",
+          "User note:",
+          turn.user_note,
+          "",
+          "Agent interpretation:",
+          turn.agent_interpretation,
+          "",
+          "Questions:",
+          ...(turn.questions.length > 0 ? turn.questions.map((question) => `- ${question}`) : ["- None recorded"]),
+          ""
+        ])),
+    "",
+    "## Finalization Rule",
+    "Only approved design decisions should be converted into implementation directives and spec.md. Finalizing this session must not approve spec.md or implement code."
+  ].join("\n");
+  return ensureTrailingNewline(body);
+}
+
+function designAnnotationMarkdown(block: BlockRecord, session: DesignSessionRecord, pins: PinRecord[], turns: DesignTurnRecord[]): string {
+  return ensureTrailingNewline([
+    `# Annotation Log For ${block.id} ${block.title}`,
+    "",
+    "This file captures user-supplied redesign discussion for the block. It is generated from the active design session so the user can talk naturally while Codex records concrete decisions against internal pins.",
+    "",
+    "## Active Pins",
+    ...(pins.length > 0 ? pins.map((pin) => `- ${pin.id}: ${pin.title}`) : ["- No pins generated."]),
+    "",
+    "## Recorded Notes",
+    ...(turns.length === 0
+      ? ["No notes recorded yet."]
+      : turns.flatMap((turn) => [
+          `### ${turn.id} ${turn.status}`,
+          `Related pins: ${turn.related_pin_ids.join(", ") || "none"}`,
+          "",
+          turn.user_note,
+          "",
+          "Interpretation:",
+          turn.agent_interpretation,
+          ""
+        ])),
+    "",
+    `Session status: ${session.status}`
+  ].join("\n"));
+}
+
+function finalizedDesignPinsForBlock(state: PlannerState, block: BlockRecord): PinRecord[] {
+  const session = state.design_sessions[block.id];
+  if (!session || session.status !== "finalized") {
+    return [];
+  }
+  const approvedTurnPinIds = new Set(
+    session.turn_ids
+      .map((id) => state.design_turns[id])
+      .filter((turn): turn is DesignTurnRecord => Boolean(turn) && turn.status === "approved")
+      .flatMap((turn) => turn.related_pin_ids)
+  );
+  const ids = approvedTurnPinIds.size > 0 ? [...approvedTurnPinIds] : session.pin_ids;
+  return ids.map((id) => state.pins[id]).filter(Boolean);
+}
+
+function findRelevantExcerpt(markdown: string, title: string): string {
+  if (!markdown.trim()) {
+    return "";
+  }
+  const escaped = escapeRegExp(title.trim());
+  const match = new RegExp(`(^|\\n)#{1,4}\\s+.*${escaped}.*(?:\\n[\\s\\S]{0,1400})?`, "i").exec(markdown);
+  return match?.[0] ?? markdown;
+}
+
+function compactExcerpt(markdown: string, maxLength = 900): string {
+  const cleaned = markdown.replace(/\r/g, "").replace(/\n{3,}/g, "\n\n").trim();
+  if (!cleaned) {
+    return "";
+  }
+  return cleaned.length <= maxLength ? cleaned : `${cleaned.slice(0, maxLength).trim()}...`;
+}
 function papersMarkdown(block: BlockRecord, papers: PaperRecord[]): string {
   const body = [
     `# Papers For ${block.id} ${block.title}`,
@@ -2298,3 +2879,14 @@ function extractKeywords(value: string): string[] {
     .slice(0, 12)
     .map(([word]) => word);
 }
+
+
+
+
+
+
+
+
+
+
+

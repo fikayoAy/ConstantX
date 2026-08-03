@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -437,6 +437,9 @@ test("consolidated workflow tools support the five-command path", async () => {
       "workflow.approve_plan_blocks",
       "workflow.gather_evidence",
       "workflow.prepare_block_design",
+      "workflow.start_block_design_session",
+      "workflow.record_block_design_turn",
+      "workflow.finalize_block_design_session",
       "workflow.implement_and_verify_block"
     ]) {
       assert.ok(tools.tools.some((tool) => tool.name === toolName), `${toolName} should be registered`);
@@ -553,6 +556,155 @@ test("consolidated workflow tools support the five-command path", async () => {
   }
 });
 
+test("block design sessions generate pins, record decisions, and finalize into directives plus spec", async () => {
+  const projectPath = path.join(".test-output", `workflow-design-session-${process.pid}-${Date.now()}`);
+  await fs.mkdir(".test-output", { recursive: true });
+
+  const client = new Client({ name: "planner-design-session-test-client", version: "0.1.0" });
+  const transport = new StdioClientTransport({
+    command: process.execPath,
+    args: ["dist/src/index.js"],
+    cwd: process.cwd(),
+    stderr: "pipe"
+  });
+
+  try {
+    await client.connect(transport);
+
+    const tools = await client.listTools();
+    for (const toolName of [
+      "workflow.start_block_design_session",
+      "workflow.record_block_design_turn",
+      "workflow.finalize_block_design_session"
+    ]) {
+      assert.ok(tools.tools.some((tool) => tool.name === toolName), `${toolName} should be registered`);
+    }
+
+    await call(client, "workflow.start_project", {
+      projectPath,
+      content: [
+        "# Design Anchored Pipeline",
+        "",
+        "## Intake",
+        "Read plans and keep the exact source evidence pinned while users redesign the block before spec generation."
+      ].join("\n"),
+      planFileName: "system-plan.md",
+      language: "Python",
+      framework: "PyTorch",
+      maxBlocks: 1
+    });
+
+    const blocks = await call(client, "workflow.approve_plan_blocks", {
+      projectPath,
+      blocks: [
+        {
+          id: "B-001",
+          title: "Intake",
+          purpose: "Read plans and keep source evidence pinned during redesign.",
+          responsibilities: ["Store plan text", "Track redesign checkpoints"],
+          implementation_criteria: ["Spec generation cites internal pins when finalized."]
+        }
+      ]
+    });
+    const blockDir = blocks.blocks[0].dir;
+
+    await call(client, "workflow.gather_evidence", {
+      projectPath,
+      blockId: "B-001",
+      references: [
+        {
+          title: "Pinned Design Evidence",
+          sourceUrl: "https://github.com/example/pinned-design",
+          evidenceType: "repository",
+          notes: "Repository evidence for checkpointed design sessions.",
+          relevant_sections: ["Design checkpoints", "Spec traceability"]
+        }
+      ],
+      extractionMarkdown: [
+        "# Extracted Research For B-001 Intake",
+        "",
+        "## Relevant Claims",
+        "- Checkpointed design decisions prevent block drift during spec generation.",
+        "",
+        "## Evidence Map",
+        "- P-001: Pinned Design Evidence maps to design-session traceability."
+      ].join("\n"),
+      generatedBy: "node:test"
+    });
+
+    const session = await call(client, "workflow.start_block_design_session", {
+      projectPath,
+      blockId: "B-001",
+      focus: "Convert user redesign notes into directives before spec generation."
+    });
+    assert.equal(session.session.status, "active");
+    assert.ok(session.pins.length >= 2);
+    assert.match(session.context, /Internal Pins/);
+    assert.match(session.files.annotation, /annotation-B-001\.md/);
+
+    const approvedPinId = session.pins[0].id;
+    const turn = await call(client, "workflow.record_block_design_turn", {
+      projectPath,
+      blockId: "B-001",
+      userNote: "Use the pinned design-session evidence to force spec generation to cite the original plan checkpoint and prevent generic implementation drift.",
+      relatedPinIds: [approvedPinId],
+      status: "approved",
+      questions: []
+    });
+    assert.equal(turn.turn.status, "approved");
+    assert.deepEqual(turn.turn.related_pin_ids, [approvedPinId]);
+
+    const finalized = await call(client, "workflow.finalize_block_design_session", {
+      projectPath,
+      blockId: "B-001",
+      approvedBy: "node:test",
+      directives: [
+        {
+          title: "Use pinned design decisions for spec traceability",
+          instruction: "Take the approved design-session evidence from annotation-B-001.md and use it to require spec generation to cite the original plan checkpoint for B-001 before implementation.",
+          inferredImplementation: "The implementation direction is that B-001 spec generation must treat the finalized design-session pin as a required traceability checkpoint. The spec must cite the pin id, preserve original plan grounding, state implementation effect, and prevent generic drift or unrelated block implementation before strict implementation context.",
+          sourceFile: "annotation-B-001.md",
+          sourceEvidence: approvedPinId,
+          approvedBy: "node:test"
+        }
+      ],
+      specMarkdown: concreteSpecWithDesignPins(
+        "B-001",
+        "Intake",
+        "Implement checkpointed design-session persistence for source intake so approved user redesign decisions become explicit spec requirements before code implementation.",
+        ["P-001"],
+        ["D-001"],
+        [approvedPinId]
+      ),
+      generatedBy: "node:test"
+    });
+    assert.equal(finalized.session.status, "finalized");
+    assert.equal(finalized.directives.length, 1);
+    assert.equal(finalized.spec.block.status, "spec_created");
+    assert.match(finalized.blockPackage.spec, new RegExp(approvedPinId));
+
+    const pinsMarkdown = await fs.readFile(path.join(projectPath, blockDir, "pins.md"), "utf8");
+    const designSessionMarkdown = await fs.readFile(path.join(projectPath, blockDir, "design-session.md"), "utf8");
+    const annotationMarkdown = await fs.readFile(path.join(projectPath, blockDir, "annotation-B-001.md"), "utf8");
+    assert.match(pinsMarkdown, /Design Pins For B-001/);
+    assert.match(designSessionMarkdown, /Conversation Decisions/);
+    assert.match(annotationMarkdown, /approved/);
+  } finally {
+    await client.close();
+  }
+});
+
+function concreteSpecWithDesignPins(blockId: string, title: string, objective: string, paperIds: string[], directiveIds: string[], pinIds: string[]): string {
+  return concreteSpec(blockId, title, objective, paperIds, directiveIds).replace(
+    "## Acceptance Criteria",
+    [
+      "## Design Session Pins And Checkpoints",
+      ...pinIds.map((pinId) => `${pinId}: Preserve this finalized design session checkpoint as an implementation effect. The spec must cite the pin, keep the original plan scope grounded, and reject generic drift or unrelated block expansion.`),
+      "",
+      "## Acceptance Criteria"
+    ].join("\n")
+  );
+}
 function concreteSpec(blockId: string, title: string, objective: string, paperIds = ["P-001", "P-002"], directiveIds: string[] = []): string {
   return [
     `# Implementation Spec For ${blockId} ${title}`,
@@ -659,3 +811,5 @@ function getText(result: Awaited<ReturnType<Client["callTool"]>>): string {
   assert.ok(text);
   return text.text;
 }
+
+

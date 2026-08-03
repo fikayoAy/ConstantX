@@ -1,4 +1,4 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+﻿import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { PlannerStore } from "./storage.js";
@@ -30,6 +30,7 @@ const evidenceType = z.enum([
   "local_project_file",
   "other"
 ]);
+const designDecisionStatus = z.enum(["open", "candidate", "approved", "rejected"]);
 const implementationContextMode = z.enum(["implement", "reimplement"]).optional()
   .describe("Default implement only allows ready blocks. Use reimplement only when the user explicitly requests reimplementation of an implemented or verified block.");
 
@@ -63,6 +64,14 @@ const workflowAnnotationSchema = z.object({
   sourceUrls: z.array(z.string()).optional()
 });
 
+const workflowDesignDirectiveSchema = z.object({
+  instruction: directiveInstruction,
+  inferredImplementation,
+  title: z.string().optional(),
+  sourceFile: z.string().optional(),
+  sourceEvidence: z.string().optional(),
+  approvedBy: z.string().optional()
+});
 const workflowDirectiveSchema = z.object({
   instruction: directiveInstruction,
   inferredImplementation,
@@ -100,7 +109,7 @@ export function createPlannerServer(): McpServer {
         "Do not implement a block until planner.prepare_implementation_context succeeds in strict mode.",
         "When extracting research, store only block-specific information and preserve evidence references.",
         "For online evidence, prepare search queries, search primary sources or official references, add useful evidence references, extract block-specific evidence, create spec.md, then implement from the approved spec.",
-        "Prefer the consolidated workflow tools for normal use: workflow.start_project, workflow.approve_plan_blocks, workflow.gather_evidence, workflow.prepare_block_design, and workflow.implement_and_verify_block."
+        "Prefer the consolidated workflow tools for normal use: workflow.start_project, workflow.approve_plan_blocks, workflow.gather_evidence, workflow.start_block_design_session, workflow.record_block_design_turn, workflow.finalize_block_design_session, and workflow.implement_and_verify_block. Use workflow.prepare_block_design only for backward-compatible one-shot design preparation."
       ].join(" ")
     }
   );
@@ -176,6 +185,55 @@ export function createPlannerServer(): McpServer {
     async (args) => ok(await new PlannerStore(args.projectPath).prepareBlockDesign(args))
   );
 
+  server.registerTool(
+    "workflow.start_block_design_session",
+    {
+      title: "Start Block Design Session",
+      description: "Start an internal pinned design-review session for one block. Generates pins from the original plan, block.md, extracted evidence, attached evidence, directives, and existing spec. Does not approve, create specs, or implement.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        focus: z.string().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).startBlockDesignSession(args))
+  );
+
+  server.registerTool(
+    "workflow.record_block_design_turn",
+    {
+      title: "Record Block Design Turn",
+      description: "Internal session tool for Codex to append a substantive user design decision/question to annotation-<BLOCK_ID>.md and design-session.md against inferred pins. Does not approve, create specs, or implement.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        userNote: z.string().min(20),
+        agentInterpretation: z.string().optional(),
+        relatedPinIds: z.array(z.string()).optional(),
+        status: designDecisionStatus.optional(),
+        questions: z.array(z.string()).optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).recordBlockDesignTurn(args))
+  );
+
+  server.registerTool(
+    "workflow.finalize_block_design_session",
+    {
+      title: "Finalize Block Design Session",
+      description: "Finalize approved design-session decisions into implementation directives, approve research if ready, and optionally create concrete spec.md. Stops before spec approval and implementation.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        directives: z.array(workflowDesignDirectiveSchema).optional(),
+        approvedBy: z.string().optional(),
+        approvalNotes: z.string().optional(),
+        specMarkdown: z.string().optional(),
+        generatedBy: z.string().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).finalizeBlockDesignSession(args))
+  );
   server.registerTool(
     "workflow.implement_and_verify_block",
     {
@@ -690,3 +748,5 @@ function ok(data: ToolResultData): CallToolResult {
     }
   };
 }
+
+

@@ -1,8 +1,8 @@
-# deep_learning_auto_research
+﻿# deep_learning_auto_research
 
-`deep_learning_auto_research` is an opt-in MCP workflow for Codex. It turns a markdown system plan into traceable implementation blocks, connects each block to research evidence, creates concrete specs, and gates implementation behind approved context.
+`deep_learning_auto_research` is an opt-in MCP workflow for Codex. It turns a markdown system plan into traceable implementation blocks, gathers block-specific evidence, supports user-guided redesign before specs, and gates code implementation behind approved research, approved specs, and strict implementation context.
 
-Use it from Codex with prompts that start like this:
+Use it from Codex only when your prompt starts like this:
 
 ```text
 Use deep_learning_auto_research. <workflow action>
@@ -12,11 +12,12 @@ Use deep_learning_auto_research. <workflow action>
 
 ## What It Does
 
-- Decomposes a system plan into actual plan-derived implementation blocks.
-- Stores each block as markdown: `block.md`, `papers.md`/evidence references, `extracted-research.md`, `directives.md`, `spec.md`, and `implementation.md`.
-- Lets Codex gather broad evidence: papers, official docs, repositories, datasets, benchmarks, model cards, implementation references, user files, and local project files.
-- Supports source-based annotations and approved implementation directives.
-- Exposes five consolidated `workflow.*` commands while preserving strict internal approval gates before coding.
+- Decomposes a markdown plan into semantic implementation blocks from the actual plan, not generic phases.
+- Stores each block as markdown: `block.md`, `papers.md`, `extracted-research.md`, `pins.md`, `design-session.md`, `annotation-<BLOCK_ID>.md`, `directives.md`, `spec.md`, and `implementation.md`.
+- Lets Codex gather broad evidence: papers, official docs, repositories, datasets, benchmarks, model cards, API docs, implementation examples, user files, and local project files.
+- Creates internal design pins from the original plan, block package, extracted evidence, directives, and existing specs so redesign discussions stay anchored.
+- Converts approved design decisions into implementation directives and concrete specs before implementation.
+- Exposes consolidated `workflow.*` tools while preserving strict approval gates before coding.
 
 ![Research-gated implementation workflow](assets/workflow.svg)
 
@@ -28,7 +29,7 @@ Prerequisites:
 - npm
 - Codex with MCP server support
 
-Build the MCP server:
+Build the server:
 
 ```bash
 npm install
@@ -56,9 +57,9 @@ Add it to your Codex MCP config:
 
 Restart Codex after changing MCP config or rebuilding the server.
 
-## Codex Instructions
+## Codex Opt-In Rule
 
-Add this opt-in rule to your global `AGENTS.md`:
+Add this to your global `AGENTS.md` so the tool is used only when requested:
 
 ```md
 [Tools]
@@ -72,9 +73,9 @@ Do not use deep_learning_auto_research automatically for normal coding, debuggin
 When deep_learning_auto_research is invoked, follow the requested MCP stage exactly and do not advance to another stage unless I ask.
 ```
 
-## Project Files
+## Project Layout
 
-A planner project is stored inside your selected `<PROJECT_PATH>`:
+A planner project is stored inside your chosen `<PROJECT_PATH>`:
 
 ```text
 <PROJECT_PATH>/
@@ -85,107 +86,93 @@ A planner project is stored inside your selected `<PROJECT_PATH>`:
   blocks/
     B-001-.../
       block.md
-      papers.md
+      papers.md                    # evidence references, not only papers
       extracted-research.md
-      directives.md
+      pins.md                      # internal source/evidence checkpoints
+      design-session.md            # redesign conversation state
+      annotation-B-001.md          # user redesign notes captured by Codex
+      directives.md                # approved implementation decisions
       spec.md
       implementation.md
   papers/
-    P-001-...md          # evidence/reference records, not only papers
+    P-001-...md
   graph.md
   system-plan.md
 ```
 
-Blocks are semantic parts of your source plan, not generic phases like foundation, training, or deployment.
+## Main Workflow
 
-## Core Workflow
+The workflow has five user-facing stages. Stage 4 is a short design session, not repeated manual annotation commands.
 
-The normal workflow is now five user-facing commands. Each command maps to strict internal MCP stages and stops at the right review gate.
-
-1. Start the project.
-2. Approve and write the plan blocks.
-3. Gather block evidence from online sources and user-provided files.
-4. Prepare the block design and spec.
-5. Implement and verify the block.
-
-Strict implementation context remains the gate that prevents early implementation. The lower-level `planner.*` tools still exist for advanced/manual control, but normal usage should go through the five consolidated `workflow.*` tools.
-
-## Prompt Commands
-
-Replace placeholders like `<PROJECT_PATH>`, `<PLAN_MARKDOWN_PATH>`, `<BLOCK_ID>`, `<LANGUAGE>`, `<FRAMEWORK>`, and `<MAX_BLOCKS>`.
-
-### Consolidated MCP Tools
-
-| User stage | MCP tool |
+| Stage | MCP tool path |
 | --- | --- |
 | Start project | `workflow.start_project` |
 | Approve plan blocks | `workflow.approve_plan_blocks` |
 | Gather evidence | `workflow.gather_evidence` |
-| Prepare block design | `workflow.prepare_block_design` |
-| Implement and verify block | `workflow.implement_and_verify_block` |
+| Design the block | `workflow.start_block_design_session`, internal `workflow.record_block_design_turn`, then `workflow.finalize_block_design_session` |
+| Implement and verify | `workflow.implement_and_verify_block` |
 
-### 1. Start Project
+Lower-level `planner.*` tools still exist for advanced/manual control. Normal use should follow the workflow tools.
+
+## 1. Start Project
 
 ```text
 Use deep_learning_auto_research. Start project <PROJECT_PATH> from plan <PLAN_MARKDOWN_PATH> with language <LANGUAGE> and framework <FRAMEWORK>. Propose no more than <MAX_BLOCKS> blocks. Do not write blocks until I approve.
 ```
 
-This creates the project, ingests the plan, sets the implementation target, and proposes semantic blocks. It stops before writing block folders.
+This creates the project, ingests the plan, sets the implementation target, and proposes blocks. It stops before writing block folders.
 
-### 2. Approve Plan Blocks
+## 2. Approve Plan Blocks
 
 ```text
 Use deep_learning_auto_research. Approve and write the proposed blocks for project <PROJECT_PATH>.
 ```
 
-This writes the approved block decomposition, creates block folders, and exports the graph. It stops before evidence gathering.
+This writes the approved decomposition, creates block folders, and exports the graph. It stops before evidence gathering.
 
-### 3. Gather Evidence
+## 3. Gather Evidence
 
 ```text
 Use deep_learning_auto_research. Gather evidence for block <BLOCK_ID> in project <PROJECT_PATH>. Search online and use any user-provided files. Extract only <BLOCK_ID>-specific evidence. Do not approve or implement.
 ```
 
-Supported evidence types include papers, official docs, repositories, datasets, benchmarks, model cards, technical reports, API docs, implementation examples, user-uploaded files, and local project files.
+This stage lets Codex search online, attach useful evidence references/files, and write `extracted-research.md`. Evidence is not limited to papers.
 
-This stage prepares online search context, lets Codex attach useful references/files into the evidence store, writes `extracted-research.md`, and stops before approval.
+## 4. Design The Block
 
-### 4. Prepare Block Design
-
-```text
-Use deep_learning_auto_research. Prepare block design for <BLOCK_ID> in project <PROJECT_PATH>. Include any annotations or implementation directives I provide, approve research, create spec.md, and show it for review. Do not approve spec or implement.
-```
-
-Use annotations for source-based notes that do not change workflow status. Use implementation directives for approved decisions that must shape `spec.md` and implementation.
-
-Example directive:
+Start a design session:
 
 ```text
-Use deep_learning_auto_research. Prepare block design for B-001 in project C:\Users\ayode\MotionIntelligence\full_scene_entity_skill_planner.
-
-Add this approved implementation directive:
-Take the SAM 2 evidence from extracted-research.md and use it as the video segmentation and mask propagation model for video inputs.
-
-Approve research, create spec.md, and show it for review. Do not approve spec or implement.
+Use deep_learning_auto_research. Start a block design session for <BLOCK_ID> in project <PROJECT_PATH>. Generate internal pins from the original plan, block.md, papers.md, extracted-research.md, directives.md, and spec.md so we can redesign this block before spec generation. Do not approve, create specs, or implement.
 ```
+
+During the discussion, you can speak normally. Codex should compare your requested changes against the generated pins, block scope, extracted evidence, and existing directives, then internally call `workflow.record_block_design_turn` to update `annotation-<BLOCK_ID>.md` and `design-session.md`. You do not need to manage pin ids or send repeated annotation commands.
+
+Finalize when the redesign is done:
+
+```text
+Use deep_learning_auto_research. Finalize the block design session for <BLOCK_ID> in project <PROJECT_PATH>. Convert approved decisions into implementation directives, approve research if ready, create spec.md, and show it for review. Do not approve spec or implement.
+```
+
+The generated `spec.md` must cite the finalized design pins, approved directives, implementation target, evidence/model fit, exact files/artifacts to create or modify, artifacts to remove or replace, non-goals, acceptance criteria, verification plan, and traceability.
 
 ![Annotation and directive loop](assets/redirection_loop.png)
 
-### 5. Implement And Verify Block
+## 5. Implement And Verify
 
 ```text
 Use deep_learning_auto_research. Approve spec, implement, record, and verify block <BLOCK_ID> in project <PROJECT_PATH>.
 ```
 
-This is the only consolidated command that writes implementation code. Internally it approves the reviewed spec if needed, prepares strict implementation context, lets Codex implement only that block, records changed files, runs verification, and marks the block verified.
+This is the only workflow stage that writes implementation code. It approves the reviewed spec if needed, prepares strict implementation context, implements only that block, records changed files, runs verification, and marks the block verified.
 
-Use reimplementation only when you intentionally want to redo an already implemented or verified block:
+Use reimplementation only when you intentionally want to redo a completed block:
 
 ```text
 Use deep_learning_auto_research. Reimplement, record, and verify block <BLOCK_ID> in project <PROJECT_PATH>.
 ```
 
-### Final Code Context
+## Final Code Context
 
 After all blocks are implemented or verified:
 
@@ -194,13 +181,15 @@ Use deep_learning_auto_research. Prepare final code context for project <PROJECT
 ```
 
 ## Rules
+
 - The workflow is opt-in and should only run when you explicitly say `Use deep_learning_auto_research`.
-- The project path must be a directory, not the path to the plan file.
-- Set implementation target before specs or implementation.
-- Research extraction must be block-specific.
-- An annotation adds a traceable note and does not advance workflow status.
-- A directive is an approved implementation decision and must be reflected in the spec and implementation context.
-- Specs are accepted only after evidence approval and must be concrete, non-placeholder, traceable, target-specific, directive-aware, and evidence/model-aware.
+- `<PROJECT_PATH>` is a directory, not the plan file path.
+- Set language and framework before specs or implementation.
+- Evidence extraction must be block-specific.
+- Design pins are internal checkpoints; users do not manage them manually.
+- An annotation/design note does not advance workflow status.
+- A directive is an approved implementation decision and must appear in `spec.md` and strict implementation context.
+- Specs must be concrete, non-placeholder, target-specific, directive-aware, evidence/model-aware, and traceable to block sources and finalized pins.
 - Implementation starts only after strict implementation context succeeds.
 - Dependencies must be implemented or verified before dependent blocks are implemented.
 - `mode reimplement` allows redoing a completed block, but it does not bypass strict gates.
@@ -209,7 +198,7 @@ Use deep_learning_auto_research. Prepare final code context for project <PROJECT
 
 - If Codex does not see the server, rebuild with `npm run build` and restart Codex.
 - If new tool arguments do not appear, restart Codex so the MCP schema refreshes.
-- If a block is not ready, check research approval, spec approval, dependencies, and implementation target.
+- If a block is not ready, check evidence extraction, research approval, spec approval, dependencies, and implementation target.
 - On Windows, quote paths with spaces.
 
 Example Windows project path:
@@ -224,66 +213,25 @@ Example Windows project path:
 
 This repo includes a complete Python/PyTorch MNIST example in [`mnist_folder`](mnist_folder).
 
-### Output Blocks
+Useful files:
 
 - [`B-001 Data Pipeline and Preprocessing`](mnist_folder/blocks/B-001-data-pipeline-and-preprocessing/block.md)
 - [`B-002 CNN Model Training`](mnist_folder/blocks/B-002-cnn-model-training/block.md)
 - [`B-003 Evaluation, Inference, and Run Instructions`](mnist_folder/blocks/B-003-evaluation-inference-and-run-instructions/block.md)
-
-### Research And Specs
-
-- [`B-001 papers.md`](mnist_folder/blocks/B-001-data-pipeline-and-preprocessing/papers.md)
-- [`B-001 extracted-research.md`](mnist_folder/blocks/B-001-data-pipeline-and-preprocessing/extracted-research.md)
-- [`B-001 spec.md`](mnist_folder/blocks/B-001-data-pipeline-and-preprocessing/spec.md)
-- [`B-002 papers.md`](mnist_folder/blocks/B-002-cnn-model-training/papers.md)
-- [`B-002 extracted-research.md`](mnist_folder/blocks/B-002-cnn-model-training/extracted-research.md)
-- [`B-002 spec.md`](mnist_folder/blocks/B-002-cnn-model-training/spec.md)
-- [`B-003 papers.md`](mnist_folder/blocks/B-003-evaluation-inference-and-run-instructions/papers.md)
-- [`B-003 extracted-research.md`](mnist_folder/blocks/B-003-evaluation-inference-and-run-instructions/extracted-research.md)
-- [`B-003 spec.md`](mnist_folder/blocks/B-003-evaluation-inference-and-run-instructions/spec.md)
-
-### Implementation Files
-
 - [`mnist_pipeline/data.py`](mnist_folder/mnist_pipeline/data.py)
 - [`mnist_pipeline/model.py`](mnist_folder/mnist_pipeline/model.py)
 - [`mnist_pipeline/evaluation.py`](mnist_folder/mnist_pipeline/evaluation.py)
 - [`mnist_pipeline/RUN_INSTRUCTIONS.md`](mnist_folder/mnist_pipeline/RUN_INSTRUCTIONS.md)
-- [`tests/test_mnist_pipeline.py`](mnist_folder/tests/test_mnist_pipeline.py)
-- [`tests/test_mnist_model.py`](mnist_folder/tests/test_mnist_model.py)
-- [`tests/test_mnist_evaluation.py`](mnist_folder/tests/test_mnist_evaluation.py)
 
-### Five-Command Prompt Shape
+Example prompt shape:
 
 ```text
-Use deep_learning_auto_research. Start project C:\Users\ayode\New folder (3) from plan C:\Users\ayode\New folder (3)\mnist.md with language Python and framework PyTorch. Propose no more than 3 blocks. Do not write blocks until I approve.
-```
-
-```text
-Use deep_learning_auto_research. Approve and write the proposed blocks for project C:\Users\ayode\New folder (3).
-```
-
-```text
-Use deep_learning_auto_research. Gather evidence for block <BLOCK_ID> in project C:\Users\ayode\New folder (3). Search online and use any user-provided files. Extract only <BLOCK_ID>-specific evidence. Do not approve or implement.
-```
-
-```text
-Use deep_learning_auto_research. Prepare block design for <BLOCK_ID> in project C:\Users\ayode\New folder (3). Include any annotations or implementation directives I provide, approve research, create spec.md, and show it for review. Do not approve spec or implement.
-```
-
-```text
-Use deep_learning_auto_research. Approve spec, implement, record, and verify block <BLOCK_ID> in project C:\Users\ayode\New folder (3).
-```
-
-After moving the finished example, use this project path for future MCP prompts:
-
-```text
-<REPO_PATH>\mnist_folder
+Use deep_learning_auto_research. Start project <REPO_PATH>\mnist_folder from plan <REPO_PATH>\mnist_folder\mnist.md with language Python and framework PyTorch. Propose no more than 3 blocks. Do not write blocks until I approve.
 ```
 
 Verify the example:
 
 ```bash
 python -m unittest discover -s mnist_folder\tests -t mnist_folder -p "test_*.py"
-npm run build
-npm test
+npm run verify
 ```

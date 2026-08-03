@@ -1,4 +1,4 @@
-export const BLOCK_STATUSES = [
+﻿export const BLOCK_STATUSES = [
   "created",
   "needs_research",
   "research_attached",
@@ -51,6 +51,46 @@ export type EvidenceType =
   | "user_file"
   | "local_project_file"
   | "other";
+
+export type DesignSessionStatus = "active" | "finalized";
+
+export type DesignDecisionStatus = "open" | "candidate" | "approved" | "rejected";
+
+export type PinRecord = {
+  id: string;
+  block_id: string;
+  title: string;
+  source_file: string;
+  source_ref?: string;
+  source_excerpt?: string;
+  checkpoint: string;
+  related_files: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type DesignTurnRecord = {
+  id: string;
+  block_id: string;
+  user_note: string;
+  agent_interpretation: string;
+  related_pin_ids: string[];
+  status: DesignDecisionStatus;
+  questions: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type DesignSessionRecord = {
+  block_id: string;
+  status: DesignSessionStatus;
+  pin_ids: string[];
+  turn_ids: string[];
+  finalized_at?: string;
+  finalized_by?: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export type BlockRecord = {
   id: string;
@@ -112,11 +152,16 @@ export type PlannerState = {
     blocks: number;
     papers: number;
     directives: number;
+    pins: number;
+    designTurns: number;
   };
   implementation_target?: ImplementationTarget;
   blocks: Record<string, BlockRecord>;
   papers: Record<string, PaperRecord>;
   directives: Record<string, DirectiveRecord>;
+  pins: Record<string, PinRecord>;
+  design_turns: Record<string, DesignTurnRecord>;
+  design_sessions: Record<string, DesignSessionRecord>;
 };
 
 export type BlockMarkdownMeta = BlockRecord & {
