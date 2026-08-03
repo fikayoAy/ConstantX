@@ -38,6 +38,20 @@ export type ImplementationContextMode = "implement" | "reimplement";
 
 export type DirectiveStatus = "approved";
 
+export type EvidenceType =
+  | "paper"
+  | "official_doc"
+  | "repository"
+  | "dataset"
+  | "benchmark"
+  | "model_card"
+  | "technical_report"
+  | "api_doc"
+  | "implementation_example"
+  | "user_file"
+  | "local_project_file"
+  | "other";
+
 export type BlockRecord = {
   id: string;
   title: string;
@@ -68,6 +82,7 @@ export type DirectiveRecord = {
 };
 export type PaperRecord = {
   id: string;
+  evidence_type?: EvidenceType;
   title: string;
   citation?: string;
   authors?: string[];

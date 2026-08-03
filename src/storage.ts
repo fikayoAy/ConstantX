@@ -8,6 +8,7 @@ import type {
   BlockRecord,
   BlockStatus,
   DirectiveRecord,
+  EvidenceType,
   ImplementationContextMode,
   ImplementationTarget,
   PaperRecord,
@@ -20,6 +21,20 @@ const STATE_VERSION = 1;
 const IMPLEMENTABLE_STATUSES: BlockStatus[] = ["spec_approved", "ready_to_implement"];
 const REIMPLEMENTABLE_STATUSES: BlockStatus[] = ["implemented", "verified"];
 const COMPLETE_STATUSES: BlockStatus[] = ["implemented", "verified"];
+const EVIDENCE_TYPES: EvidenceType[] = [
+  "paper",
+  "official_doc",
+  "repository",
+  "dataset",
+  "benchmark",
+  "model_card",
+  "technical_report",
+  "api_doc",
+  "implementation_example",
+  "user_file",
+  "local_project_file",
+  "other"
+];
 
 export class PlannerStore {
   readonly root: string;
@@ -101,6 +116,332 @@ export class PlannerStore {
     };
   }
 
+  async startProject(args: {
+    planPath?: string;
+    content?: string;
+    planFileName?: string;
+    title?: string;
+    language: string;
+    framework: string;
+    maxBlocks?: number;
+    preserveSections?: boolean;
+  }): Promise<{
+    projectPath: string;
+    plan: Awaited<ReturnType<PlannerStore["ingestPlan"]>>;
+    implementationTarget: ImplementationTarget;
+    proposedBlocks: PlanBlockInput[];
+    nextActions: string[];
+  }> {
+    await this.createProject(args.planFileName);
+    const plan = await this.ingestPlan({
+      content: args.content,
+      planPath: args.planPath,
+      planFileName: args.planFileName,
+      title: args.title
+    });
+    const implementationTarget = await this.setImplementationTarget({
+      language: args.language,
+      framework: args.framework
+    });
+    const proposed = await this.decomposePlan({
+      maxBlocks: args.maxBlocks,
+      preserveSections: args.preserveSections,
+      write: false
+    });
+
+    return {
+      projectPath: this.root,
+      plan,
+      implementationTarget,
+      proposedBlocks: proposed.blocks as PlanBlockInput[],
+      nextActions: [
+        "Review the proposed blocks.",
+        "If accepted, run the consolidated Approve Plan Blocks command with the approved block list."
+      ]
+    };
+  }
+
+  async approvePlanBlocks(args: {
+    blocks?: PlanBlockInput[];
+    maxBlocks?: number;
+    preserveSections?: boolean;
+    replace?: boolean;
+  }): Promise<{
+    written: true;
+    blocks: BlockRecord[];
+    graph?: ReturnType<PlannerStore["buildGraph"]>;
+    nextActions: string[];
+  }> {
+    const written = await this.decomposePlan({
+      blocks: args.blocks,
+      maxBlocks: args.maxBlocks,
+      preserveSections: args.preserveSections,
+      replace: args.replace,
+      write: true
+    });
+
+    return {
+      written: true,
+      blocks: written.blocks as BlockRecord[],
+      graph: written.graph,
+      nextActions: [
+        "Pick a block id and run the consolidated Gather Evidence command.",
+        "Do not create specs or implement until evidence has been extracted and approved."
+      ]
+    };
+  }
+
+  async gatherEvidence(args: {
+    blockId: string;
+    references?: Array<{
+      title: string;
+      sourceUrl?: string;
+      citation?: string;
+      authors?: string[];
+      year?: string;
+      venue?: string;
+      doi?: string;
+      arxivId?: string;
+      notes?: string;
+      abstract?: string;
+      relevant_sections?: string[];
+      relevanceScore?: number;
+      evidenceType?: EvidenceType;
+      paperPath?: string;
+      content?: string;
+      copy?: boolean;
+    }>;
+    extractionMarkdown?: string;
+    generatedBy?: string;
+  }): Promise<{
+    block: BlockRecord;
+    attachedEvidence: PaperRecord[];
+    onlineResearch: ReturnType<PlannerStore["buildOnlineResearchPlan"]>;
+    extraction?: Awaited<ReturnType<PlannerStore["extractResearch"]>>;
+    blockPackage: Awaited<ReturnType<PlannerStore["readBlock"]>>;
+    evidenceTypes: EvidenceType[];
+    nextActions: string[];
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, args.blockId);
+    const onlineResearch = await this.prepareOnlineResearch(block.id);
+    const attachedEvidence: PaperRecord[] = [];
+
+    for (const reference of args.references ?? []) {
+      attachedEvidence.push(await this.attachPaper({
+        blockId: block.id,
+        title: reference.title,
+        sourceUrl: reference.sourceUrl,
+        citation: reference.citation,
+        authors: reference.authors,
+        year: reference.year,
+        venue: reference.venue,
+        doi: reference.doi,
+        arxivId: reference.arxivId,
+        notes: reference.notes,
+        abstract: reference.abstract,
+        relevant_sections: reference.relevant_sections,
+        relevanceScore: reference.relevanceScore,
+        evidenceType: reference.evidenceType,
+        paperPath: reference.paperPath,
+        content: reference.content,
+        copy: reference.copy,
+        discoverySource: reference.sourceUrl && !reference.paperPath ? "codex_online" : "user_upload"
+      }));
+    }
+
+    const extraction = args.extractionMarkdown
+      ? await this.extractResearch({
+          blockId: block.id,
+          extractionMarkdown: args.extractionMarkdown,
+          generatedBy: args.generatedBy
+        })
+      : undefined;
+
+    return {
+      block: this.requireBlock(await this.loadState(), block.id),
+      attachedEvidence,
+      onlineResearch,
+      extraction,
+      blockPackage: await this.readBlock(block.id),
+      evidenceTypes: EVIDENCE_TYPES,
+      nextActions: extraction
+        ? [
+            "Review extracted-research.md.",
+            "If accepted, run Prepare Block Design to approve evidence and create spec.md."
+          ]
+        : [
+            "Codex should search online using the returned queries and any user-provided files.",
+            "Attach useful evidence references of any supported evidence type.",
+            "Call this workflow stage again with extractionMarkdown containing only block-specific evidence.",
+            "Do not approve research, create specs, or implement in this stage."
+          ]
+    };
+  }
+
+  async prepareBlockDesign(args: {
+    blockId: string;
+    annotations?: Array<{
+      targetFile: string;
+      annotationMarkdown: string;
+      sourceFile?: string;
+      annotationSource?: string;
+      topic?: string;
+      annotatedBy?: string;
+      onlineResearchUsed?: boolean;
+      sourceUrls?: string[];
+    }>;
+    directives?: Array<{
+      instruction: string;
+      inferredImplementation: string;
+      title?: string;
+      sourceFile?: string;
+      sourceEvidence?: string;
+      approvedBy?: string;
+    }>;
+    approvedBy?: string;
+    approvalNotes?: string;
+    specMarkdown?: string;
+    generatedBy?: string;
+  }): Promise<{
+    block: BlockRecord;
+    annotations: Array<Awaited<ReturnType<PlannerStore["annotateTargetFile"]>>>;
+    directives: Array<Awaited<ReturnType<PlannerStore["addDirective"]>>>;
+    researchApproval?: BlockRecord;
+    spec?: Awaited<ReturnType<PlannerStore["createSpec"]>>;
+    blockPackage: Awaited<ReturnType<PlannerStore["readBlock"]>>;
+    nextActions: string[];
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, args.blockId);
+    const annotations = [];
+    const directives = [];
+
+    for (const annotation of args.annotations ?? []) {
+      annotations.push(await this.annotateTargetFile({
+        blockId: block.id,
+        targetFile: annotation.targetFile,
+        annotationMarkdown: annotation.annotationMarkdown,
+        sourceFile: annotation.sourceFile,
+        annotationSource: annotation.annotationSource,
+        topic: annotation.topic,
+        annotatedBy: annotation.annotatedBy,
+        onlineResearchUsed: annotation.onlineResearchUsed,
+        sourceUrls: annotation.sourceUrls
+      }));
+    }
+
+    for (const directive of args.directives ?? []) {
+      directives.push(await this.addDirective({
+        blockId: block.id,
+        instruction: directive.instruction,
+        inferredImplementation: directive.inferredImplementation,
+        title: directive.title,
+        sourceFile: directive.sourceFile,
+        sourceEvidence: directive.sourceEvidence,
+        approvedBy: directive.approvedBy ?? args.approvedBy
+      }));
+    }
+
+    const current = this.requireBlock(await this.loadState(), block.id);
+    const researchApproval = current.status === "research_approved" || current.status === "spec_created" || current.status === "spec_approved" || current.status === "ready_to_implement"
+      ? current
+      : await this.approveResearch({ blockId: block.id, approvedBy: args.approvedBy, notes: args.approvalNotes });
+
+    const spec = args.specMarkdown
+      ? await this.createSpec({ blockId: block.id, specMarkdown: args.specMarkdown, generatedBy: args.generatedBy })
+      : undefined;
+
+    return {
+      block: this.requireBlock(await this.loadState(), block.id),
+      annotations,
+      directives,
+      researchApproval,
+      spec,
+      blockPackage: await this.readBlock(block.id),
+      nextActions: spec
+        ? [
+            "Review spec.md.",
+            "If accepted, run Implement And Verify Block."
+          ]
+        : [
+            "Codex must create concrete specMarkdown from block.md, papers.md, extracted-research.md, directives.md, and the implementation target.",
+            "Call this workflow stage again with specMarkdown.",
+            "Do not approve spec or implement in this stage."
+          ]
+    };
+  }
+
+  async implementAndVerifyBlock(args: {
+    blockId: string;
+    approvedBy?: string;
+    approvalNotes?: string;
+    mode?: ImplementationContextMode;
+    implementationSummary?: string;
+    changedFiles?: string[];
+    implementationNotes?: string;
+    verificationEvidence?: string;
+    verifier?: string;
+  }): Promise<{
+    approvedSpec?: BlockRecord;
+    implementationContext: Awaited<ReturnType<PlannerStore["prepareImplementationContext"]>>;
+    implementation?: BlockRecord;
+    verification?: BlockRecord;
+    nextActions: string[];
+  }> {
+    const state = await this.loadState();
+    const block = this.requireBlock(state, args.blockId);
+    let approvedSpec: BlockRecord | undefined;
+
+    if (block.status === "spec_created") {
+      approvedSpec = await this.approveSpec({
+        blockId: block.id,
+        approvedBy: args.approvedBy,
+        notes: args.approvalNotes
+      });
+    } else if (block.status === "spec_approved" || block.status === "ready_to_implement" || block.status === "implemented" || block.status === "verified") {
+      approvedSpec = block;
+    } else {
+      throw new Error(`Block ${block.id} must have spec.md created before Implement And Verify. Current status: ${block.status}.`);
+    }
+
+    const implementationContext = await this.prepareImplementationContext(block.id, true, args.mode ?? "implement");
+
+    if (!args.implementationSummary || !args.changedFiles || args.changedFiles.length === 0 || !args.verificationEvidence) {
+      return {
+        approvedSpec,
+        implementationContext,
+        nextActions: [
+          "Codex must implement only this block from the strict implementation context.",
+          "After code changes, run verification commands.",
+          "Call this workflow stage again with implementationSummary, changedFiles, verificationEvidence, and verifier."
+        ]
+      };
+    }
+
+    const implementation = await this.recordImplementation({
+      blockId: block.id,
+      summary: args.implementationSummary,
+      changedFiles: args.changedFiles,
+      notes: args.implementationNotes
+    });
+    const verification = await this.verifyBlock({
+      blockId: block.id,
+      evidence: args.verificationEvidence,
+      verifier: args.verifier
+    });
+
+    return {
+      approvedSpec,
+      implementationContext,
+      implementation,
+      verification,
+      nextActions: [
+        "Block implementation is recorded and verified.",
+        "Move to the next unverified block or finalize the project when all blocks are complete."
+      ]
+    };
+  }
   async setImplementationTarget(args: { language: string; framework: string }): Promise<ImplementationTarget> {
     const state = await this.loadState();
     const target = normalizeImplementationTarget(args);
@@ -388,6 +729,7 @@ export class PlannerStore {
     abstract?: string;
     relevant_sections?: string[];
     discoverySource?: "user_upload" | "codex_online" | "manual_reference";
+    evidenceType?: EvidenceType;
     relevanceScore?: number;
     copy?: boolean;
   }): Promise<PaperRecord> {
@@ -414,6 +756,7 @@ export class PlannerStore {
     const now = nowIso();
     const paper: PaperRecord = {
       id,
+      evidence_type: args.evidenceType ?? inferEvidenceType(args),
       title,
       citation: args.citation,
       authors: args.authors,
@@ -1854,6 +2197,32 @@ function researchExtractionTemplate(block: BlockRecord, state: PlannerState): st
     "TBD",
     ""
   ].join("\n");
+}
+
+function inferEvidenceType(args: { evidenceType?: EvidenceType; sourceUrl?: string; paperPath?: string; content?: string; title?: string; venue?: string }): EvidenceType {
+  if (args.evidenceType) {
+    return args.evidenceType;
+  }
+  const text = `${args.title ?? ""} ${args.sourceUrl ?? ""} ${args.venue ?? ""}`.toLowerCase();
+  if (text.includes("github.com") || text.includes("gitlab.com") || text.includes("repository") || text.includes("repo")) {
+    return "repository";
+  }
+  if (text.includes("huggingface.co") || text.includes("model card") || text.includes("model-card")) {
+    return "model_card";
+  }
+  if (text.includes("dataset") || text.includes("kaggle.com") || text.includes("paperswithcode.com/dataset")) {
+    return "dataset";
+  }
+  if (text.includes("benchmark") || text.includes("leaderboard")) {
+    return "benchmark";
+  }
+  if (text.includes("docs") || text.includes("documentation") || text.includes("api")) {
+    return text.includes("api") ? "api_doc" : "official_doc";
+  }
+  if (args.paperPath || args.content) {
+    return "user_file";
+  }
+  return "paper";
 }
 
 function inferPaperTitle(paperPath: string | undefined, id: string): string {

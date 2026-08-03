@@ -16,9 +16,61 @@ const annotationTopic = z.string().min(1).optional().describe("Backward-compatib
 const directiveInstruction = z.string().min(40).describe("The exact user instruction describing what evidence to use and how it should affect implementation.");
 const inferredImplementation = z.string().min(80).describe("Codex-inferred implementation relevance from block.md, papers.md, extracted-research.md, spec.md, and the user instruction.");
 const stringList = z.array(z.string()).optional();
+const evidenceType = z.enum([
+  "paper",
+  "official_doc",
+  "repository",
+  "dataset",
+  "benchmark",
+  "model_card",
+  "technical_report",
+  "api_doc",
+  "implementation_example",
+  "user_file",
+  "local_project_file",
+  "other"
+]);
 const implementationContextMode = z.enum(["implement", "reimplement"]).optional()
   .describe("Default implement only allows ready blocks. Use reimplement only when the user explicitly requests reimplementation of an implemented or verified block.");
 
+const evidenceReferenceSchema = z.object({
+  title: z.string(),
+  sourceUrl: z.string().optional(),
+  citation: z.string().optional(),
+  authors: z.array(z.string()).optional(),
+  year: z.string().optional(),
+  venue: z.string().optional(),
+  doi: z.string().optional(),
+  arxivId: z.string().optional(),
+  notes: z.string().optional(),
+  abstract: z.string().optional(),
+  relevant_sections: z.array(z.string()).optional(),
+  relevanceScore: z.number().min(0).max(1).optional(),
+  evidenceType: evidenceType.optional(),
+  paperPath: z.string().optional(),
+  content: z.string().optional(),
+  copy: z.boolean().optional()
+});
+
+const workflowAnnotationSchema = z.object({
+  targetFile,
+  topic: annotationTopic,
+  sourceFile: annotationSourceFile,
+  annotationSource,
+  annotationMarkdown,
+  annotatedBy: z.string().optional(),
+  onlineResearchUsed: z.boolean().optional(),
+  sourceUrls: z.array(z.string()).optional()
+});
+
+const workflowDirectiveSchema = z.object({
+  instruction: directiveInstruction,
+  inferredImplementation,
+  title: z.string().optional(),
+  sourceFile: z.string().optional(),
+  sourceEvidence: z.string().optional(),
+  approvedBy: z.string().optional()
+});
 const planBlockSchema = z.object({
   id: z.string().optional(),
   title: z.string(),
@@ -47,11 +99,103 @@ export function createPlannerServer(): McpServer {
         "Before creating specs or implementing blocks, set the project implementation target with language and framework.",
         "Do not implement a block until planner.prepare_implementation_context succeeds in strict mode.",
         "When extracting research, store only block-specific information and preserve evidence references.",
-        "For online papers, prepare search queries, search primary sources, add discovered papers as references, extract block-specific evidence, create spec.md, then implement from the approved spec."
+        "For online evidence, prepare search queries, search primary sources or official references, add useful evidence references, extract block-specific evidence, create spec.md, then implement from the approved spec.",
+        "Prefer the consolidated workflow tools for normal use: workflow.start_project, workflow.approve_plan_blocks, workflow.gather_evidence, workflow.prepare_block_design, and workflow.implement_and_verify_block."
       ].join(" ")
     }
   );
 
+  server.registerTool(
+    "workflow.start_project",
+    {
+      title: "Start Project",
+      description: "Consolidated stage 1: create a planner project, ingest the plan, set language/framework, and propose blocks without writing them.",
+      inputSchema: {
+        projectPath,
+        planPath: z.string().optional(),
+        content: z.string().optional(),
+        planFileName: z.string().optional(),
+        title: z.string().optional(),
+        language: z.string().min(1),
+        framework: z.string().min(1),
+        maxBlocks: z.number().int().min(1).max(200).optional(),
+        preserveSections: z.boolean().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).startProject(args))
+  );
+
+  server.registerTool(
+    "workflow.approve_plan_blocks",
+    {
+      title: "Approve Plan Blocks",
+      description: "Consolidated stage 2: write approved plan-derived blocks, create block folders, and export the graph. Stops before evidence gathering.",
+      inputSchema: {
+        projectPath,
+        blocks: z.array(planBlockSchema).optional(),
+        maxBlocks: z.number().int().min(1).max(200).optional(),
+        preserveSections: z.boolean().optional(),
+        replace: z.boolean().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).approvePlanBlocks(args))
+  );
+
+  server.registerTool(
+    "workflow.gather_evidence",
+    {
+      title: "Gather Evidence",
+      description: "Consolidated stage 3: prepare broad online evidence search, optionally attach evidence references/files, and optionally store block-specific extracted evidence. Does not approve or implement.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        references: z.array(evidenceReferenceSchema).optional(),
+        extractionMarkdown: z.string().optional(),
+        generatedBy: z.string().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).gatherEvidence(args))
+  );
+
+  server.registerTool(
+    "workflow.prepare_block_design",
+    {
+      title: "Prepare Block Design",
+      description: "Consolidated stage 4: apply provided annotations/directives, approve extracted evidence, and optionally create spec.md. Stops before spec approval and implementation.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        annotations: z.array(workflowAnnotationSchema).optional(),
+        directives: z.array(workflowDirectiveSchema).optional(),
+        approvedBy: z.string().optional(),
+        approvalNotes: z.string().optional(),
+        specMarkdown: z.string().optional(),
+        generatedBy: z.string().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).prepareBlockDesign(args))
+  );
+
+  server.registerTool(
+    "workflow.implement_and_verify_block",
+    {
+      title: "Implement And Verify Block",
+      description: "Consolidated stage 5: approve reviewed spec if needed, prepare strict implementation context, then record and verify only after Codex supplies implementation evidence.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        approvedBy: z.string().optional(),
+        approvalNotes: z.string().optional(),
+        mode: implementationContextMode,
+        implementationSummary: z.string().optional(),
+        changedFiles: z.array(z.string()).optional(),
+        implementationNotes: z.string().optional(),
+        verificationEvidence: z.string().optional(),
+        verifier: z.string().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).implementAndVerifyBlock(args))
+  );
   server.registerTool(
     "planner.create_project",
     {

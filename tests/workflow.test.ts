@@ -416,6 +416,143 @@ test("planner MCP server supports the full research-gated block workflow", async
 });
 
 
+test("consolidated workflow tools support the five-command path", async () => {
+  const projectPath = path.join(".test-output", `workflow-five-${process.pid}-${Date.now()}`);
+  await fs.mkdir(".test-output", { recursive: true });
+
+  const client = new Client({ name: "planner-five-command-test-client", version: "0.1.0" });
+  const transport = new StdioClientTransport({
+    command: process.execPath,
+    args: ["dist/src/index.js"],
+    cwd: process.cwd(),
+    stderr: "pipe"
+  });
+
+  try {
+    await client.connect(transport);
+
+    const tools = await client.listTools();
+    for (const toolName of [
+      "workflow.start_project",
+      "workflow.approve_plan_blocks",
+      "workflow.gather_evidence",
+      "workflow.prepare_block_design",
+      "workflow.implement_and_verify_block"
+    ]) {
+      assert.ok(tools.tools.some((tool) => tool.name === toolName), `${toolName} should be registered`);
+    }
+
+    const plan = [
+      "# Compact Evidence System",
+      "",
+      "## Intake",
+      "Read user plans and preserve exact source references.",
+      "",
+      "## Evidence",
+      "Gather broad implementation evidence from papers, repositories, official docs, datasets, and user files."
+    ].join("\n");
+
+    const started = await call(client, "workflow.start_project", {
+      projectPath,
+      content: plan,
+      planFileName: "system-plan.md",
+      language: "Python",
+      framework: "PyTorch",
+      maxBlocks: 2
+    });
+    assert.deepEqual(started.implementationTarget, { language: "Python", framework: "PyTorch" });
+    assert.equal(started.proposedBlocks.length, 2);
+    assert.match(started.nextActions.join("\n"), /Review the proposed blocks/);
+
+    const approvedBlocks = await call(client, "workflow.approve_plan_blocks", {
+      projectPath,
+      blocks: [
+        {
+          id: "B-001",
+          title: "Intake",
+          purpose: "Read user plans and preserve exact source references.",
+          responsibilities: ["Store plan text", "Keep source references"],
+          implementation_criteria: ["Source references are deterministic."]
+        }
+      ]
+    });
+    assert.equal(approvedBlocks.written, true);
+    assert.equal(approvedBlocks.blocks.length, 1);
+
+    const evidencePlan = await call(client, "workflow.gather_evidence", {
+      projectPath,
+      blockId: "B-001"
+    });
+    assert.ok(evidencePlan.evidenceTypes.includes("repository"));
+    assert.ok(evidencePlan.onlineResearch.queries.length > 0);
+    assert.match(evidencePlan.nextActions.join("\n"), /search online/i);
+
+    const gathered = await call(client, "workflow.gather_evidence", {
+      projectPath,
+      blockId: "B-001",
+      references: [
+        {
+          title: "Example Intake Repository",
+          sourceUrl: "https://github.com/example/intake",
+          evidenceType: "repository",
+          notes: "Repository evidence for source intake behavior.",
+          relevant_sections: ["README", "source reference handling"]
+        }
+      ],
+      extractionMarkdown: [
+        "# Extracted Research For B-001 Intake",
+        "",
+        "## Relevant Claims",
+        "- Repository evidence shows source references should be explicit and deterministic.",
+        "",
+        "## Evidence Map",
+        "- P-001: Example Intake Repository maps to source-reference behavior."
+      ].join("\n"),
+      generatedBy: "node:test"
+    });
+    assert.equal(gathered.attachedEvidence[0].evidence_type, "repository");
+    assert.equal(gathered.extraction.block.status, "research_extracted");
+
+    const designed = await call(client, "workflow.prepare_block_design", {
+      projectPath,
+      blockId: "B-001",
+      approvedBy: "node:test",
+      specMarkdown: concreteSpec(
+        "B-001",
+        "Intake",
+        "Implement deterministic source intake for user plans and preserve exact source references for downstream block packages.",
+        ["P-001"]
+      ),
+      generatedBy: "node:test"
+    });
+    assert.equal(designed.block.status, "spec_created");
+    assert.match(designed.blockPackage.spec, /Implementation Spec For B-001/);
+    assert.match(designed.nextActions.join("\n"), /Review spec/);
+
+    const implementationGate = await call(client, "workflow.implement_and_verify_block", {
+      projectPath,
+      blockId: "B-001",
+      approvedBy: "node:test"
+    });
+    assert.equal(implementationGate.approvedSpec.status, "ready_to_implement");
+    assert.match(implementationGate.implementationContext.context, /Implementation Context For B-001/);
+    assert.match(implementationGate.nextActions.join("\n"), /Codex must implement only this block/);
+
+    const verified = await call(client, "workflow.implement_and_verify_block", {
+      projectPath,
+      blockId: "B-001",
+      implementationSummary: "Implemented deterministic source intake.",
+      changedFiles: ["src/intake.py"],
+      verificationEvidence: "Unit tests passed for deterministic source intake.",
+      verifier: "node:test"
+    });
+    assert.equal(verified.implementation.status, "implemented");
+    assert.equal(verified.verification.status, "verified");
+  } finally {
+    await client.close();
+  }
+});
+
 function concreteSpec(blockId: string, title: string, objective: string, paperIds = ["P-001", "P-002"], directiveIds: string[] = []): string {
   return [
     `# Implementation Spec For ${blockId} ${title}`,
