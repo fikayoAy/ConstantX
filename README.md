@@ -29,7 +29,7 @@ Use deep_learning_auto_research. <workflow action>
 - Converts approved design decisions into implementation directives and concrete specs before implementation.
 - Preserves strict gates so implementation starts only after approved research, approved spec, dependencies, and strict implementation context.
 
-![Research-gated implementation workflow](assets/workflow.svg)
+![Five-command MCP workflow from plan to verified implementation](assets/ChatGPT%20Image%20Aug%204%2C%202026%2C%2004_28_04%20AM.png)
 
 ## Quick Start
 
@@ -60,4 +60,5 @@ Use deep_learning_auto_research. Start project <PROJECT_PATH> from plan <PLAN_MA
 ```
 
 Continue with the five command families in [Workflow Commands](docs/workflow-commands.md). Use [Block Design Sessions](docs/block-design-sessions.md) for the refinement loop before `spec.md` is finalized.
+
 
