@@ -56,9 +56,14 @@ export type DesignSessionStatus = "active" | "finalized";
 
 export type DesignDecisionStatus = "open" | "candidate" | "approved" | "rejected";
 
+export type PinKind = "plan" | "evidence" | "design" | "directive";
+
 export type PinRecord = {
   id: string;
   block_id: string;
+  pin_number: number;
+  label: string;
+  kind: PinKind;
   title: string;
   source_file: string;
   source_ref?: string;
@@ -169,3 +174,5 @@ export type BlockMarkdownMeta = BlockRecord & {
 };
 
 export type ToolResultData = Record<string, unknown> | unknown[] | null;
+
+

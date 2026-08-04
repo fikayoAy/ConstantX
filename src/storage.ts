@@ -15,6 +15,7 @@ import type {
   ImplementationContextMode,
   ImplementationTarget,
   PaperRecord,
+  PinKind,
   PinRecord,
   PlanBlockInput,
   PlannerState
@@ -165,7 +166,7 @@ export class PlannerStore {
       proposedBlocks: proposed.blocks as PlanBlockInput[],
       nextActions: [
         "Review the proposed blocks.",
-        "If accepted, run the consolidated Approve Plan Blocks command with the approved block list."
+        "If accepted, run the Write Blocks command with the approved block list."
       ]
     };
   }
@@ -194,12 +195,128 @@ export class PlannerStore {
       blocks: written.blocks as BlockRecord[],
       graph: written.graph,
       nextActions: [
-        "Pick a block id and run the consolidated Gather Evidence command.",
+        "Pick a block id and run the Gather Evidence command.",
         "Do not create specs or implement until evidence has been extracted and approved."
       ]
     };
   }
 
+  async writeBlocks(args: {
+    blocks?: PlanBlockInput[];
+    maxBlocks?: number;
+    preserveSections?: boolean;
+    replace?: boolean;
+  }): Promise<Awaited<ReturnType<PlannerStore["approvePlanBlocks"]>>> {
+    return this.approvePlanBlocks(args);
+  }
+
+  async refine(args: {
+    blockId?: string;
+    userNote?: string;
+    relatedPinIds?: string[];
+    status?: DesignDecisionStatus;
+    questions?: string[];
+    finalize?: boolean;
+    directives?: Array<{
+      instruction: string;
+      inferredImplementation: string;
+      title?: string;
+      sourceFile?: string;
+      sourceEvidence?: string;
+      approvedBy?: string;
+    }>;
+    approvedBy?: string;
+    approvalNotes?: string;
+    specMarkdown?: string;
+    generatedBy?: string;
+    focus?: string;
+  }): Promise<unknown> {
+    if (args.blockId && args.finalize) {
+      return this.finalizeBlockDesignSession({
+        blockId: args.blockId,
+        directives: args.directives,
+        approvedBy: args.approvedBy,
+        approvalNotes: args.approvalNotes,
+        specMarkdown: args.specMarkdown,
+        generatedBy: args.generatedBy
+      });
+    }
+
+    if (args.blockId && args.userNote) {
+      const state = await this.loadState();
+      if (!state.design_sessions[normalizeId(args.blockId)] || state.design_sessions[normalizeId(args.blockId)].status !== "active") {
+        await this.startBlockDesignSession({ blockId: args.blockId, focus: args.focus });
+      }
+      return this.recordBlockDesignTurn({
+        blockId: args.blockId,
+        userNote: args.userNote,
+        relatedPinIds: args.relatedPinIds,
+        status: args.status,
+        questions: args.questions
+      });
+    }
+
+    if (args.blockId) {
+      return this.startBlockDesignSession({ blockId: args.blockId, focus: args.focus });
+    }
+
+    return this.refineWrittenBlocks({
+      userNote: args.userNote,
+      approvedBy: args.approvedBy,
+      focus: args.focus
+    });
+  }
+
+  async implement(args: {
+    blockId: string;
+    specMarkdown?: string;
+    generatedBy?: string;
+    approvedBy?: string;
+    approvalNotes?: string;
+    mode?: ImplementationContextMode;
+    implementationSummary?: string;
+    changedFiles?: string[];
+    implementationNotes?: string;
+    verificationEvidence?: string;
+    verifier?: string;
+  }): Promise<unknown> {
+    if (args.specMarkdown) {
+      const state = await this.loadState();
+      const block = this.requireBlock(state, args.blockId);
+      if (block.status !== "research_approved" && block.status !== "spec_created" && block.status !== "spec_approved" && block.status !== "ready_to_implement") {
+        await this.approveResearch({
+          blockId: block.id,
+          approvedBy: args.approvedBy,
+          notes: args.approvalNotes
+        });
+      }
+      const spec = await this.createSpec({
+        blockId: args.blockId,
+        specMarkdown: args.specMarkdown,
+        generatedBy: args.generatedBy
+      });
+      return {
+        ...spec,
+        blockPackage: await this.readBlock(args.blockId),
+        nextActions: [
+          "Review spec.md.",
+          "If accepted, run workflow.implement without specMarkdown to approve the spec, prepare strict implementation context, and proceed to implementation recording/verification."
+        ]
+      };
+    }
+
+    return this.implementAndVerifyBlock({
+      blockId: args.blockId,
+      approvedBy: args.approvedBy,
+      approvalNotes: args.approvalNotes,
+      mode: args.mode,
+      implementationSummary: args.implementationSummary,
+      changedFiles: args.changedFiles,
+      implementationNotes: args.implementationNotes,
+      verificationEvidence: args.verificationEvidence,
+      verifier: args.verifier
+    });
+  }
   async gatherEvidence(args: {
     blockId: string;
     references?: Array<{
@@ -277,7 +394,7 @@ export class PlannerStore {
       nextActions: extraction
         ? [
             "Review extracted-research.md.",
-            "If accepted, run Prepare Block Design to approve evidence and create spec.md."
+            "If accepted, run Refine or Implement with specMarkdown to approve evidence and create spec.md."
           ]
         : [
             "Codex should search online using the returned queries and any user-provided files.",
@@ -400,25 +517,28 @@ export class PlannerStore {
     const planText = await readIfExists(path.join(this.root, state.plan_file));
     const timestamp = nowIso();
 
-    let session = state.design_sessions[block.id];
-    if (!session) {
-      const pins = deriveDesignPins(block, {
-        planFile: state.plan_file,
-        planText,
-        blockMarkdown,
-        extraction,
-        papers,
-        spec,
-        directives
-      }, timestamp);
-      for (const pin of pins) {
+    for (const pin of deriveDesignPins(block, {
+      planFile: state.plan_file,
+      planText,
+      blockMarkdown,
+      extraction,
+      papers,
+      spec,
+      directives
+    }, timestamp, nextPinNumberForBlock(state, block))) {
+      if (!hasEquivalentPin(state, block, pin)) {
         state.pins[pin.id] = pin;
+        state.counters.pins = Math.max(state.counters.pins, pin.pin_number);
       }
-      state.counters.pins = Math.max(state.counters.pins, pins.length);
+    }
+
+    let session = state.design_sessions[block.id];
+    const activePinIds = blockPinsForBlock(state, block).map((pin) => pin.id);
+    if (!session) {
       session = {
         block_id: block.id,
         status: "active",
-        pin_ids: pins.map((pin) => pin.id),
+        pin_ids: activePinIds,
         turn_ids: [],
         created_at: timestamp,
         updated_at: timestamp
@@ -429,22 +549,7 @@ export class PlannerStore {
       session.updated_at = timestamp;
       delete session.finalized_at;
       delete session.finalized_by;
-      if (session.pin_ids.length === 0) {
-        const pins = deriveDesignPins(block, {
-          planFile: state.plan_file,
-          planText,
-          blockMarkdown,
-          extraction,
-          papers,
-          spec,
-          directives
-        }, timestamp);
-        for (const pin of pins) {
-          state.pins[pin.id] = pin;
-        }
-        session.pin_ids = pins.map((pin) => pin.id);
-        state.counters.pins = Math.max(state.counters.pins, pins.length);
-      }
+      session.pin_ids = uniqueValues([...session.pin_ids, ...activePinIds]);
     }
 
     const pins = session.pin_ids.map((id) => state.pins[id]).filter(Boolean);
@@ -462,7 +567,7 @@ export class PlannerStore {
       nextActions: [
         "Discuss the block changes naturally with the user and compare every requested change against block.md, extracted-research.md, directives.md, and the generated pins.",
         "After each substantive user decision, Codex should call workflow.record_block_design_turn internally to append the decision to annotation-<BLOCK_ID>.md and design-session.md.",
-        "When the user says the redesign is done, run workflow.finalize_block_design_session with approved directives and concrete specMarkdown. Do not approve spec or implement."
+        "When the user says the redesign is done, run workflow.refine with finalize=true, approved directives, and concrete specMarkdown. Do not approve spec or implement."
       ]
     };
   }
@@ -608,7 +713,7 @@ export class PlannerStore {
           ]
         : [
             "Codex must convert approved design-session decisions into concrete directives and a complete specMarkdown value.",
-            "Call workflow.finalize_block_design_session again with directives and specMarkdown. Do not approve spec or implement."
+            "Call workflow.refine with finalize=true, directives, and specMarkdown. Do not approve spec or implement."
           ]
     };
   }
@@ -1117,6 +1222,23 @@ export class PlannerStore {
     block.status = "research_extracted";
     block.updated_at = nowIso();
     state.updated_at = block.updated_at;
+    const evidencePin = makePinRecord({
+      block,
+      pinNumber: nextPinNumberForBlock(state, block),
+      kind: "evidence",
+      title: "Block-specific extracted evidence",
+      sourceFile: "extracted-research.md",
+      sourceRef: "Extracted evidence for active block",
+      sourceExcerpt: markdown,
+      checkpoint: "Use extracted-research.md only for evidence that is specific to this block and cite this pin in the spec when the evidence affects implementation.",
+      relatedFiles: ["extracted-research.md", "papers.md", "spec.md"],
+      timestamp: block.updated_at
+    });
+    if (!hasEquivalentPin(state, block, evidencePin) && !containsPlaceholderOnly(markdown)) {
+      state.pins[evidencePin.id] = evidencePin;
+      state.counters.pins = Math.max(state.counters.pins, evidencePin.pin_number);
+      await fs.writeFile(path.join(this.root, block.dir, "pins.md"), pinsMarkdown(block, blockPinsForBlock(state, block)), "utf8");
+    }
     await this.writeBlockMarkdown(block, undefined, state);
     await this.saveState(state);
     await this.audit("research_extracted", { blockId: block.id, generatedBy: args.generatedBy });
@@ -1256,7 +1378,7 @@ export class PlannerStore {
 
     const specPath = path.join(this.root, block.dir, "spec.md");
     const markdown = ensureSpecImplementationTarget(args.specMarkdown, implementationTarget);
-    validateConcreteSpec(markdown, block, implementationTarget, approvedDirectivesForBlock(state, block), finalizedDesignPinsForBlock(state, block));
+    validateConcreteSpec(markdown, block, implementationTarget, approvedDirectivesForBlock(state, block), pinsRequiredForSpec(state, block));
     await fs.writeFile(specPath, ensureTrailingNewline(markdown), "utf8");
     block.status = "spec_created";
     block.updated_at = nowIso();
@@ -1279,7 +1401,7 @@ export class PlannerStore {
     if (spec.trim().length === 0) {
       throw new Error(`Block ${block.id} has no spec.md to approve.`);
     }
-    validateConcreteSpec(spec, block, requireImplementationTarget(state), approvedDirectivesForBlock(state, block), finalizedDesignPinsForBlock(state, block));
+    validateConcreteSpec(spec, block, requireImplementationTarget(state), approvedDirectivesForBlock(state, block), pinsRequiredForSpec(state, block));
 
     block.status = this.dependenciesSatisfied(state, block) ? "ready_to_implement" : "spec_approved";
     block.updated_at = nowIso();
@@ -1375,8 +1497,8 @@ export class PlannerStore {
       "## Approved Implementation Directives",
       directives.trim() || "No implementation directives recorded.",
       "",
-      "## Finalized Design Pins",
-      pins.trim() || "No design pins recorded.",
+      "## Pins And Checkpoints",
+      pins.trim() || "No pins recorded.",
       "",
       "## Block Design Session",
       designSession.trim() || "No design session recorded.",
@@ -1546,6 +1668,14 @@ export class PlannerStore {
     for (const block of Object.values(parsed.blocks)) {
       block.directive_ids ??= [];
     }
+    for (const pin of Object.values(parsed.pins)) {
+      const fallbackNumber = numericSuffix(pin.id) || 1;
+      pin.pin_number ??= fallbackNumber;
+      pin.label ??= `[${pin.pin_number}]`;
+      pin.kind ??= inferPinKind(pin);
+      pin.related_files ??= [];
+    }
+    parsed.counters.pins = Math.max(parsed.counters.pins, ...Object.values(parsed.pins).map((pin) => pin.pin_number ?? numericSuffix(pin.id)), 0);
 
     return parsed;
   }
@@ -1589,7 +1719,12 @@ export class PlannerStore {
 
     state.blocks[id] = record;
     await fs.mkdir(path.join(this.root, record.dir), { recursive: true });
+    for (const pin of initialPinsForBlock(record, block, state.plan_file, now)) {
+      state.pins[pin.id] = pin;
+      state.counters.pins = Math.max(state.counters.pins, pin.pin_number);
+    }
     await this.writeBlockMarkdown(record, block, state);
+    await fs.writeFile(path.join(this.root, record.dir, "pins.md"), pinsMarkdown(record, blockPinsForBlock(state, record)), "utf8");
     await fs.writeFile(path.join(this.root, record.dir, "papers.md"), papersMarkdown(record, []), "utf8");
     await fs.writeFile(path.join(this.root, record.dir, "extracted-research.md"), "", "utf8");
     await fs.writeFile(path.join(this.root, record.dir, "spec.md"), "", "utf8");
@@ -1614,18 +1749,19 @@ export class PlannerStore {
       source_excerpt: sourceExcerpt
     };
 
+    const pins = state ? blockPinsForBlock(state, record) : [];
     const body = existingBody ?? [
       `# ${record.title}`,
       "",
-      section("Purpose", input?.purpose),
+      section("Purpose", withPin(input?.purpose, pinForField(pins, "Purpose"))),
       section("Source From Original Plan", input?.source_excerpt),
-      section("Responsibilities", input?.responsibilities),
-      section("Inputs", input?.inputs),
-      section("Outputs", input?.outputs),
+      section("Responsibilities", withPins(input?.responsibilities, pinsForField(pins, "Responsibilities"))),
+      section("Inputs", withPins(input?.inputs, pinsForField(pins, "Inputs"))),
+      section("Outputs", withPins(input?.outputs, pinsForField(pins, "Outputs"))),
       section("Dependencies", record.depends_on.map((id) => crossRef(id, state))),
       section("Related Blocks", record.related_blocks.map((id) => crossRef(id, state))),
-      section("Research Questions", input?.research_questions),
-      section("Implementation Criteria", input?.implementation_criteria),
+      section("Research Questions", withPins(input?.research_questions, pinsForField(pins, "Research Questions"))),
+      section("Implementation Criteria", withPins(input?.implementation_criteria, pinsForField(pins, "Implementation Criteria"))),
       section("Open Questions", "TBD")
     ].join("\n");
 
@@ -1641,6 +1777,90 @@ export class PlannerStore {
     await fs.writeFile(path.join(this.root, block.dir, "directives.md"), directivesMarkdown(block, directives), "utf8");
   }
 
+  private async refineWrittenBlocks(args: { userNote?: string; approvedBy?: string; focus?: string }): Promise<{
+    projectPath: string;
+    blocks: Array<{ id: string; title: string; status: BlockStatus; pins: Array<{ label: string; title: string; source: string }> }>;
+    refinementLog: string;
+    context: string;
+    questions: string[];
+    nextActions: string[];
+  }> {
+    const state = await this.loadState();
+    const blocks = Object.values(state.blocks).sort((a, b) => a.id.localeCompare(b.id));
+    const planText = await readIfExists(path.join(this.root, state.plan_file));
+    const timestamp = nowIso();
+    const logPath = path.join(this.root, "block-refinement.md");
+
+    if (!(await exists(logPath))) {
+      await fs.writeFile(logPath, ensureTrailingNewline([
+        "# Block Refinement Log",
+        "",
+        "This file records discussion about written block partitions, inline [n] references, missing plan coverage, overlap, dependencies, related blocks, removals, and boundary changes before evidence gathering.",
+        ""
+      ].join("\n")), "utf8");
+    }
+
+    if (args.userNote?.trim()) {
+      await fs.appendFile(logPath, ensureTrailingNewline([
+        `## Refinement Note ${timestamp}`,
+        `Recorded by: ${args.approvedBy?.trim() || "codex"}`,
+        args.focus ? `Focus: ${args.focus}` : "Focus: Written block partition refinement",
+        "",
+        args.userNote.trim(),
+        ""
+      ].join("\n")), "utf8");
+    }
+
+    const blockSummaries = [];
+    for (const block of blocks) {
+      const blockMarkdown = await readIfExists(path.join(this.root, block.dir, "block.md"));
+      const pins = blockPinsForBlock(state, block);
+      blockSummaries.push([
+        `## ${block.id} ${block.title}`,
+        `Status: ${block.status}`,
+        "Pins:",
+        ...(pins.length > 0 ? pins.map((pin) => `- ${pin.label}: ${pin.title} (${pin.source_file})`) : ["- No pins recorded."]),
+        "Block excerpt:",
+        compactExcerpt(blockMarkdown, 1000)
+      ].join("\n"));
+    }
+
+    return {
+      projectPath: this.root,
+      blocks: blocks.map((block) => ({
+        id: block.id,
+        title: block.title,
+        status: block.status,
+        pins: blockPinsForBlock(state, block).map((pin) => ({
+          label: pin.label,
+          title: pin.title,
+          source: `${pin.source_file}${pin.source_ref ? ` > ${pin.source_ref}` : ""}`
+        }))
+      })),
+      refinementLog: relativeToProject(this.root, logPath),
+      context: [
+        "# Written Block Refinement Context",
+        "",
+        args.focus ? `Focus: ${args.focus}` : "Focus: review all written blocks against the original plan and existing pins.",
+        "",
+        "## Original Plan Excerpt",
+        compactExcerpt(planText, 2000),
+        "",
+        ...blockSummaries
+      ].join("\n\n"),
+      questions: [
+        "Do any block responsibilities overlap or belong in another block? Refer to block ids and [n] labels where possible.",
+        "Is any original plan requirement missing from all block.md files or pins.md files?",
+        "Should any dependency or related-block link be added, removed, or changed before evidence gathering?",
+        "Should any pinned item be removed from a block because it is out of scope?"
+      ],
+      nextActions: [
+        "Discuss block partition changes naturally and cite block ids plus [n] labels where useful.",
+        "Codex should use planner.update_block for approved block.md/dependency edits and append additional project refinement notes through workflow.refine.",
+        "Do not gather evidence, create specs, approve specs, or implement during refinement."
+      ]
+    };
+  }
   private designSessionFiles(block: BlockRecord): Record<string, string> {
     return {
       pins: relativeToProject(this.root, path.join(this.root, block.dir, "pins.md")),
@@ -2205,9 +2425,9 @@ function validateDesignPinsInSpec(markdown: string, designPins: PinRecord[], pro
   }
 
   for (const pin of designPins) {
-    const pinMentioned = markdown.includes(pin.id) || markdown.toLowerCase().includes(pin.title.toLowerCase());
+    const pinMentioned = markdown.includes(pin.label) || markdown.includes(pin.id) || markdown.toLowerCase().includes(pin.title.toLowerCase());
     if (!pinMentioned) {
-      problems.push(`spec must cite finalized design pin ${pin.id} (${pin.title}) or explicitly state how it is unaffected`);
+      problems.push(`spec must cite required pin ${pin.label} / ${pin.id} (${pin.title}) or explicitly state how it is unaffected`);
     }
   }
 
@@ -2404,6 +2624,163 @@ function numericSuffix(id: string): number {
   return match ? Number.parseInt(match[1], 10) : 0;
 }
 
+function initialPinsForBlock(block: BlockRecord, input: PlanBlockInput, planFile: string, timestamp: string): PinRecord[] {
+  const sourceBase = input.source_plan_refs?.join(", ") || input.title;
+  const entries: Array<{ field: string; text: string; sourceRef: string; sourceExcerpt?: string }> = [];
+
+  if (input.purpose?.trim()) {
+    entries.push({
+      field: "Purpose",
+      text: input.purpose.trim(),
+      sourceRef: `${sourceBase} > Purpose`,
+      sourceExcerpt: input.source_excerpt
+    });
+  }
+
+  for (const entry of indexedEntries("Responsibilities", input.responsibilities, sourceBase, input.source_excerpt)) {
+    entries.push(entry);
+  }
+  for (const entry of indexedEntries("Inputs", input.inputs, sourceBase, input.source_excerpt)) {
+    entries.push(entry);
+  }
+  for (const entry of indexedEntries("Outputs", input.outputs, sourceBase, input.source_excerpt)) {
+    entries.push(entry);
+  }
+  for (const entry of indexedEntries("Research Questions", input.research_questions, sourceBase, input.source_excerpt)) {
+    entries.push(entry);
+  }
+  for (const entry of indexedEntries("Implementation Criteria", input.implementation_criteria, sourceBase, input.source_excerpt)) {
+    entries.push(entry);
+  }
+
+  if (entries.length === 0 && input.source_excerpt?.trim()) {
+    entries.push({
+      field: "Source From Original Plan",
+      text: compactExcerpt(input.source_excerpt, 300),
+      sourceRef: sourceBase,
+      sourceExcerpt: input.source_excerpt
+    });
+  }
+
+  return entries.map((entry, index) => makePinRecord({
+    block,
+    pinNumber: index + 1,
+    kind: "plan",
+    title: entry.text,
+    sourceFile: planFile,
+    sourceRef: entry.sourceRef,
+    sourceExcerpt: entry.sourceExcerpt || entry.text,
+    checkpoint: entry.text,
+    relatedFiles: [planFile, "block.md"],
+    timestamp
+  }));
+}
+
+function indexedEntries(field: string, values: string[] | undefined, sourceBase: string, sourceExcerpt?: string): Array<{ field: string; text: string; sourceRef: string; sourceExcerpt?: string }> {
+  return (values ?? [])
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .map((text, index) => ({
+      field,
+      text,
+      sourceRef: `${sourceBase} > ${field}[${index + 1}]`,
+      sourceExcerpt
+    }));
+}
+
+function makePinRecord(args: {
+  block: BlockRecord;
+  pinNumber: number;
+  kind: PinKind;
+  title: string;
+  sourceFile: string;
+  sourceRef?: string;
+  sourceExcerpt?: string;
+  checkpoint: string;
+  relatedFiles: string[];
+  timestamp: string;
+}): PinRecord {
+  return {
+    id: pinId(args.block, args.pinNumber),
+    block_id: args.block.id,
+    pin_number: args.pinNumber,
+    label: `[${args.pinNumber}]`,
+    kind: args.kind,
+    title: compactExcerpt(args.title, 160),
+    source_file: args.sourceFile,
+    source_ref: args.sourceRef,
+    source_excerpt: args.sourceExcerpt ? compactExcerpt(args.sourceExcerpt, 900) : undefined,
+    checkpoint: args.checkpoint,
+    related_files: args.relatedFiles,
+    created_at: args.timestamp,
+    updated_at: args.timestamp
+  };
+}
+
+function pinId(block: BlockRecord, pinNumber: number): string {
+  return `PIN-${block.id.replace(/-/g, "")}-${String(pinNumber).padStart(3, "0")}`;
+}
+
+function blockPinsForBlock(state: PlannerState, block: BlockRecord): PinRecord[] {
+  return Object.values(state.pins)
+    .filter((pin) => pin.block_id === block.id)
+    .sort((a, b) => (a.pin_number ?? numericSuffix(a.id)) - (b.pin_number ?? numericSuffix(b.id)) || a.id.localeCompare(b.id));
+}
+
+function nextPinNumberForBlock(state: PlannerState, block: BlockRecord): number {
+  const pins = blockPinsForBlock(state, block);
+  return pins.reduce((max, pin) => Math.max(max, pin.pin_number ?? numericSuffix(pin.id)), 0) + 1;
+}
+
+function pinForField(pins: PinRecord[], field: string): PinRecord | undefined {
+  return pins.find((pin) => pin.kind === "plan" && pin.source_ref?.includes(`> ${field}`));
+}
+
+function pinsForField(pins: PinRecord[], field: string): PinRecord[] {
+  return pins.filter((pin) => pin.kind === "plan" && pin.source_ref?.includes(`> ${field}`));
+}
+
+function withPin(value: string | undefined, pin: PinRecord | undefined): string | undefined {
+  if (!value || !pin) {
+    return value;
+  }
+  return hasPinLabel(value, pin.label) ? value : `${value.trim()} ${pin.label}`;
+}
+
+function withPins(values: string[] | undefined, pins: PinRecord[]): string[] | undefined {
+  if (!values) {
+    return values;
+  }
+  return values.map((value, index) => withPin(value, pins[index]) ?? value);
+}
+
+function hasPinLabel(value: string, label: string): boolean {
+  return new RegExp(`${escapeRegExp(label)}\\s*$`).test(value.trim());
+}
+
+function containsPlaceholderOnly(markdown: string): boolean {
+  const cleaned = markdown.replace(/^#.*$/gm, "").replace(/[-*\s]/g, "").trim().toLowerCase();
+  return cleaned.length === 0 || /^(tbd|todo|placeholder|fillme|n\/a)+$/.test(cleaned);
+}
+function inferPinKind(pin: PinRecord): PinKind {
+  const sourceFile = pin.source_file.toLowerCase();
+  if (sourceFile.includes("extracted-research") || sourceFile.includes("papers")) {
+    return "evidence";
+  }
+  if (sourceFile.includes("directive") || sourceFile.includes("annotation")) {
+    return "directive";
+  }
+  if (sourceFile.includes("spec") || sourceFile.includes("design-session")) {
+    return "design";
+  }
+  return "plan";
+}
+function hasEquivalentPin(state: PlannerState, block: BlockRecord, candidate: PinRecord): boolean {
+  return blockPinsForBlock(state, block).some((pin) => {
+    return pin.source_file === candidate.source_file && pin.source_ref === candidate.source_ref;
+  });
+}
+
 function deriveDesignPins(
   block: BlockRecord,
   sources: {
@@ -2415,74 +2792,79 @@ function deriveDesignPins(
     spec: string;
     directives: string;
   },
-  timestamp: string
+  timestamp: string,
+  startPinNumber: number
 ): PinRecord[] {
-  const candidates = [
-    {
-      title: "Original Plan Scope",
-      source_file: sources.planFile,
-      source_ref: block.source_plan_refs.join(", ") || block.title,
-      source_excerpt: compactExcerpt(findRelevantExcerpt(sources.planText, block.title) || sources.planText),
-      checkpoint: `Keep ${block.id} grounded in the original plan language and source references; do not drift into generic phases.`,
-      related_files: [sources.planFile, "block.md"]
-    },
-    {
-      title: "Block Responsibilities And Boundaries",
-      source_file: "block.md",
-      source_ref: "Purpose, Responsibilities, Inputs, Outputs, Implementation Criteria",
-      source_excerpt: compactExcerpt(sources.blockMarkdown),
-      checkpoint: "When redesigning this block, preserve its responsibilities, inputs, outputs, dependencies, related blocks, and non-goal boundaries.",
-      related_files: ["block.md"]
-    },
-    {
-      title: "Extracted Evidence Claims",
-      source_file: "extracted-research.md",
-      source_ref: "Relevant Claims, Methods To Use, Evidence Map",
-      source_excerpt: compactExcerpt(sources.extraction),
-      checkpoint: "Only evidence that is specific to this block can influence the spec; broad or unrelated evidence must stay out of implementation scope.",
-      related_files: ["extracted-research.md", "papers.md"]
-    },
-    {
-      title: "Attached Evidence And Model Fit",
-      source_file: "papers.md",
-      source_ref: block.paper_ids.join(", ") || "No attached evidence ids yet",
-      source_excerpt: compactExcerpt(sources.papers),
-      checkpoint: "Each attached evidence item must have an implementation role, processing step, adapter/interface, consumed records, produced records, provenance, confidence handling, and boundary in spec.md.",
-      related_files: ["papers.md", "extracted-research.md", "spec.md"]
-    },
-    {
-      title: "Approved Implementation Directives",
-      source_file: "directives.md",
-      source_ref: block.directive_ids.join(", ") || "No approved directives yet",
-      source_excerpt: compactExcerpt(sources.directives),
-      checkpoint: "Approved directives override loose research interpretation and must be carried into the next spec without expanding scope beyond the block.",
-      related_files: ["directives.md", "spec.md"]
-    },
-    {
-      title: "Existing Spec Scope",
-      source_file: "spec.md",
-      source_ref: "Existing implementation scope if present",
-      source_excerpt: compactExcerpt(sources.spec),
-      checkpoint: "If spec.md already exists, redesign decisions must explicitly preserve, replace, or reject existing spec scope and stale artifacts.",
-      related_files: ["spec.md"]
-    }
-  ];
+  const candidates: Array<{
+    kind: PinKind;
+    title: string;
+    source_file: string;
+    source_ref: string;
+    source_excerpt: string;
+    checkpoint: string;
+    related_files: string[];
+  }> = [];
 
-  return candidates
-    .filter((candidate) => candidate.source_excerpt || candidate.title === "Original Plan Scope" || candidate.title === "Block Responsibilities And Boundaries")
-    .slice(0, 8)
-    .map((candidate, index) => ({
-      id: `PIN-${block.id.replace(/-/g, "")}-${String(index + 1).padStart(3, "0")}`,
-      block_id: block.id,
-      title: candidate.title,
-      source_file: candidate.source_file,
-      source_ref: candidate.source_ref,
-      source_excerpt: candidate.source_excerpt || "No source excerpt recorded yet; revisit this checkpoint when the related artifact is populated.",
-      checkpoint: candidate.checkpoint,
-      related_files: candidate.related_files,
-      created_at: timestamp,
-      updated_at: timestamp
-    }));
+  if (sources.extraction.trim()) {
+    candidates.push({
+      kind: "evidence",
+      title: "Block-specific extracted evidence",
+      source_file: "extracted-research.md",
+      source_ref: "Extracted evidence for active block",
+      source_excerpt: compactExcerpt(sources.extraction),
+      checkpoint: "Evidence in extracted-research.md may influence this block only when it is specific, cited, and preserved in spec traceability.",
+      related_files: ["extracted-research.md", "papers.md", "spec.md"]
+    });
+  }
+
+  if (sources.papers.trim() && !/No papers attached yet\./i.test(sources.papers)) {
+    candidates.push({
+      kind: "evidence",
+      title: "Attached evidence references",
+      source_file: "papers.md",
+      source_ref: block.paper_ids.join(", ") || "Attached evidence records",
+      source_excerpt: compactExcerpt(sources.papers),
+      checkpoint: "Attached evidence must map to an implementation role, processing step, consumed/produced records, provenance, confidence handling, and boundaries before implementation.",
+      related_files: ["papers.md", "extracted-research.md", "spec.md"]
+    });
+  }
+
+  if (sources.directives.trim() && !/No implementation directives recorded yet\./i.test(sources.directives)) {
+    candidates.push({
+      kind: "directive",
+      title: "Approved implementation directives",
+      source_file: "directives.md",
+      source_ref: block.directive_ids.join(", ") || "Approved directives",
+      source_excerpt: compactExcerpt(sources.directives),
+      checkpoint: "Approved directives override loose research interpretation and must be carried into spec.md without expanding scope beyond the block.",
+      related_files: ["directives.md", "spec.md"]
+    });
+  }
+
+  if (sources.spec.trim()) {
+    candidates.push({
+      kind: "design",
+      title: "Existing spec scope",
+      source_file: "spec.md",
+      source_ref: "Existing implementation scope",
+      source_excerpt: compactExcerpt(sources.spec),
+      checkpoint: "Existing spec scope must be preserved, replaced, or explicitly rejected when redesign decisions change implementation direction.",
+      related_files: ["spec.md", "implementation.md"]
+    });
+  }
+
+  return candidates.map((candidate, index) => makePinRecord({
+    block,
+    pinNumber: startPinNumber + index,
+    kind: candidate.kind,
+    title: candidate.title,
+    sourceFile: candidate.source_file,
+    sourceRef: candidate.source_ref,
+    sourceExcerpt: candidate.source_excerpt,
+    checkpoint: candidate.checkpoint,
+    relatedFiles: candidate.related_files,
+    timestamp
+  }));
 }
 
 function designSessionContext(
@@ -2554,23 +2936,25 @@ function inferDesignTurnInterpretation(note: string, pins: PinRecord[], relatedP
 
 function pinsMarkdown(block: BlockRecord, pins: PinRecord[]): string {
   const body = [
-    `# Design Pins For ${block.id} ${block.title}`,
+    `# Pins For ${block.id} ${block.title}`,
     "",
-    "Pins are internal checkpoints derived from the original plan, block package, extracted evidence, directives, and spec. The user does not manage these ids directly; Codex uses them to keep redesign discussions anchored before spec generation.",
+    "Pins are stable checkpoints. The readable block text uses labels like [1], while this file stores what each label means and where it came from.",
     "",
     ...(pins.length === 0
-      ? ["No design pins generated yet."]
+      ? ["No pins recorded yet."]
       : pins.flatMap((pin) => [
-          `## ${pin.id} ${pin.title}`,
+          `## ${pin.label} ${pin.title}`,
           "",
+          `Internal id: ${pin.id}`,
+          `Kind: ${pin.kind}`,
           `Source file: ${pin.source_file}`,
           `Source reference: ${pin.source_ref ?? "Not recorded"}`,
           `Related files: ${pin.related_files.join(", ")}`,
           "",
-          "### Checkpoint",
+          "Checkpoint:",
           pin.checkpoint,
           "",
-          "### Source Excerpt",
+          "Source excerpt:",
           pin.source_excerpt ?? "No source excerpt recorded.",
           ""
         ]))
@@ -2643,6 +3027,14 @@ function designAnnotationMarkdown(block: BlockRecord, session: DesignSessionReco
   ].join("\n"));
 }
 
+function pinsRequiredForSpec(state: PlannerState, block: BlockRecord): PinRecord[] {
+  const finalized = finalizedDesignPinsForBlock(state, block);
+  if (finalized.length > 0) {
+    return finalized;
+  }
+  const planPins = blockPinsForBlock(state, block).filter((pin) => pin.kind === "plan");
+  return planPins.slice(0, 1);
+}
 function finalizedDesignPinsForBlock(state: PlannerState, block: BlockRecord): PinRecord[] {
   const session = state.design_sessions[block.id];
   if (!session || session.status !== "finalized") {
@@ -2879,6 +3271,26 @@ function extractKeywords(value: string): string[] {
     .slice(0, 12)
     .map(([word]) => word);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

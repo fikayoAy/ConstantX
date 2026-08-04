@@ -25,7 +25,7 @@ Use deep_learning_auto_research. <workflow action>
 - Decomposes a markdown plan into semantic implementation blocks from the actual plan, not generic phases.
 - Stores each block as markdown artifacts for evidence, pins, design sessions, directives, specs, and implementation records.
 - Lets Codex gather broad evidence: papers, official docs, repositories, datasets, benchmarks, model cards, API docs, implementation examples, user files, and local project files.
-- Creates internal design pins so redesign discussions stay anchored to the original plan and block evidence.
+- Creates inline `[n]` checkpoints when blocks are written, with `pins.md` preserving the original plan and block evidence behind each checkpoint.
 - Converts approved design decisions into implementation directives and concrete specs before implementation.
 - Preserves strict gates so implementation starts only after approved research, approved spec, dependencies, and strict implementation context.
 
@@ -59,4 +59,5 @@ Then restart Codex.
 Use deep_learning_auto_research. Start project <PROJECT_PATH> from plan <PLAN_MARKDOWN_PATH> with language <LANGUAGE> and framework <FRAMEWORK>. Propose no more than <MAX_BLOCKS> blocks. Do not write blocks until I approve.
 ```
 
-Continue with the stage prompts in [Workflow Commands](docs/workflow-commands.md). Use [Block Design Sessions](docs/block-design-sessions.md) when you need to discuss and redesign a block before `spec.md` is finalized.
+Continue with the five command families in [Workflow Commands](docs/workflow-commands.md). Use [Block Design Sessions](docs/block-design-sessions.md) for the refinement loop before `spec.md` is finalized.
+

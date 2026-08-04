@@ -109,7 +109,7 @@ export function createPlannerServer(): McpServer {
         "Do not implement a block until planner.prepare_implementation_context succeeds in strict mode.",
         "When extracting research, store only block-specific information and preserve evidence references.",
         "For online evidence, prepare search queries, search primary sources or official references, add useful evidence references, extract block-specific evidence, create spec.md, then implement from the approved spec.",
-        "Prefer the consolidated workflow tools for normal use: workflow.start_project, workflow.approve_plan_blocks, workflow.gather_evidence, workflow.start_block_design_session, workflow.record_block_design_turn, workflow.finalize_block_design_session, and workflow.implement_and_verify_block. Use workflow.prepare_block_design only for backward-compatible one-shot design preparation."
+        "Prefer the five user-facing workflow command families for normal use: workflow.start_project, workflow.write_blocks, workflow.refine, workflow.gather_evidence, and workflow.implement. Lower-level workflow and planner tools remain for backward-compatible or advanced stage control."
       ].join(" ")
     }
   );
@@ -138,7 +138,7 @@ export function createPlannerServer(): McpServer {
     "workflow.approve_plan_blocks",
     {
       title: "Approve Plan Blocks",
-      description: "Consolidated stage 2: write approved plan-derived blocks, create block folders, and export the graph. Stops before evidence gathering.",
+      description: "Backward-compatible stage 2 alias: write approved plan-derived blocks, create block folders, generate inline [n] block pins plus pins.md, and export the graph. Prefer workflow.write_blocks for normal use.",
       inputSchema: {
         projectPath,
         blocks: z.array(planBlockSchema).optional(),
@@ -150,6 +150,68 @@ export function createPlannerServer(): McpServer {
     async (args) => ok(await new PlannerStore(args.projectPath).approvePlanBlocks(args))
   );
 
+  server.registerTool(
+    "workflow.write_blocks",
+    {
+      title: "Write Blocks",
+      description: "Five-command stage 2: write approved plan-derived blocks, generate inline [n] references in block.md, create pins.md for each block, and export the graph. Stops before refinement/evidence/spec/implementation.",
+      inputSchema: {
+        projectPath,
+        blocks: z.array(planBlockSchema).optional(),
+        maxBlocks: z.number().int().min(1).max(200).optional(),
+        preserveSections: z.boolean().optional(),
+        replace: z.boolean().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).writeBlocks(args))
+  );
+
+  server.registerTool(
+    "workflow.refine",
+    {
+      title: "Refine",
+      description: "Five-command refinement family: refine all written blocks before evidence, record block-level discussion against [n] pins, or finalize a block design session before spec/code. Never gathers evidence or implements.",
+      inputSchema: {
+        projectPath,
+        blockId: z.string().optional(),
+        focus: z.string().optional(),
+        userNote: z.string().optional(),
+        relatedPinIds: z.array(z.string()).optional(),
+        status: designDecisionStatus.optional(),
+        questions: z.array(z.string()).optional(),
+        finalize: z.boolean().optional(),
+        directives: z.array(workflowDesignDirectiveSchema).optional(),
+        approvedBy: z.string().optional(),
+        approvalNotes: z.string().optional(),
+        specMarkdown: z.string().optional(),
+        generatedBy: z.string().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).refine(args) as ToolResultData)
+  );
+
+  server.registerTool(
+    "workflow.implement",
+    {
+      title: "Implement",
+      description: "Five-command implementation family: with specMarkdown it creates concrete spec.md; without specMarkdown it approves reviewed spec if needed, prepares strict context, then records and verifies implementation only when implementation evidence is supplied.",
+      inputSchema: {
+        projectPath,
+        blockId,
+        specMarkdown: z.string().optional(),
+        generatedBy: z.string().optional(),
+        approvedBy: z.string().optional(),
+        approvalNotes: z.string().optional(),
+        mode: implementationContextMode,
+        implementationSummary: z.string().optional(),
+        changedFiles: z.array(z.string()).optional(),
+        implementationNotes: z.string().optional(),
+        verificationEvidence: z.string().optional(),
+        verifier: z.string().optional()
+      }
+    },
+    async (args) => ok(await new PlannerStore(args.projectPath).implement(args) as ToolResultData)
+  );
   server.registerTool(
     "workflow.gather_evidence",
     {
@@ -170,7 +232,7 @@ export function createPlannerServer(): McpServer {
     "workflow.prepare_block_design",
     {
       title: "Prepare Block Design",
-      description: "Consolidated stage 4: apply provided annotations/directives, approve extracted evidence, and optionally create spec.md. Stops before spec approval and implementation.",
+      description: "Backward-compatible design stage alias: apply provided annotations/directives, approve extracted evidence, and optionally create spec.md. Prefer workflow.refine and workflow.implement for normal use.",
       inputSchema: {
         projectPath,
         blockId,
@@ -189,7 +251,7 @@ export function createPlannerServer(): McpServer {
     "workflow.start_block_design_session",
     {
       title: "Start Block Design Session",
-      description: "Start an internal pinned design-review session for one block. Generates pins from the original plan, block.md, extracted evidence, attached evidence, directives, and existing spec. Does not approve, create specs, or implement.",
+      description: "Internal/backward-compatible refinement tool for one block. Reuses existing block pins and appends evidence/directive/spec pins when needed. Does not approve, create specs, or implement.",
       inputSchema: {
         projectPath,
         blockId,
@@ -238,7 +300,7 @@ export function createPlannerServer(): McpServer {
     "workflow.implement_and_verify_block",
     {
       title: "Implement And Verify Block",
-      description: "Consolidated stage 5: approve reviewed spec if needed, prepare strict implementation context, then record and verify only after Codex supplies implementation evidence.",
+      description: "Backward-compatible implementation stage alias: approve reviewed spec if needed, prepare strict implementation context, then record and verify only after Codex supplies implementation evidence. Prefer workflow.implement for normal use.",
       inputSchema: {
         projectPath,
         blockId,
@@ -748,5 +810,9 @@ function ok(data: ToolResultData): CallToolResult {
     }
   };
 }
+
+
+
+
 
 

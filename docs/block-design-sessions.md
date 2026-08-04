@@ -1,27 +1,29 @@
 ﻿# Block Design Sessions
 
-Design sessions let the user redesign a block before `spec.md` is generated without manually managing pins, stages, or repeated annotation commands.
+Design sessions are now part of the `workflow.refine` command family. They let the user redesign a block before `spec.md` is generated without manually managing pins, stages, or repeated annotation commands.
 
-## Start A Session
+## Pins Already Exist
+
+Initial `[n]` checkpoints are created when `workflow.write_blocks` writes each block. The readable `block.md` contains labels like `[1]`; `pins.md` stores what each label means and where it came from in the original plan or block content.
+
+A design session reuses those existing pins. If extracted evidence, directives, or an existing spec add new implementation-relevant checkpoints, the MCP appends more `[n]` entries to the same `pins.md` file.
+
+## Start Refinement
 
 ```text
-Use deep_learning_auto_research. Start a block design session for <BLOCK_ID> in project <PROJECT_PATH>. Generate internal pins from the original plan, block.md, papers.md, extracted-research.md, directives.md, and spec.md so we can redesign this block before spec generation. Do not approve, create specs, or implement.
+Use deep_learning_auto_research. Refine block <BLOCK_ID> in project <PROJECT_PATH>. Use the existing [n] pins from block.md and pins.md, compare my requested changes against the block and extracted evidence if present, and keep recording the design discussion until I say we are done. Do not create specs or implement.
 ```
 
-The MCP server generates `pins.md`, `design-session.md`, and `annotation-<BLOCK_ID>.md` inside the block folder.
-
-## Discuss Normally
-
-During the discussion, you can speak normally. Codex should compare your requested changes against the generated pins, block scope, extracted evidence, and existing directives, then internally call `workflow.record_block_design_turn` to update `annotation-<BLOCK_ID>.md` and `design-session.md`.
+During the discussion, you can speak normally. Codex should compare your requested changes against the pins, block scope, extracted evidence, existing directives, and the original plan, then internally update `annotation-<BLOCK_ID>.md` and `design-session.md`.
 
 You do not need to manage pin ids or send repeated annotation commands.
 
-## Finalize The Session
+## Finalize Refinement
 
 ```text
-Use deep_learning_auto_research. Finalize the block design session for <BLOCK_ID> in project <PROJECT_PATH>. Convert approved decisions into implementation directives, approve research if ready, create spec.md, and show it for review. Do not approve spec or implement.
+Use deep_learning_auto_research. Finalize the refinement for block <BLOCK_ID> in project <PROJECT_PATH>. Convert approved decisions into implementation directives, approve evidence if ready, create spec.md, and show it for review. Do not approve spec or implement.
 ```
 
-The generated `spec.md` must cite finalized design pins, approved directives, implementation target, evidence/model fit, exact files/artifacts to create or modify, artifacts to remove or replace, non-goals, acceptance criteria, verification plan, and traceability.
+The generated `spec.md` must cite the relevant `[n]` checkpoints, approved directives, implementation target, evidence/model fit, exact files/artifacts to create or modify, artifacts to remove or replace, non-goals, acceptance criteria, verification plan, and traceability.
 
 ![Annotation and directive loop](../assets/redirection_loop.png)

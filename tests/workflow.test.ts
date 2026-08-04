@@ -322,6 +322,7 @@ test("planner MCP server supports the full research-gated block workflow", async
     });
     assert.match(implementationContext.context, /Approved Extracted Research/);
     assert.match(implementationContext.context, /Approved Implementation Spec/);
+    assert.match(implementationContext.context, /Pins And Checkpoints/);
     assert.match(implementationContext.context, /## Implementation Target/);
     assert.match(implementationContext.context, /Language: TypeScript/);
     assert.match(implementationContext.context, /Stable block ids preserve traceability/);
@@ -434,13 +435,10 @@ test("consolidated workflow tools support the five-command path", async () => {
     const tools = await client.listTools();
     for (const toolName of [
       "workflow.start_project",
-      "workflow.approve_plan_blocks",
+      "workflow.write_blocks",
+      "workflow.refine",
       "workflow.gather_evidence",
-      "workflow.prepare_block_design",
-      "workflow.start_block_design_session",
-      "workflow.record_block_design_turn",
-      "workflow.finalize_block_design_session",
-      "workflow.implement_and_verify_block"
+      "workflow.implement"
     ]) {
       assert.ok(tools.tools.some((tool) => tool.name === toolName), `${toolName} should be registered`);
     }
@@ -467,7 +465,7 @@ test("consolidated workflow tools support the five-command path", async () => {
     assert.equal(started.proposedBlocks.length, 2);
     assert.match(started.nextActions.join("\n"), /Review the proposed blocks/);
 
-    const approvedBlocks = await call(client, "workflow.approve_plan_blocks", {
+    const approvedBlocks = await call(client, "workflow.write_blocks", {
       projectPath,
       blocks: [
         {
@@ -481,6 +479,18 @@ test("consolidated workflow tools support the five-command path", async () => {
     });
     assert.equal(approvedBlocks.written, true);
     assert.equal(approvedBlocks.blocks.length, 1);
+
+    const writtenBlock = await call(client, "planner.read_block", { projectPath, blockId: "B-001" });
+    assert.match(writtenBlock.block, /\[1\]/);
+    assert.match(writtenBlock.pins, /# Pins For B-001/);
+    assert.match(writtenBlock.pins, /## \[1\]/);
+
+    const projectRefinement = await call(client, "workflow.refine", {
+      projectPath,
+      focus: "Review written blocks and pin references before evidence."
+    });
+    assert.match(projectRefinement.context, /Written Block Refinement Context/);
+    assert.match(projectRefinement.context, /\[1\]/);
 
     const evidencePlan = await call(client, "workflow.gather_evidence", {
       projectPath,
@@ -516,7 +526,7 @@ test("consolidated workflow tools support the five-command path", async () => {
     assert.equal(gathered.attachedEvidence[0].evidence_type, "repository");
     assert.equal(gathered.extraction.block.status, "research_extracted");
 
-    const designed = await call(client, "workflow.prepare_block_design", {
+    const designed = await call(client, "workflow.implement", {
       projectPath,
       blockId: "B-001",
       approvedBy: "node:test",
@@ -532,7 +542,7 @@ test("consolidated workflow tools support the five-command path", async () => {
     assert.match(designed.blockPackage.spec, /Implementation Spec For B-001/);
     assert.match(designed.nextActions.join("\n"), /Review spec/);
 
-    const implementationGate = await call(client, "workflow.implement_and_verify_block", {
+    const implementationGate = await call(client, "workflow.implement", {
       projectPath,
       blockId: "B-001",
       approvedBy: "node:test"
@@ -541,7 +551,7 @@ test("consolidated workflow tools support the five-command path", async () => {
     assert.match(implementationGate.implementationContext.context, /Implementation Context For B-001/);
     assert.match(implementationGate.nextActions.join("\n"), /Codex must implement only this block/);
 
-    const verified = await call(client, "workflow.implement_and_verify_block", {
+    const verified = await call(client, "workflow.implement", {
       projectPath,
       blockId: "B-001",
       implementationSummary: "Implemented deterministic source intake.",
@@ -686,7 +696,8 @@ test("block design sessions generate pins, record decisions, and finalize into d
     const pinsMarkdown = await fs.readFile(path.join(projectPath, blockDir, "pins.md"), "utf8");
     const designSessionMarkdown = await fs.readFile(path.join(projectPath, blockDir, "design-session.md"), "utf8");
     const annotationMarkdown = await fs.readFile(path.join(projectPath, blockDir, "annotation-B-001.md"), "utf8");
-    assert.match(pinsMarkdown, /Design Pins For B-001/);
+    assert.match(pinsMarkdown, /Pins For B-001/);
+    assert.match(pinsMarkdown, /## \[1\]/);
     assert.match(designSessionMarkdown, /Conversation Decisions/);
     assert.match(annotationMarkdown, /approved/);
   } finally {
@@ -811,5 +822,8 @@ function getText(result: Awaited<ReturnType<Client["callTool"]>>): string {
   assert.ok(text);
   return text.text;
 }
+
+
+
 
 
