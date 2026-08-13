@@ -1,5 +1,5 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
-  <title id="title">deep_learning_auto_research hero banner</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">ConstantX hero banner</title>
   <desc id="desc">Hero banner showing plans transformed into research-backed implementation blocks for Codex.</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
@@ -20,7 +20,7 @@
   <rect width="1200" height="360" fill="url(#glow)"/>
   <path d="M0 276 C168 220 302 302 456 246 C628 184 736 96 902 132 C1030 160 1114 248 1200 208 L1200 360 L0 360 Z" fill="#f7d08a" opacity="0.12"/>
   <path d="M772 65 L1130 65 Q1160 65 1160 95 L1160 280 Q1160 310 1130 310 L772 310 Q742 310 742 280 L742 95 Q742 65 772 65 Z" fill="#fff7e7" opacity="0.96" filter="url(#shadow)"/>
-  <text x="80" y="124" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="700" fill="#fff7e7">deep_learning_auto_research</text>
+  <text x="80" y="124" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="700" fill="#fff7e7">ConstantX</text>
   <text x="84" y="172" font-family="Verdana, sans-serif" font-size="22" fill="#d8f5e8">Plan to papers to specs to implementation.</text>
   <text x="84" y="212" font-family="Verdana, sans-serif" font-size="18" fill="#b8d9cb">An MCP workflow for Codex that keeps research, decisions, code, and verification traceable.</text>
   <g transform="translate(785 94)">

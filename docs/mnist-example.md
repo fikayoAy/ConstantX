@@ -1,4 +1,4 @@
-﻿# MNIST Worked Example
+# MNIST Worked Example
 
 ![MNIST worked example flow](../assets/mnist-flow.svg)
 
@@ -17,7 +17,7 @@ Useful files:
 Example prompt shape:
 
 ```text
-Use deep_learning_auto_research. Start project <REPO_PATH>\mnist_folder from plan <REPO_PATH>\mnist_folder\mnist.md with language Python and framework PyTorch. Propose no more than 3 blocks. Do not write blocks until I approve.
+Use ConstantX. Start project <REPO_PATH>\mnist_folder from plan <REPO_PATH>\mnist_folder\mnist.md with language Python and framework PyTorch. Propose no more than 3 blocks. Do not write blocks until I approve.
 ```
 
 Verify the example:

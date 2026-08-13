@@ -1,7 +1,7 @@
 {
-  "name": "deep-learning-auto-research-mcp",
+  "name": "constantx-mcp",
   "version": "0.1.0",
-  "description": "Markdown-backed MCP workflow for deep learning auto research, plan decomposition, and research-approved implementation blocks.",
+  "description": "Markdown-backed MCP workflow for ConstantX, plan decomposition, and research-approved implementation blocks.",
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",

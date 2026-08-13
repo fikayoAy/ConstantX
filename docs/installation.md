@@ -1,4 +1,4 @@
-﻿# Installation
+# Installation
 
 Prerequisites:
 
@@ -24,7 +24,7 @@ Add it to your Codex MCP config:
 ```json
 {
   "mcpServers": {
-    "deep_learning_auto_research": {
+    "ConstantX": {
       "command": "node",
       "args": ["<ABSOLUTE_PATH_TO_REPO>/dist/src/index.js"]
     }

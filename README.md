@@ -1,14 +1,18 @@
+<<<<<<< Updated upstream
 ﻿# ConstantX
+=======
+# ConstantX
+>>>>>>> Stashed changes
 
-`deep_learning_auto_research` is an opt-in MCP workflow for Codex. It turns a markdown system plan into traceable implementation blocks, gathers block-specific evidence, supports user-guided redesign before specs, and gates code implementation behind approved research, approved specs, and strict implementation context.
+`ConstantX` is an opt-in MCP workflow for Codex. It turns a markdown system plan into traceable implementation blocks, gathers block-specific evidence, supports user-guided redesign before specs, and gates code implementation behind approved research, approved specs, and strict implementation context.
 
 Use it from Codex only when your prompt starts like this:
 
 ```text
-Use deep_learning_auto_research. <workflow action>
+Use ConstantX. <workflow action>
 ```
 
-![deep_learning_auto_research hero](assets/ChatGPT%20Image%20Jul%2023%2C%202026%2C%2001_54_24%20PM.png)
+![ConstantX hero](assets/ChatGPT%20Image%20Jul%2023%2C%202026%2C%2001_54_24%20PM.png)
 
 ## Documentation
 
@@ -43,7 +47,7 @@ Add the MCP server to Codex:
 ```json
 {
   "mcpServers": {
-    "deep_learning_auto_research": {
+    "ConstantX": {
       "command": "node",
       "args": ["<ABSOLUTE_PATH_TO_REPO>/dist/src/index.js"]
     }
@@ -56,7 +60,7 @@ Then restart Codex.
 ## Main Prompt Shape
 
 ```text
-Use deep_learning_auto_research. Start project <PROJECT_PATH> from plan <PLAN_MARKDOWN_PATH> with language <LANGUAGE> and framework <FRAMEWORK>. Propose no more than <MAX_BLOCKS> blocks. Do not write blocks until I approve.
+Use ConstantX. Start project <PROJECT_PATH> from plan <PLAN_MARKDOWN_PATH> with language <LANGUAGE> and framework <FRAMEWORK>. Propose no more than <MAX_BLOCKS> blocks. Do not write blocks until I approve.
 ```
 
 Continue with the five command families in [Workflow Commands](docs/workflow-commands.md). Use [Block Design Sessions](docs/block-design-sessions.md) for the refinement loop before `spec.md` is finalized.

@@ -1,5 +1,5 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
-  <title id="title">deep_learning_auto_research workflow diagram</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">ConstantX workflow diagram</title>
   <desc id="desc">Workflow from markdown plan through decomposition, research, specs, strict implementation, verification, and final code synthesis.</desc>
   <defs>
     <linearGradient id="paper" x1="0" x2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#f2ead6"/></linearGradient>

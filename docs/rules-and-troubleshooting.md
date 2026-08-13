@@ -1,8 +1,8 @@
-﻿# Rules And Troubleshooting
+# Rules And Troubleshooting
 
 ## Rules
 
-- The workflow is opt-in and should only run when you explicitly say `Use deep_learning_auto_research`.
+- The workflow is opt-in and should only run when you explicitly say `Use ConstantX`.
 - Normal use has five command families: Start Project, Write Blocks, Refine, Gather Evidence, and Implement.
 - `<PROJECT_PATH>` is a directory, not the plan file path.
 - Set language and framework before specs or implementation.

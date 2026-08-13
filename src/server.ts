@@ -1,4 +1,4 @@
-﻿import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { PlannerStore } from "./storage.js";
@@ -99,7 +99,7 @@ const planBlockSchema = z.object({
 export function createPlannerServer(): McpServer {
   const server = new McpServer(
     {
-      name: "deep_learning_auto_research",
+      name: "ConstantX",
       version: "0.1.0"
     },
     {
