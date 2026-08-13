@@ -23,11 +23,11 @@ Use deep_learning_auto_research. <workflow action>
 ## What It Does
 
 - Decomposes a markdown plan into semantic implementation blocks from the actual plan, not generic phases.
-- Stores each block as markdown artifacts for evidence, pins, design sessions, directives, specs, and implementation records.
+- Stores each block as markdown artifacts for acceptance criteria, criteria diffs, evidence, pins, design sessions, directives, specs, and implementation records.
 - Lets Codex gather broad evidence: papers, official docs, repositories, datasets, benchmarks, model cards, API docs, implementation examples, user files, and local project files.
-- Creates inline `[n]` checkpoints when blocks are written, with `pins.md` preserving the original plan and block evidence behind each checkpoint.
+- Creates original-plan acceptance criteria upfront, embeds them in each block, and pins them with inline `[n]` checkpoints backed by `criteria.md`, `criteria-diff.md`, and `pins.md`.
 - Converts approved design decisions into implementation directives and concrete specs before implementation.
-- Preserves strict gates so implementation starts only after approved research, approved spec, dependencies, and strict implementation context.
+- Preserves strict gates so implementation starts only after approved research, approved spec, dependencies, strict implementation context, and criteria coverage evidence.
 
 ![Five-command MCP workflow from plan to verified implementation](assets/ChatGPT%20Image%20Aug%204%2C%202026%2C%2004_28_04%20AM.png)
 
@@ -60,5 +60,6 @@ Use deep_learning_auto_research. Start project <PROJECT_PATH> from plan <PLAN_MA
 ```
 
 Continue with the five command families in [Workflow Commands](docs/workflow-commands.md). Use [Block Design Sessions](docs/block-design-sessions.md) for the refinement loop before `spec.md` is finalized.
+
 
 

@@ -4,6 +4,7 @@ import { blockDirectoryName, decomposePlanText } from "./decompose.js";
 import type { DecomposeOptions } from "./decompose.js";
 import { parseMarkdownDocument, section, stringifyMarkdownDocument } from "./markdown.js";
 import type {
+  AcceptanceCriterionRecord,
   BlockMarkdownMeta,
   BlockRecord,
   BlockStatus,
@@ -75,11 +76,13 @@ export class PlannerStore {
         papers: 0,
         directives: 0,
         pins: 0,
+        criteria: 0,
         designTurns: 0
       },
       blocks: {},
       papers: {},
       directives: {},
+      criteria: {},
       pins: {},
       design_turns: {},
       design_sessions: {}
@@ -277,6 +280,7 @@ export class PlannerStore {
     implementationSummary?: string;
     changedFiles?: string[];
     implementationNotes?: string;
+    criteriaEvidence?: string;
     verificationEvidence?: string;
     verifier?: string;
   }): Promise<unknown> {
@@ -512,6 +516,8 @@ export class PlannerStore {
     const blockMarkdown = await readIfExists(path.join(this.root, block.dir, "block.md"));
     const extraction = await readIfExists(path.join(this.root, block.dir, "extracted-research.md"));
     const papers = await readIfExists(path.join(this.root, block.dir, "papers.md"));
+    const criteria = await readIfExists(path.join(this.root, block.dir, "criteria.md"));
+    const criteriaDiff = await readIfExists(path.join(this.root, block.dir, "criteria-diff.md"));
     const spec = await readIfExists(path.join(this.root, block.dir, "spec.md"));
     const directives = await readIfExists(path.join(this.root, block.dir, "directives.md"));
     const planText = await readIfExists(path.join(this.root, state.plan_file));
@@ -725,6 +731,7 @@ export class PlannerStore {
     implementationSummary?: string;
     changedFiles?: string[];
     implementationNotes?: string;
+    criteriaEvidence?: string;
     verificationEvidence?: string;
     verifier?: string;
   }): Promise<{
@@ -759,7 +766,7 @@ export class PlannerStore {
         nextActions: [
           "Codex must implement only this block from the strict implementation context.",
           "After code changes, run verification commands.",
-          "Call this workflow stage again with implementationSummary, changedFiles, verificationEvidence, and verifier."
+          "Call this workflow stage again with implementationSummary, changedFiles, criteriaEvidence, verificationEvidence, and verifier."
         ]
       };
     }
@@ -768,11 +775,13 @@ export class PlannerStore {
       blockId: block.id,
       summary: args.implementationSummary,
       changedFiles: args.changedFiles,
-      notes: args.implementationNotes
+      notes: args.implementationNotes,
+      criteriaEvidence: args.criteriaEvidence
     });
     const verification = await this.verifyBlock({
       blockId: block.id,
       evidence: args.verificationEvidence,
+      criteriaEvidence: args.criteriaEvidence,
       verifier: args.verifier
     });
 
@@ -878,6 +887,8 @@ export class PlannerStore {
     record: BlockRecord;
     block: string;
     papers: string;
+    criteria: string;
+    criteriaDiff: string;
     extraction: string;
     spec: string;
     implementation: string;
@@ -892,6 +903,8 @@ export class PlannerStore {
       record,
       block: await readIfExists(path.join(this.root, record.dir, "block.md")),
       papers: await readIfExists(path.join(this.root, record.dir, "papers.md")),
+      criteria: await readIfExists(path.join(this.root, record.dir, "criteria.md")),
+      criteriaDiff: await readIfExists(path.join(this.root, record.dir, "criteria-diff.md")),
       extraction: await readIfExists(path.join(this.root, record.dir, "extracted-research.md")),
       spec: await readIfExists(path.join(this.root, record.dir, "spec.md")),
       implementation: await readIfExists(path.join(this.root, record.dir, "implementation.md")),
@@ -1378,7 +1391,8 @@ export class PlannerStore {
 
     const specPath = path.join(this.root, block.dir, "spec.md");
     const markdown = ensureSpecImplementationTarget(args.specMarkdown, implementationTarget);
-    validateConcreteSpec(markdown, block, implementationTarget, approvedDirectivesForBlock(state, block), pinsRequiredForSpec(state, block));
+    validateConcreteSpec(markdown, block, implementationTarget, approvedDirectivesForBlock(state, block), criteriaForBlock(state, block), pinsRequiredForSpec(state, block));
+    await fs.writeFile(path.join(this.root, block.dir, "criteria-diff.md"), appendCriteriaDiff(await readIfExists(path.join(this.root, block.dir, "criteria-diff.md")), block, criteriaForBlock(state, block), "spec_created", markdown), "utf8");
     await fs.writeFile(specPath, ensureTrailingNewline(markdown), "utf8");
     block.status = "spec_created";
     block.updated_at = nowIso();
@@ -1401,7 +1415,7 @@ export class PlannerStore {
     if (spec.trim().length === 0) {
       throw new Error(`Block ${block.id} has no spec.md to approve.`);
     }
-    validateConcreteSpec(spec, block, requireImplementationTarget(state), approvedDirectivesForBlock(state, block), pinsRequiredForSpec(state, block));
+    validateConcreteSpec(spec, block, requireImplementationTarget(state), approvedDirectivesForBlock(state, block), criteriaForBlock(state, block), pinsRequiredForSpec(state, block));
 
     block.status = this.dependenciesSatisfied(state, block) ? "ready_to_implement" : "spec_approved";
     block.updated_at = nowIso();
@@ -1453,6 +1467,8 @@ export class PlannerStore {
       throw new Error(`Block ${block.id} spec.md must include Implementation Target language ${implementationTarget!.language} and framework ${implementationTarget!.framework}.`);
     }
     const papers = await readIfExists(path.join(this.root, block.dir, "papers.md"));
+    const criteria = await readIfExists(path.join(this.root, block.dir, "criteria.md"));
+    const criteriaDiff = await readIfExists(path.join(this.root, block.dir, "criteria-diff.md"));
     const directives = await readIfExists(path.join(this.root, block.dir, "directives.md"));
     const pins = await readIfExists(path.join(this.root, block.dir, "pins.md"));
     const designSession = await readIfExists(path.join(this.root, block.dir, "design-session.md"));
@@ -1490,6 +1506,12 @@ export class PlannerStore {
       "",
       "## Approved Implementation Spec",
       spec.trim() || "No spec.md recorded.",
+      "",
+      "## Acceptance Criteria",
+      criteria.trim() || "No acceptance criteria recorded.",
+      "",
+      "## Criteria Diff History",
+      criteriaDiff.trim() || "No criteria diff history recorded.",
       "",
       "## Attached Papers",
       papers.trim() || "No attached papers recorded.",
@@ -1529,11 +1551,16 @@ export class PlannerStore {
     summary: string;
     changedFiles?: string[];
     notes?: string;
+    criteriaEvidence?: string;
     markImplemented?: boolean;
   }): Promise<BlockRecord> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
     const implementationPath = path.join(this.root, block.dir, "implementation.md");
+    const criteria = criteriaForBlock(state, block);
+    const criteriaCoverageText = [args.summary, args.notes ?? "", args.criteriaEvidence ?? "", ...(args.changedFiles ?? [])].join("\n");
+    validateCriteriaCoverageText("Implementation record", criteriaCoverageText, criteria);
+
     const timestamp = nowIso();
     const entry = [
       `\n## Implementation Record ${timestamp}`,
@@ -1546,10 +1573,18 @@ export class PlannerStore {
       "",
       "### Notes",
       args.notes ?? "None",
+      "",
+      "### Acceptance Criteria Coverage",
+      args.criteriaEvidence ?? "Covered by summary, notes, and changed files.",
       ""
     ].join("\n");
 
     await fs.appendFile(implementationPath, entry, "utf8");
+    await fs.writeFile(
+      path.join(this.root, block.dir, "criteria-diff.md"),
+      appendCriteriaDiff(await readIfExists(path.join(this.root, block.dir, "criteria-diff.md")), block, criteria, "implementation_recorded", entry),
+      "utf8"
+    );
     block.status = args.markImplemented === false ? "implementing" : "implemented";
     block.updated_at = timestamp;
     state.updated_at = timestamp;
@@ -1559,23 +1594,38 @@ export class PlannerStore {
     return block;
   }
 
-  async verifyBlock(args: { blockId: string; evidence?: string; verifier?: string }): Promise<BlockRecord> {
+  async verifyBlock(args: { blockId: string; evidence?: string; criteriaEvidence?: string; verifier?: string }): Promise<BlockRecord> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
     if (block.status !== "implemented" && block.status !== "verified") {
       throw new Error(`Block ${block.id} must be implemented before verification. Current status: ${block.status}.`);
     }
 
+    const criteria = criteriaForBlock(state, block);
+    const verificationText = [args.evidence ?? "", args.criteriaEvidence ?? ""].join("\n");
+    validateCriteriaCoverageText("Verification evidence", verificationText, criteria);
+
     const timestamp = nowIso();
-    await fs.appendFile(
-      path.join(this.root, block.dir, "implementation.md"),
-      [
-        `\n## Verification ${timestamp}`,
-        `Verifier: ${args.verifier ?? "user"}`,
-        "",
-        args.evidence ?? "No additional evidence recorded.",
-        ""
-      ].join("\n"),
+    const entry = [
+      `\n## Verification ${timestamp}`,
+      `Verifier: ${args.verifier ?? "user"}`,
+      "",
+      args.evidence ?? "No additional evidence recorded.",
+      "",
+      "### Acceptance Criteria Verification",
+      args.criteriaEvidence ?? "Covered by verification evidence.",
+      ""
+    ].join("\n");
+
+    await fs.appendFile(path.join(this.root, block.dir, "implementation.md"), entry, "utf8");
+    for (const criterion of criteria) {
+      criterion.status = "satisfied";
+      criterion.updated_at = timestamp;
+    }
+    await fs.writeFile(path.join(this.root, block.dir, "criteria.md"), criteriaMarkdown(block, criteria, blockPinsForBlock(state, block)), "utf8");
+    await fs.writeFile(
+      path.join(this.root, block.dir, "criteria-diff.md"),
+      appendCriteriaDiff(await readIfExists(path.join(this.root, block.dir, "criteria-diff.md")), block, criteria, "verified", verificationText),
       "utf8"
     );
     block.status = "verified";
@@ -1587,7 +1637,6 @@ export class PlannerStore {
     await this.audit("block_verified", { blockId: block.id });
     return block;
   }
-
   async exportGraph(): Promise<{ graph: ReturnType<PlannerStore["buildGraph"]>; markdown: string }> {
     const state = await this.loadState();
     await this.writeGraphFiles(state);
@@ -1660,13 +1709,16 @@ export class PlannerStore {
 
     parsed.counters.directives ??= 0;
     parsed.counters.pins ??= 0;
+    parsed.counters.criteria ??= 0;
     parsed.counters.designTurns ??= 0;
     parsed.directives ??= {};
+    parsed.criteria ??= {};
     parsed.pins ??= {};
     parsed.design_turns ??= {};
     parsed.design_sessions ??= {};
     for (const block of Object.values(parsed.blocks)) {
       block.directive_ids ??= [];
+      block.criterion_ids ??= [];
     }
     for (const pin of Object.values(parsed.pins)) {
       const fallbackNumber = numericSuffix(pin.id) || 1;
@@ -1675,7 +1727,13 @@ export class PlannerStore {
       pin.kind ??= inferPinKind(pin);
       pin.related_files ??= [];
     }
+    for (const criterion of Object.values(parsed.criteria)) {
+      criterion.criterion_number ??= numericSuffix(criterion.id) || 1;
+      criterion.label ??= `AC-${criterion.criterion_number}`;
+      criterion.status ??= "required";
+    }
     parsed.counters.pins = Math.max(parsed.counters.pins, ...Object.values(parsed.pins).map((pin) => pin.pin_number ?? numericSuffix(pin.id)), 0);
+    parsed.counters.criteria = Math.max(parsed.counters.criteria, ...Object.values(parsed.criteria).map((criterion) => criterion.criterion_number ?? numericSuffix(criterion.id)), 0);
 
     return parsed;
   }
@@ -1711,6 +1769,7 @@ export class PlannerStore {
       depends_on: uniqueValues(block.depends_on ?? []).map(normalizeId),
       related_blocks: uniqueValues(block.related_blocks ?? []).map(normalizeId),
       source_plan_refs: uniqueValues(block.source_plan_refs ?? []),
+      criterion_ids: [],
       paper_ids: [],
       directive_ids: [],
       created_at: now,
@@ -1719,12 +1778,20 @@ export class PlannerStore {
 
     state.blocks[id] = record;
     await fs.mkdir(path.join(this.root, record.dir), { recursive: true });
+    const criteria = initialCriteriaForBlock(record, block, state.plan_file, now);
+    for (const criterion of criteria) {
+      state.criteria[criterion.id] = criterion;
+      record.criterion_ids.push(criterion.id);
+      state.counters.criteria = Math.max(state.counters.criteria, criterion.criterion_number);
+    }
     for (const pin of initialPinsForBlock(record, block, state.plan_file, now)) {
       state.pins[pin.id] = pin;
       state.counters.pins = Math.max(state.counters.pins, pin.pin_number);
     }
     await this.writeBlockMarkdown(record, block, state);
     await fs.writeFile(path.join(this.root, record.dir, "pins.md"), pinsMarkdown(record, blockPinsForBlock(state, record)), "utf8");
+    await fs.writeFile(path.join(this.root, record.dir, "criteria.md"), criteriaMarkdown(record, criteria, blockPinsForBlock(state, record)), "utf8");
+    await fs.writeFile(path.join(this.root, record.dir, "criteria-diff.md"), criteriaDiffMarkdown(record, criteria, "block_written", await readIfExists(path.join(this.root, record.dir, "block.md"))), "utf8");
     await fs.writeFile(path.join(this.root, record.dir, "papers.md"), papersMarkdown(record, []), "utf8");
     await fs.writeFile(path.join(this.root, record.dir, "extracted-research.md"), "", "utf8");
     await fs.writeFile(path.join(this.root, record.dir, "spec.md"), "", "utf8");
@@ -1761,6 +1828,7 @@ export class PlannerStore {
       section("Dependencies", record.depends_on.map((id) => crossRef(id, state))),
       section("Related Blocks", record.related_blocks.map((id) => crossRef(id, state))),
       section("Research Questions", withPins(input?.research_questions, pinsForField(pins, "Research Questions"))),
+      section("Acceptance Criteria", withPins(input?.acceptance_criteria, pinsForField(pins, "Acceptance Criteria"))),
       section("Implementation Criteria", withPins(input?.implementation_criteria, pinsForField(pins, "Implementation Criteria"))),
       section("Open Questions", "TBD")
     ].join("\n");
@@ -1857,6 +1925,7 @@ export class PlannerStore {
       nextActions: [
         "Discuss block partition changes naturally and cite block ids plus [n] labels where useful.",
         "Codex should use planner.update_block for approved block.md/dependency edits and append additional project refinement notes through workflow.refine.",
+        "Codex should check whether any original-plan acceptance criteria are missing, duplicated, or assigned to the wrong block before evidence gathering.",
         "Do not gather evidence, create specs, approve specs, or implement during refinement."
       ]
     };
@@ -2032,6 +2101,8 @@ export class PlannerStore {
   private async specTemplate(state: PlannerState, block: BlockRecord): Promise<string> {
     const blockMarkdown = await fs.readFile(path.join(this.root, block.dir, "block.md"), "utf8");
     const papers = await readIfExists(path.join(this.root, block.dir, "papers.md"));
+    const criteria = await readIfExists(path.join(this.root, block.dir, "criteria.md"));
+    const criteriaDiff = await readIfExists(path.join(this.root, block.dir, "criteria-diff.md"));
     const extraction = await readIfExists(path.join(this.root, block.dir, "extracted-research.md"));
 
     return [
@@ -2345,12 +2416,12 @@ function concreteSpecRequiredMessage(block: BlockRecord): string {
   return [
     `Block ${block.id} requires concrete specMarkdown.`,
     "planner.create_spec no longer creates placeholder spec.md files.",
-    "Codex must first read block.md, papers.md, extracted-research.md, dependency summaries, and the implementation target, then pass a complete specMarkdown value.",
-    "The spec must state exactly what to implement for this block, what not to implement, files/artifacts to create or modify, artifacts to remove or replace, data contracts, implementation steps, acceptance criteria, verification plan, traceability back to block/research evidence, and a Paper Model Fit And Adapter Map explaining how every attached paper maps to implementation behavior."
+    "Codex must first read block.md, criteria.md, criteria-diff.md, pins.md, papers.md, extracted-research.md, dependency summaries, and the implementation target, then pass a complete specMarkdown value.",
+    "The spec must state exactly what to implement for this block, what not to implement, files/artifacts to create or modify, artifacts to remove or replace, data contracts, implementation steps, acceptance criteria mapped to every AC-* record, verification plan, traceability back to block/research evidence, and a Paper Model Fit And Adapter Map explaining how every attached paper maps to implementation behavior."
   ].join(" ");
 }
 
-function validateConcreteSpec(markdown: string, block: BlockRecord, target: ImplementationTarget, directives: DirectiveRecord[] = [], designPins: PinRecord[] = []): void {
+function validateConcreteSpec(markdown: string, block: BlockRecord, target: ImplementationTarget, directives: DirectiveRecord[] = [], criteria: AcceptanceCriterionRecord[] = [], designPins: PinRecord[] = []): void {
   const problems: string[] = [];
   const trimmed = markdown.trim();
   if (trimmed.length < 1200) {
@@ -2624,6 +2695,36 @@ function numericSuffix(id: string): number {
   return match ? Number.parseInt(match[1], 10) : 0;
 }
 
+function initialCriteriaForBlock(block: BlockRecord, input: PlanBlockInput, planFile: string, timestamp: string): AcceptanceCriterionRecord[] {
+  const sourceBase = input.source_plan_refs?.join(", ") || input.title;
+  const criteria = uniqueValues((input.acceptance_criteria && input.acceptance_criteria.length > 0
+    ? input.acceptance_criteria
+    : input.implementation_criteria ?? [])
+    .map((item) => item.trim())
+    .filter(Boolean));
+
+  const fallback = criteria.length > 0
+    ? criteria
+    : [`Implement the original plan requirements represented by ${block.id}: ${block.title}.`];
+
+  return fallback.slice(0, 20).map((text, index) => ({
+    id: criterionId(block, index + 1),
+    block_id: block.id,
+    criterion_number: index + 1,
+    label: `AC-${index + 1}`,
+    status: "required",
+    text,
+    source_file: planFile,
+    source_ref: `${sourceBase} > Acceptance Criteria[${index + 1}]`,
+    source_excerpt: input.source_excerpt || text,
+    created_at: timestamp,
+    updated_at: timestamp
+  }));
+}
+
+function criterionId(block: BlockRecord, criterionNumber: number): string {
+  return `AC-${block.id.replace(/-/g, "")}-${String(criterionNumber).padStart(3, "0")}`;
+}
 function initialPinsForBlock(block: BlockRecord, input: PlanBlockInput, planFile: string, timestamp: string): PinRecord[] {
   const sourceBase = input.source_plan_refs?.join(", ") || input.title;
   const entries: Array<{ field: string; text: string; sourceRef: string; sourceExcerpt?: string }> = [];
@@ -2649,6 +2750,9 @@ function initialPinsForBlock(block: BlockRecord, input: PlanBlockInput, planFile
   for (const entry of indexedEntries("Research Questions", input.research_questions, sourceBase, input.source_excerpt)) {
     entries.push(entry);
   }
+  for (const entry of indexedEntries("Acceptance Criteria", input.acceptance_criteria, sourceBase, input.source_excerpt)) {
+    entries.push(entry);
+  }
   for (const entry of indexedEntries("Implementation Criteria", input.implementation_criteria, sourceBase, input.source_excerpt)) {
     entries.push(entry);
   }
@@ -2665,7 +2769,7 @@ function initialPinsForBlock(block: BlockRecord, input: PlanBlockInput, planFile
   return entries.map((entry, index) => makePinRecord({
     block,
     pinNumber: index + 1,
-    kind: "plan",
+    kind: entry.field === "Acceptance Criteria" ? "criterion" : "plan",
     title: entry.text,
     sourceFile: planFile,
     sourceRef: entry.sourceRef,
@@ -3066,6 +3170,119 @@ function compactExcerpt(markdown: string, maxLength = 900): string {
   }
   return cleaned.length <= maxLength ? cleaned : `${cleaned.slice(0, maxLength).trim()}...`;
 }
+function criteriaForBlock(state: PlannerState, block: BlockRecord): AcceptanceCriterionRecord[] {
+  return block.criterion_ids
+    .map((id) => state.criteria[id])
+    .filter((criterion): criterion is AcceptanceCriterionRecord => Boolean(criterion))
+    .sort((a, b) => a.criterion_number - b.criterion_number || a.id.localeCompare(b.id));
+}
+
+function criteriaMarkdown(block: BlockRecord, criteria: AcceptanceCriterionRecord[], pins: PinRecord[]): string {
+  const body = [
+    `# Acceptance Criteria For ${block.id} ${block.title}`,
+    "",
+    "These criteria are original-plan obligations for this block. Later evidence, directives, specs, implementation records, and verification evidence must preserve, satisfy, defer, mark non-scope, or supersede them explicitly.",
+    "",
+    ...(criteria.length === 0
+      ? ["No acceptance criteria recorded."]
+      : criteria.flatMap((criterion) => {
+          const pin = pins.find((candidate) => candidate.kind === "criterion" && candidate.source_ref === criterion.source_ref);
+          return [
+            `## ${criterion.label} ${criterion.text}`,
+            "",
+            `Record id: ${criterion.id}`,
+            `Status: ${criterion.status}`,
+            `Pinned checkpoint: ${pin?.label ?? criterion.pin_id ?? "No pin recorded"}`,
+            `Source file: ${criterion.source_file}`,
+            `Source reference: ${criterion.source_ref ?? "Not recorded"}`,
+            "",
+            "Acceptance obligation:",
+            criterion.text,
+            "",
+            "Source excerpt:",
+            criterion.source_excerpt ?? "No source excerpt recorded.",
+            ""
+          ];
+        }))
+  ].join("\n");
+  return ensureTrailingNewline(body);
+}
+
+function criteriaDiffMarkdown(block: BlockRecord, criteria: AcceptanceCriterionRecord[], stage: string, targetMarkdown: string): string {
+  const timestamp = nowIso();
+  const lines = [
+    `# Criteria Diff For ${block.id} ${block.title}`,
+    "",
+    `## Stage ${stage} ${timestamp}`,
+    "",
+    ...(criteria.length === 0
+      ? ["No acceptance criteria recorded for this block."]
+      : criteria.flatMap((criterion) => {
+          const coverage = criterionCoverage(criterion, targetMarkdown);
+          return [
+            `### ${criterion.label} ${coverage.covered ? "covered" : "missing"}`,
+            `Record id: ${criterion.id}`,
+            `Criterion: ${criterion.text}`,
+            `Evidence: ${coverage.reason}`,
+            ""
+          ];
+        }))
+  ];
+  return ensureTrailingNewline(lines.join("\n"));
+}
+
+function appendCriteriaDiff(existing: string, block: BlockRecord, criteria: AcceptanceCriterionRecord[], stage: string, targetMarkdown: string): string {
+  const next = criteriaDiffMarkdown(block, criteria, stage, targetMarkdown).replace(/^# Criteria Diff[^\n]*\n\n/, "");
+  return ensureTrailingNewline([existing.trim(), next.trim()].filter(Boolean).join("\n\n"));
+}
+
+function criterionCoverage(criterion: AcceptanceCriterionRecord, targetMarkdown: string): { covered: boolean; reason: string } {
+  const target = targetMarkdown.toLowerCase();
+  if (target.includes(criterion.id.toLowerCase())) {
+    return { covered: true, reason: `explicitly cites ${criterion.id}` };
+  }
+  if (target.includes(criterion.label.toLowerCase())) {
+    return { covered: true, reason: `explicitly cites ${criterion.label}` };
+  }
+  const keywords = extractKeywords(criterion.text).slice(0, 6);
+  const matched = keywords.filter((keyword) => target.includes(keyword.toLowerCase()));
+  const required = Math.min(3, Math.max(1, keywords.length));
+  return {
+    covered: matched.length >= required,
+    reason: matched.length >= required
+      ? `matches criterion terms: ${matched.join(", ")}`
+      : `missing explicit citation or enough criterion terms; matched: ${matched.join(", ") || "none"}`
+  };
+}
+
+function validateCriteriaCoverageText(label: string, markdown: string, criteria: AcceptanceCriterionRecord[]): void {
+  if (criteria.length === 0) {
+    return;
+  }
+  const missing = criteria.filter((criterion) => !criterionCoverage(criterion, markdown).covered);
+  if (missing.length > 0) {
+    throw new Error(`${label} must cover every acceptance criterion. Missing: ${missing.map((criterion) => `${criterion.label} / ${criterion.id}`).join(", ")}.`);
+  }
+}
+
+function validateAcceptanceCriteriaInSpec(markdown: string, criteria: AcceptanceCriterionRecord[], problems: string[]): void {
+  if (criteria.length === 0) {
+    return;
+  }
+  const sectionText = extractTopLevelSection(markdown, /^##\s+.*acceptance criteria.*$/i);
+  if (!sectionText) {
+    problems.push("spec must include an Acceptance Criteria section mapped to criteria.md");
+    return;
+  }
+  for (const criterion of criteria) {
+    if (!criterionCoverage(criterion, sectionText).covered && !criterionCoverage(criterion, markdown).covered) {
+      problems.push(`spec must cite or satisfy acceptance criterion ${criterion.label} / ${criterion.id}`);
+    }
+  }
+  if (!/\b(satisfy|satisfied|defer|deferred|non-scope|out of scope|supersede|superseded|verify|covered|acceptance)\b/i.test(sectionText)) {
+    problems.push("acceptance criteria section must state how criteria are satisfied, deferred, non-scope, or superseded");
+  }
+}
 function papersMarkdown(block: BlockRecord, papers: PaperRecord[]): string {
   const body = [
     `# Papers For ${block.id} ${block.title}`,
@@ -3271,6 +3488,21 @@ function extractKeywords(value: string): string[] {
     .slice(0, 12)
     .map(([word]) => word);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -18,6 +18,7 @@ export type PlanBlockInput = {
   id?: string;
   title: string;
   purpose?: string;
+  acceptance_criteria?: string[];
   responsibilities?: string[];
   inputs?: string[];
   outputs?: string[];
@@ -56,7 +57,24 @@ export type DesignSessionStatus = "active" | "finalized";
 
 export type DesignDecisionStatus = "open" | "candidate" | "approved" | "rejected";
 
-export type PinKind = "plan" | "evidence" | "design" | "directive";
+export type PinKind = "plan" | "criterion" | "evidence" | "design" | "directive";
+
+export type AcceptanceCriterionStatus = "required" | "satisfied" | "deferred" | "non_scope" | "superseded";
+
+export type AcceptanceCriterionRecord = {
+  id: string;
+  block_id: string;
+  criterion_number: number;
+  label: string;
+  status: AcceptanceCriterionStatus;
+  text: string;
+  source_file: string;
+  source_ref?: string;
+  source_excerpt?: string;
+  pin_id?: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export type PinRecord = {
   id: string;
@@ -106,6 +124,7 @@ export type BlockRecord = {
   depends_on: string[];
   related_blocks: string[];
   source_plan_refs: string[];
+  criterion_ids: string[];
   paper_ids: string[];
   directive_ids: string[];
   created_at: string;
@@ -158,12 +177,14 @@ export type PlannerState = {
     papers: number;
     directives: number;
     pins: number;
+    criteria: number;
     designTurns: number;
   };
   implementation_target?: ImplementationTarget;
   blocks: Record<string, BlockRecord>;
   papers: Record<string, PaperRecord>;
   directives: Record<string, DirectiveRecord>;
+  criteria: Record<string, AcceptanceCriterionRecord>;
   pins: Record<string, PinRecord>;
   design_turns: Record<string, DesignTurnRecord>;
   design_sessions: Record<string, DesignSessionRecord>;
@@ -174,5 +195,8 @@ export type BlockMarkdownMeta = BlockRecord & {
 };
 
 export type ToolResultData = Record<string, unknown> | unknown[] | null;
+
+
+
 
 

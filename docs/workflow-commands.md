@@ -26,7 +26,7 @@ This creates the project, ingests the plan, sets the implementation target, and 
 Use deep_learning_auto_research. Write the approved proposed blocks for project <PROJECT_PATH>.
 ```
 
-This writes the approved decomposition, creates block folders, exports the graph, and immediately adds inline `[n]` checkpoints inside each `block.md`. The meaning of each checkpoint is stored in that block's `pins.md`.
+This writes the approved decomposition, creates block folders, exports the graph, extracts original-plan acceptance criteria, and immediately adds inline `[n]` checkpoints inside each `block.md`. The criteria are stored in `criteria.md`, coverage history goes into `criteria-diff.md`, and the meaning of each checkpoint is stored in that block's `pins.md`.
 
 The user does not create these pins manually. They are created from the original plan and the approved block content so later discussions can refer to concrete checkpoints like `[1]` or `[2]`.
 
@@ -66,7 +66,7 @@ If evidence creates new checkpoints, the MCP appends them to the same `pins.md` 
 
 ## 5. Implement
 
-To create the reviewed spec from approved design/evidence:
+To create the reviewed spec from approved design/evidence, the spec must map every original-plan acceptance criterion from `criteria.md`:
 
 ```text
 Use deep_learning_auto_research. Create spec.md for block <BLOCK_ID> in project <PROJECT_PATH> from block.md, pins.md, papers.md, extracted-research.md, approved implementation directives, and the approved implementation target. Do not approve spec or implement.
@@ -78,7 +78,7 @@ To implement after reviewing the spec:
 Use deep_learning_auto_research. Approve spec, implement, record, and verify block <BLOCK_ID> in project <PROJECT_PATH>.
 ```
 
-This is the only family that writes implementation code. It approves the reviewed spec if needed, prepares strict implementation context, implements only that block, records changed files, runs verification, and marks the block verified.
+This is the only family that writes implementation code. It approves the reviewed spec if needed, prepares strict implementation context, implements only that block, records changed files, requires criteria coverage evidence, runs verification, updates `criteria-diff.md`, and marks the block verified.
 
 Use reimplementation only when you intentionally want to redo a completed block:
 
@@ -93,3 +93,4 @@ After all blocks are implemented or verified:
 ```text
 Use deep_learning_auto_research. Prepare final code context for project <PROJECT_PATH> in strict mode after all blocks are implemented or verified.
 ```
+

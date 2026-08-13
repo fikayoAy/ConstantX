@@ -1,4 +1,4 @@
-﻿# Project Layout
+# Project Layout
 
 A planner project is stored inside your chosen `<PROJECT_PATH>`:
 
@@ -12,6 +12,8 @@ A planner project is stored inside your chosen `<PROJECT_PATH>`:
     B-001-.../
       block.md                    # readable block with inline [n] checkpoints
       pins.md                     # meaning/source of each [n] checkpoint
+      criteria.md                 # original-plan acceptance criteria
+      criteria-diff.md            # stage-by-stage criteria coverage
       papers.md                   # evidence references, not only papers
       extracted-research.md
       design-session.md           # refinement conversation state
@@ -28,4 +30,6 @@ A planner project is stored inside your chosen `<PROJECT_PATH>`:
 
 Blocks are semantic parts of your source plan. They should not be generic phases like foundation, training, evaluation, or deployment unless the original plan actually defines those as real implementation units.
 
-`block.md` should not contain separate source-pin or evidence-pin sections. It only uses inline labels like `[1]`, while `pins.md` stores the detailed checkpoint metadata.
+`block.md` should not contain separate source-pin or evidence-pin sections. It only uses inline labels like `[1]`, while `pins.md` stores the detailed checkpoint metadata. Acceptance criteria are stored in `criteria.md` and are diffed through `criteria-diff.md` as the block moves through evidence, spec, implementation, and verification.
+
+

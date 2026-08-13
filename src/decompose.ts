@@ -1,5 +1,5 @@
-import type { PlanBlockInput } from "./types.js";
-import { slugify } from "./utils.js";
+﻿import type { PlanBlockInput } from "./types.js";
+import { slugify, uniqueValues } from "./utils.js";
 
 type HeadingSection = {
   title: string;
@@ -117,6 +117,7 @@ function toBlock(section: HeadingSection, ordinal: number, planFile: string): Pl
   return {
     title,
     purpose: derivePurpose(title, sourceTitles, rawContent),
+    acceptance_criteria: deriveAcceptanceCriteria(title, sourceTitles, rawContent),
     responsibilities,
     inputs: deriveInputs(title, sourceTitles),
     outputs: deriveOutputs(title, sourceTitles),
@@ -317,6 +318,51 @@ function deriveResearchQuestions(title: string, sourceTitles: string[]): string[
   ];
 }
 
+function deriveAcceptanceCriteria(title: string, sourceTitles: string[], content: string): string[] {
+  const candidates = uniqueValues([
+    ...extractRequirementBullets(content),
+    ...extractRequirementSentences(content)
+  ]).filter((item) => item.length >= 18 && item.length <= 260);
+
+  if (candidates.length > 0) {
+    return candidates.slice(0, 10);
+  }
+
+  const sentence = firstSentence(content);
+  if (sentence) {
+    return [`Implement the source-plan requirement for ${title}: ${sentence}`];
+  }
+
+  return sourceTitles.slice(0, 6).map((sourceTitle) => `Implement the source-plan requirement named "${sourceTitle}" for ${title}.`);
+}
+
+function extractRequirementBullets(content: string): string[] {
+  return extractBullets(content)
+    .map(cleanCriterionText)
+    .filter((item) => isRequirementLike(item) || item.length >= 30);
+}
+
+function extractRequirementSentences(content: string): string[] {
+  return content
+    .replace(/^#{1,6}\s+.+$/gm, "")
+    .split(/(?<=[.!?])\s+|\r?\n+/)
+    .map(cleanCriterionText)
+    .filter((item) => isRequirementLike(item));
+}
+
+function cleanCriterionText(value: string): string {
+  return value
+    .replace(/^[-*]\s+/, "")
+    .replace(/^\d+\.\s+/, "")
+    .replace(/\s+/g, " ")
+    .replace(/[`*_>#]+/g, "")
+    .trim();
+}
+
+function isRequirementLike(value: string): boolean {
+  return /\b(must|should|shall|required|requires|requirement|accepts?|inputs?|outputs?|produces?|returns?|supports?|handles?|tracks?|preserves?|stores?|uses?|allows?|prevents?|ensures?|verifies?|detects?|segments?|classifies?|predicts?|generates?|creates?|builds?|implements?)\b/i.test(value);
+}
+
 function deriveImplementationCriteria(title: string, sourceTitles: string[]): string[] {
   return [
     `${title} has a concrete spec.md derived from block.md, papers.md, and extracted-research.md.`,
@@ -393,3 +439,7 @@ function firstSentence(content: string): string | undefined {
 export function blockDirectoryName(id: string, title: string): string {
   return `${id}-${slugify(title)}`;
 }
+
+
+
+

@@ -84,6 +84,7 @@ const planBlockSchema = z.object({
   id: z.string().optional(),
   title: z.string(),
   purpose: z.string().optional(),
+  acceptance_criteria: z.array(z.string()).optional(),
   responsibilities: z.array(z.string()).optional(),
   inputs: z.array(z.string()).optional(),
   outputs: z.array(z.string()).optional(),
@@ -104,9 +105,9 @@ export function createPlannerServer(): McpServer {
     {
       instructions: [
         "Use this server to manage markdown-backed implementation planning.",
-        "Blocks must represent actual decomposed parts of the supplied plan, not generic project phases.",
+        "Blocks must represent actual decomposed parts of the supplied plan, not generic project phases, and each written block must carry original-plan acceptance criteria.",
         "Before creating specs or implementing blocks, set the project implementation target with language and framework.",
-        "Do not implement a block until planner.prepare_implementation_context succeeds in strict mode.",
+        "Do not implement a block until planner.prepare_implementation_context succeeds in strict mode and criteria coverage evidence can be recorded.",
         "When extracting research, store only block-specific information and preserve evidence references.",
         "For online evidence, prepare search queries, search primary sources or official references, add useful evidence references, extract block-specific evidence, create spec.md, then implement from the approved spec.",
         "Prefer the five user-facing workflow command families for normal use: workflow.start_project, workflow.write_blocks, workflow.refine, workflow.gather_evidence, and workflow.implement. Lower-level workflow and planner tools remain for backward-compatible or advanced stage control."
@@ -154,7 +155,7 @@ export function createPlannerServer(): McpServer {
     "workflow.write_blocks",
     {
       title: "Write Blocks",
-      description: "Five-command stage 2: write approved plan-derived blocks, generate inline [n] references in block.md, create pins.md for each block, and export the graph. Stops before refinement/evidence/spec/implementation.",
+      description: "Five-command stage 2: write approved plan-derived blocks, derive original-plan acceptance criteria, generate inline [n] references in block.md, create criteria.md, criteria-diff.md, pins.md for each block, and export the graph. Stops before refinement/evidence/spec/implementation.",
       inputSchema: {
         projectPath,
         blocks: z.array(planBlockSchema).optional(),
@@ -194,7 +195,7 @@ export function createPlannerServer(): McpServer {
     "workflow.implement",
     {
       title: "Implement",
-      description: "Five-command implementation family: with specMarkdown it creates concrete spec.md; without specMarkdown it approves reviewed spec if needed, prepares strict context, then records and verifies implementation only when implementation evidence is supplied.",
+      description: "Five-command implementation family: with specMarkdown it creates concrete spec.md only when acceptance criteria are mapped; without specMarkdown it approves reviewed spec if needed, prepares strict context, then records and verifies implementation only when implementation evidence and criteria coverage are supplied.",
       inputSchema: {
         projectPath,
         blockId,
@@ -206,6 +207,7 @@ export function createPlannerServer(): McpServer {
         implementationSummary: z.string().optional(),
         changedFiles: z.array(z.string()).optional(),
         implementationNotes: z.string().optional(),
+        criteriaEvidence: z.string().optional(),
         verificationEvidence: z.string().optional(),
         verifier: z.string().optional()
       }
@@ -310,6 +312,7 @@ export function createPlannerServer(): McpServer {
         implementationSummary: z.string().optional(),
         changedFiles: z.array(z.string()).optional(),
         implementationNotes: z.string().optional(),
+        criteriaEvidence: z.string().optional(),
         verificationEvidence: z.string().optional(),
         verifier: z.string().optional()
       }
@@ -742,6 +745,7 @@ export function createPlannerServer(): McpServer {
         summary: z.string(),
         changedFiles: stringList,
         notes: z.string().optional(),
+        criteriaEvidence: z.string().optional(),
         markImplemented: z.boolean().optional()
       }
     },
@@ -757,6 +761,7 @@ export function createPlannerServer(): McpServer {
         projectPath,
         blockId,
         evidence: z.string().optional(),
+        criteriaEvidence: z.string().optional(),
         verifier: z.string().optional()
       }
     },
@@ -810,6 +815,8 @@ function ok(data: ToolResultData): CallToolResult {
     }
   };
 }
+
+
 
 
 

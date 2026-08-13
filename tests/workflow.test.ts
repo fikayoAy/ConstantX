@@ -323,6 +323,8 @@ test("planner MCP server supports the full research-gated block workflow", async
     assert.match(implementationContext.context, /Approved Extracted Research/);
     assert.match(implementationContext.context, /Approved Implementation Spec/);
     assert.match(implementationContext.context, /Pins And Checkpoints/);
+    assert.match(implementationContext.context, /Acceptance Criteria/);
+    assert.match(implementationContext.context, /Criteria Diff History/);
     assert.match(implementationContext.context, /## Implementation Target/);
     assert.match(implementationContext.context, /Language: TypeScript/);
     assert.match(implementationContext.context, /Stable block ids preserve traceability/);
@@ -332,8 +334,9 @@ test("planner MCP server supports the full research-gated block workflow", async
     const implemented = await call(client, "planner.record_implementation", {
       projectPath,
       blockId: "B-001",
-      summary: "Implemented source document intake traceability.",
-      changedFiles: ["src/storage.ts"]
+      summary: "Implemented source document intake traceability and satisfied AC-1 for source plan reference preservation.",
+      changedFiles: ["src/storage.ts"],
+      criteriaEvidence: "AC-1 / AC-B001-001 satisfied: the implementation preserves the source plan reference criterion through block package records and storage updates."
     });
     assert.equal(implemented.status, "implemented");
 
@@ -357,7 +360,8 @@ test("planner MCP server supports the full research-gated block workflow", async
     const verified = await call(client, "planner.verify_block", {
       projectPath,
       blockId: "B-001",
-      evidence: "End-to-end MCP workflow test passed.",
+      evidence: "End-to-end MCP workflow test passed and verified AC-1 source plan reference preservation.",
+      criteriaEvidence: "AC-1 / AC-B001-001 verified: tests exercised the block package source reference workflow end to end.",
       verifier: "node:test"
     });
     assert.equal(verified.status, "verified");
@@ -400,13 +404,15 @@ test("planner MCP server supports the full research-gated block workflow", async
     await call(client, "planner.record_implementation", {
       projectPath,
       blockId: "B-002",
-      summary: "Implemented research evidence mapping.",
-      changedFiles: ["src/storage.ts"]
+      summary: "Implemented research evidence mapping and satisfied AC-1 for block-specific evidence linkage.",
+      changedFiles: ["src/storage.ts"],
+      criteriaEvidence: "AC-1 / AC-B002-001 satisfied: implementation keeps extracted research block-specific and evidence-linked."
     });
     await call(client, "planner.verify_block", {
       projectPath,
       blockId: "B-002",
-      evidence: "Dependent block verification passed."
+      evidence: "Dependent block verification passed and verified AC-1 block-specific evidence linkage.",
+      criteriaEvidence: "AC-1 / AC-B002-001 verified: dependent workflow preserved block-specific extraction and evidence linkage."
     });
     const finalCodeContext = await call(client, "planner.prepare_final_code_context", { projectPath });
     assert.equal(finalCodeContext.allImplemented, true);
@@ -484,6 +490,9 @@ test("consolidated workflow tools support the five-command path", async () => {
     assert.match(writtenBlock.block, /\[1\]/);
     assert.match(writtenBlock.pins, /# Pins For B-001/);
     assert.match(writtenBlock.pins, /## \[1\]/);
+    assert.match(writtenBlock.criteria, /# Acceptance Criteria For B-001/);
+    assert.match(writtenBlock.criteria, /AC-1/);
+    assert.match(writtenBlock.criteriaDiff, /block_written/);
 
     const projectRefinement = await call(client, "workflow.refine", {
       projectPath,
@@ -554,9 +563,10 @@ test("consolidated workflow tools support the five-command path", async () => {
     const verified = await call(client, "workflow.implement", {
       projectPath,
       blockId: "B-001",
-      implementationSummary: "Implemented deterministic source intake.",
+      implementationSummary: "Implemented deterministic source intake and satisfied AC-1 source reference determinism.",
       changedFiles: ["src/intake.py"],
-      verificationEvidence: "Unit tests passed for deterministic source intake.",
+      criteriaEvidence: "AC-1 / AC-B001-001 satisfied and verified: deterministic source intake preserves explicit source references for the block.",
+      verificationEvidence: "Unit tests passed for deterministic source intake and AC-1 source reference determinism.",
       verifier: "node:test"
     });
     assert.equal(verified.implementation.status, "implemented");
@@ -822,6 +832,10 @@ function getText(result: Awaited<ReturnType<Client["callTool"]>>): string {
   assert.ok(text);
   return text.text;
 }
+
+
+
+
 
 
 
