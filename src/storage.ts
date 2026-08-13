@@ -1,10 +1,13 @@
-﻿import fs from "node:fs/promises";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { blockDirectoryName, decomposePlanText } from "./decompose.js";
 import type { DecomposeOptions } from "./decompose.js";
 import { parseMarkdownDocument, section, stringifyMarkdownDocument } from "./markdown.js";
+import { actorFrom, collaborationSummary, resolveCollaborationContext } from "./collaboration.js";
 import type {
   AcceptanceCriterionRecord,
+  CollaborationContextInput,
+  CollaborationContextRecord,
   BlockMarkdownMeta,
   BlockRecord,
   BlockStatus,
@@ -49,7 +52,7 @@ export class PlannerStore {
     this.root = resolveProjectRoot(projectPath);
   }
 
-  async createProject(planFileName = "system-plan.md"): Promise<PlannerState> {
+  async createProject(planFileName = "system-plan.md", collaboration?: CollaborationContextInput): Promise<PlannerState> {
     await fs.mkdir(this.root, { recursive: true });
     await fs.mkdir(this.blocksDir(), { recursive: true });
     await fs.mkdir(this.papersDir(), { recursive: true });
@@ -77,8 +80,12 @@ export class PlannerStore {
         directives: 0,
         pins: 0,
         criteria: 0,
-        designTurns: 0
+        designTurns: 0,
+        collaborationContexts: 0
       },
+      implementation_target: undefined,
+      actors: {},
+      collaboration_contexts: {},
       blocks: {},
       papers: {},
       directives: {},
@@ -88,18 +95,32 @@ export class PlannerStore {
       design_sessions: {}
     };
 
+    const { context } = resolveCollaborationContext(state, collaboration, {
+      role: "owner",
+      scope: ["project"],
+      intent: "start_project",
+      executionMode: "draft",
+      allowedRoles: ["owner"]
+    });
     await this.saveState(state);
     await this.writeGraphFiles(state);
-    await this.audit("project_created", { planFileName });
+    await this.audit("project_created", { planFileName }, context);
     return state;
   }
 
-  async ingestPlan(args: { content?: string; planPath?: string; planFileName?: string; title?: string }): Promise<{
+  async ingestPlan(args: { content?: string; planPath?: string; planFileName?: string; title?: string } & CollaborationContextInput): Promise<{
     planFile: string;
     path: string;
     bytes: number;
   }> {
     const state = await this.ensureProject(args.planFileName);
+    const { context } = resolveCollaborationContext(state, args, {
+      role: "owner",
+      scope: ["project"],
+      intent: "ingest_plan",
+      executionMode: "draft",
+      allowedRoles: ["owner"]
+    });
     const planFile = args.planFileName ?? state.plan_file;
     const destination = path.join(this.root, planFile);
 
@@ -120,7 +141,7 @@ export class PlannerStore {
     state.plan_file = planFile;
     state.updated_at = nowIso();
     await this.saveState(state);
-    await this.audit("plan_ingested", { planFile });
+    await this.audit("plan_ingested", { planFile }, context);
 
     return {
       planFile,
@@ -138,14 +159,14 @@ export class PlannerStore {
     framework: string;
     maxBlocks?: number;
     preserveSections?: boolean;
-  }): Promise<{
+  } & CollaborationContextInput): Promise<{
     projectPath: string;
     plan: Awaited<ReturnType<PlannerStore["ingestPlan"]>>;
     implementationTarget: ImplementationTarget;
     proposedBlocks: PlanBlockInput[];
     nextActions: string[];
   }> {
-    await this.createProject(args.planFileName);
+    await this.createProject(args.planFileName, args);
     const plan = await this.ingestPlan({
       content: args.content,
       planPath: args.planPath,
@@ -179,7 +200,7 @@ export class PlannerStore {
     maxBlocks?: number;
     preserveSections?: boolean;
     replace?: boolean;
-  }): Promise<{
+  } & CollaborationContextInput): Promise<{
     written: true;
     blocks: BlockRecord[];
     graph?: ReturnType<PlannerStore["buildGraph"]>;
@@ -190,7 +211,8 @@ export class PlannerStore {
       maxBlocks: args.maxBlocks,
       preserveSections: args.preserveSections,
       replace: args.replace,
-      write: true
+      write: true,
+      ...collaborationFields(args)
     });
 
     return {
@@ -209,7 +231,7 @@ export class PlannerStore {
     maxBlocks?: number;
     preserveSections?: boolean;
     replace?: boolean;
-  }): Promise<Awaited<ReturnType<PlannerStore["approvePlanBlocks"]>>> {
+  } & CollaborationContextInput): Promise<Awaited<ReturnType<PlannerStore["approvePlanBlocks"]>>> {
     return this.approvePlanBlocks(args);
   }
 
@@ -233,7 +255,7 @@ export class PlannerStore {
     specMarkdown?: string;
     generatedBy?: string;
     focus?: string;
-  }): Promise<unknown> {
+  } & CollaborationContextInput): Promise<unknown> {
     if (args.blockId && args.finalize) {
       return this.finalizeBlockDesignSession({
         blockId: args.blockId,
@@ -248,19 +270,20 @@ export class PlannerStore {
     if (args.blockId && args.userNote) {
       const state = await this.loadState();
       if (!state.design_sessions[normalizeId(args.blockId)] || state.design_sessions[normalizeId(args.blockId)].status !== "active") {
-        await this.startBlockDesignSession({ blockId: args.blockId, focus: args.focus });
+        await this.startBlockDesignSession({ blockId: args.blockId, focus: args.focus, ...collaborationFields(args) });
       }
       return this.recordBlockDesignTurn({
         blockId: args.blockId,
         userNote: args.userNote,
         relatedPinIds: args.relatedPinIds,
         status: args.status,
-        questions: args.questions
+        questions: args.questions,
+        ...collaborationFields(args)
       });
     }
 
     if (args.blockId) {
-      return this.startBlockDesignSession({ blockId: args.blockId, focus: args.focus });
+      return this.startBlockDesignSession({ blockId: args.blockId, focus: args.focus, ...collaborationFields(args) });
     }
 
     return this.refineWrittenBlocks({
@@ -283,7 +306,7 @@ export class PlannerStore {
     criteriaEvidence?: string;
     verificationEvidence?: string;
     verifier?: string;
-  }): Promise<unknown> {
+  } & CollaborationContextInput): Promise<unknown> {
     if (args.specMarkdown) {
       const state = await this.loadState();
       const block = this.requireBlock(state, args.blockId);
@@ -317,6 +340,7 @@ export class PlannerStore {
       implementationSummary: args.implementationSummary,
       changedFiles: args.changedFiles,
       implementationNotes: args.implementationNotes,
+      criteriaEvidence: args.criteriaEvidence,
       verificationEvidence: args.verificationEvidence,
       verifier: args.verifier
     });
@@ -343,7 +367,7 @@ export class PlannerStore {
     }>;
     extractionMarkdown?: string;
     generatedBy?: string;
-  }): Promise<{
+  } & CollaborationContextInput): Promise<{
     block: BlockRecord;
     attachedEvidence: PaperRecord[];
     onlineResearch: ReturnType<PlannerStore["buildOnlineResearchPlan"]>;
@@ -376,7 +400,8 @@ export class PlannerStore {
         paperPath: reference.paperPath,
         content: reference.content,
         copy: reference.copy,
-        discoverySource: reference.sourceUrl && !reference.paperPath ? "codex_online" : "user_upload"
+        discoverySource: reference.sourceUrl && !reference.paperPath ? "codex_online" : "user_upload",
+        ...collaborationFields(args)
       }));
     }
 
@@ -384,7 +409,8 @@ export class PlannerStore {
       ? await this.extractResearch({
           blockId: block.id,
           extractionMarkdown: args.extractionMarkdown,
-          generatedBy: args.generatedBy
+          generatedBy: args.generatedBy,
+          ...collaborationFields(args)
         })
       : undefined;
 
@@ -502,7 +528,7 @@ export class PlannerStore {
     };
   }
 
-  async startBlockDesignSession(args: { blockId: string; focus?: string }): Promise<{
+  async startBlockDesignSession(args: { blockId: string; focus?: string } & CollaborationContextInput): Promise<{
     block: BlockRecord;
     session: DesignSessionRecord;
     pins: PinRecord[];
@@ -513,6 +539,7 @@ export class PlannerStore {
   }> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, { role: "owner", scope: [block.id], intent: "refine_design", executionMode: "review-only", allowedRoles: ["owner", "reviewer"] });
     const blockMarkdown = await readIfExists(path.join(this.root, block.dir, "block.md"));
     const extraction = await readIfExists(path.join(this.root, block.dir, "extracted-research.md"));
     const papers = await readIfExists(path.join(this.root, block.dir, "papers.md"));
@@ -546,12 +573,15 @@ export class PlannerStore {
         status: "active",
         pin_ids: activePinIds,
         turn_ids: [],
+        created_by: actorFrom(context),
+        updated_by: actorFrom(context),
         created_at: timestamp,
         updated_at: timestamp
       };
       state.design_sessions[block.id] = session;
     } else {
       session.status = "active";
+      session.updated_by = actorFrom(context);
       session.updated_at = timestamp;
       delete session.finalized_at;
       delete session.finalized_by;
@@ -561,7 +591,7 @@ export class PlannerStore {
     const pins = session.pin_ids.map((id) => state.pins[id]).filter(Boolean);
     await this.writeDesignSessionFiles(block, state, session);
     await this.saveState(state);
-    await this.audit("block_design_session_started", { blockId: block.id, focus: args.focus });
+    await this.audit("block_design_session_started", { blockId: block.id, focus: args.focus }, context);
 
     return {
       block,
@@ -585,7 +615,7 @@ export class PlannerStore {
     relatedPinIds?: string[];
     status?: DesignDecisionStatus;
     questions?: string[];
-  }): Promise<{
+  } & CollaborationContextInput): Promise<{
     block: BlockRecord;
     session: DesignSessionRecord;
     turn: DesignTurnRecord;
@@ -596,6 +626,7 @@ export class PlannerStore {
   }> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, { role: "owner", scope: [block.id], intent: "refine_design", executionMode: "review-only", allowedRoles: ["owner", "reviewer"] });
     const session = state.design_sessions[block.id];
     if (!session || session.status !== "active") {
       throw new Error(`Start an active design session for ${block.id} before recording design turns.`);
@@ -615,17 +646,19 @@ export class PlannerStore {
       related_pin_ids: relatedPinIds,
       status: args.status ?? "open",
       questions: uniqueValues(args.questions?.map((question) => question.trim()).filter(Boolean) ?? []),
+      created_by: actorFrom(context),
       created_at: timestamp,
       updated_at: timestamp
     };
 
     state.design_turns[turn.id] = turn;
     session.turn_ids.push(turn.id);
+    session.updated_by = actorFrom(context);
     session.updated_at = timestamp;
     state.updated_at = timestamp;
     await this.writeDesignSessionFiles(block, state, session);
     await this.saveState(state);
-    await this.audit("block_design_turn_recorded", { blockId: block.id, turnId: turn.id, status: turn.status });
+    await this.audit("block_design_turn_recorded", { blockId: block.id, turnId: turn.id, status: turn.status }, context);
 
     return {
       block,
@@ -654,7 +687,7 @@ export class PlannerStore {
     approvalNotes?: string;
     specMarkdown?: string;
     generatedBy?: string;
-  }): Promise<{
+  } & CollaborationContextInput): Promise<{
     block: BlockRecord;
     session: DesignSessionRecord;
     approvedTurns: DesignTurnRecord[];
@@ -666,6 +699,7 @@ export class PlannerStore {
   }> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, { role: "reviewer", scope: [block.id], intent: "finalize_design", executionMode: "approve", allowedRoles: ["owner", "reviewer"] });
     const session = state.design_sessions[block.id];
     if (!session) {
       throw new Error(`No design session exists for ${block.id}. Start a block design session before finalizing.`);
@@ -674,7 +708,8 @@ export class PlannerStore {
     const timestamp = nowIso();
     session.status = "finalized";
     session.finalized_at = timestamp;
-    session.finalized_by = args.approvedBy?.trim() || "user";
+    session.finalized_by = args.approvedBy?.trim() || actorFrom(context);
+    session.updated_by = actorFrom(context);
     session.updated_at = timestamp;
     state.updated_at = timestamp;
     await this.writeDesignSessionFiles(block, state, session);
@@ -702,7 +737,7 @@ export class PlannerStore {
       ? await this.createSpec({ blockId: block.id, specMarkdown: args.specMarkdown, generatedBy: args.generatedBy })
       : undefined;
 
-    await this.audit("block_design_session_finalized", { blockId: block.id, generatedBy: args.generatedBy });
+    await this.audit("block_design_session_finalized", { blockId: block.id, generatedBy: args.generatedBy }, context);
 
     return {
       block: this.requireBlock(await this.loadState(), block.id),
@@ -796,13 +831,20 @@ export class PlannerStore {
       ]
     };
   }
-  async setImplementationTarget(args: { language: string; framework: string }): Promise<ImplementationTarget> {
+  async setImplementationTarget(args: { language: string; framework: string } & CollaborationContextInput): Promise<ImplementationTarget> {
     const state = await this.loadState();
+    const { context } = resolveCollaborationContext(state, args, {
+      role: "owner",
+      scope: ["project"],
+      intent: "set_implementation_target",
+      executionMode: "approve",
+      allowedRoles: ["owner"]
+    });
     const target = normalizeImplementationTarget(args);
     state.implementation_target = target;
     state.updated_at = nowIso();
     await this.saveState(state);
-    await this.audit("implementation_target_set", target);
+    await this.audit("implementation_target_set", target, context);
     return target;
   }
 
@@ -824,7 +866,7 @@ export class PlannerStore {
     replace?: boolean;
     maxBlocks?: number;
     preserveSections?: boolean;
-  }): Promise<{
+  } & CollaborationContextInput): Promise<{
     written: boolean;
     blocks: BlockRecord[] | PlanBlockInput[];
     graph?: ReturnType<PlannerStore["buildGraph"]>;
@@ -844,6 +886,13 @@ export class PlannerStore {
     }
 
     const state = await this.loadState();
+    const { context } = resolveCollaborationContext(state, args, {
+      role: "owner",
+      scope: ["project"],
+      intent: "write_blocks",
+      executionMode: "approve",
+      allowedRoles: ["owner", "reviewer"]
+    });
     if (Object.keys(state.blocks).length > 0 && !args.replace) {
       throw new Error("Blocks already exist. Pass replace=true to rebuild the block set.");
     }
@@ -857,7 +906,7 @@ export class PlannerStore {
 
     const records: BlockRecord[] = [];
     for (const block of proposed) {
-      const record = await this.createBlock(state, block);
+      const record = await this.createBlock(state, block, actorFrom(context));
       records.push(record);
     }
 
@@ -869,7 +918,7 @@ export class PlannerStore {
     state.updated_at = nowIso();
     await this.saveState(state);
     await this.writeGraphFiles(state);
-    await this.audit("plan_decomposed", { blockCount: records.length });
+    await this.audit("plan_decomposed", { blockCount: records.length }, context);
 
     return {
       written: true,
@@ -970,7 +1019,7 @@ export class PlannerStore {
     annotatedBy?: string;
     onlineResearchUsed?: boolean;
     sourceUrls?: string[];
-  }): Promise<{
+  } & CollaborationContextInput): Promise<{
     blockId: string;
     statusUnchanged: BlockStatus;
     target: AnnotationTargetInfo;
@@ -1040,7 +1089,7 @@ export class PlannerStore {
     body?: string;
     research_questions?: string[];
     implementation_criteria?: string[];
-  }): Promise<BlockRecord> {
+  } & CollaborationContextInput): Promise<BlockRecord> {
     const state = await this.loadState();
     const record = this.requireBlock(state, args.blockId);
     const blockPath = path.join(this.root, record.dir, "block.md");
@@ -1096,9 +1145,10 @@ export class PlannerStore {
     evidenceType?: EvidenceType;
     relevanceScore?: number;
     copy?: boolean;
-  }): Promise<PaperRecord> {
+  } & CollaborationContextInput): Promise<PaperRecord> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, { role: "researcher", scope: [block.id], intent: "gather_evidence", executionMode: "draft", allowedRoles: ["owner", "researcher"] });
     if (!args.paperPath && !args.content && !args.sourceUrl) {
       throw new Error("Provide paperPath, content, or sourceUrl.");
     }
@@ -1137,6 +1187,7 @@ export class PlannerStore {
       relevant_sections: args.relevant_sections ?? [],
       discovery_source: args.discoverySource ?? (args.sourceUrl && !args.paperPath ? "codex_online" : "user_upload"),
       relevance_score: args.relevanceScore,
+      added_by: actorFrom(context),
       created_at: now,
       updated_at: now
     };
@@ -1144,13 +1195,14 @@ export class PlannerStore {
     state.papers[id] = paper;
     block.paper_ids = uniqueValues([...block.paper_ids, id]);
     block.status = block.status === "created" || block.status === "needs_research" ? "research_attached" : block.status;
+    block.updated_by = actorFrom(context);
     block.updated_at = now;
     state.updated_at = now;
 
     await this.writePapersMarkdown(block, state);
     await this.writeBlockMarkdown(block, undefined, state);
     await this.saveState(state);
-    await this.audit("paper_attached", { blockId: block.id, paperId: id });
+    await this.audit("paper_attached", { blockId: block.id, paperId: id }, context);
     return paper;
   }
 
@@ -1168,7 +1220,7 @@ export class PlannerStore {
     abstract?: string;
     relevant_sections?: string[];
     relevanceScore?: number;
-  }): Promise<PaperRecord> {
+  } & CollaborationContextInput): Promise<PaperRecord> {
     return this.attachPaper({
       ...args,
       discoverySource: "codex_online",
@@ -1222,12 +1274,13 @@ export class PlannerStore {
     return this.buildOnlineResearchPlan(block, blockMarkdown);
   }
 
-  async extractResearch(args: { blockId: string; extractionMarkdown?: string; generatedBy?: string }): Promise<{
+  async extractResearch(args: { blockId: string; extractionMarkdown?: string; generatedBy?: string } & CollaborationContextInput): Promise<{
     block: BlockRecord;
     path: string;
   }> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, { role: "researcher", scope: [block.id], intent: "extract_evidence", executionMode: "draft", allowedRoles: ["owner", "researcher"] });
     const extractionPath = path.join(this.root, block.dir, "extracted-research.md");
     const markdown = args.extractionMarkdown ?? researchExtractionTemplate(block, state);
 
@@ -1254,7 +1307,7 @@ export class PlannerStore {
     }
     await this.writeBlockMarkdown(block, undefined, state);
     await this.saveState(state);
-    await this.audit("research_extracted", { blockId: block.id, generatedBy: args.generatedBy });
+    await this.audit("research_extracted", { blockId: block.id, generatedBy: args.generatedBy }, context);
 
     return {
       block,
@@ -1262,9 +1315,16 @@ export class PlannerStore {
     };
   }
 
-  async approveResearch(args: { blockId: string; approvedBy?: string; notes?: string }): Promise<BlockRecord> {
+  async approveResearch(args: { blockId: string; approvedBy?: string; notes?: string } & CollaborationContextInput): Promise<BlockRecord> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, {
+      role: "reviewer",
+      scope: [block.id],
+      intent: "approve_research",
+      executionMode: "approve",
+      allowedRoles: ["owner", "reviewer"]
+    });
     const extractionPath = path.join(this.root, block.dir, "extracted-research.md");
     const extraction = await readIfExists(extractionPath);
 
@@ -1273,16 +1333,18 @@ export class PlannerStore {
     }
 
     block.status = "research_approved";
+    block.approved_by = args.approvedBy?.trim() || actorFrom(context);
+    block.updated_by = actorFrom(context);
     block.updated_at = nowIso();
     state.updated_at = block.updated_at;
     await fs.appendFile(
       extractionPath,
-      `\n## Approval\nApproved at: ${block.updated_at}\nApproved by: ${args.approvedBy ?? "user"}\nNotes: ${args.notes ?? "None"}\n`,
+      `\n## Approval\nApproved at: ${block.updated_at}\nApproved by: ${args.approvedBy ?? actorFrom(context)}\nNotes: ${args.notes ?? "None"}\n`,
       "utf8"
     );
     await this.writeBlockMarkdown(block, undefined, state);
     await this.saveState(state);
-    await this.audit("research_approved", { blockId: block.id, approvedBy: args.approvedBy });
+    await this.audit("research_approved", { blockId: block.id, approvedBy: args.approvedBy ?? actorFrom(context) }, context);
     return block;
   }
 
@@ -1294,7 +1356,7 @@ export class PlannerStore {
     sourceFile?: string;
     sourceEvidence?: string;
     approvedBy?: string;
-  }): Promise<{
+  } & CollaborationContextInput): Promise<{
     block: BlockRecord;
     directive: DirectiveRecord;
     path: string;
@@ -1302,6 +1364,13 @@ export class PlannerStore {
   }> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, {
+      role: "reviewer",
+      scope: [block.id],
+      intent: "add_directive",
+      executionMode: "approve",
+      allowedRoles: ["owner", "reviewer"]
+    });
     const extraction = await readIfExists(path.join(this.root, block.dir, "extracted-research.md"));
     if (extraction.trim().length === 0) {
       throw new Error(`Block ${block.id} has no extracted-research.md content. Extract research before adding implementation directives.`);
@@ -1321,7 +1390,8 @@ export class PlannerStore {
       source_file: args.sourceFile?.trim() || "extracted-research.md",
       source_evidence: args.sourceEvidence?.trim(),
       inferred_implementation: args.inferredImplementation.trim(),
-      approved_by: args.approvedBy?.trim() || "user",
+      proposed_by: actorFrom(context),
+      approved_by: args.approvedBy?.trim() || actorFrom(context),
       created_at: timestamp,
       updated_at: timestamp
     };
@@ -1333,6 +1403,7 @@ export class PlannerStore {
     if (specInvalidated) {
       block.status = "research_approved";
     }
+    block.updated_by = actorFrom(context);
     block.updated_at = timestamp;
     state.updated_at = timestamp;
 
@@ -1340,7 +1411,7 @@ export class PlannerStore {
     await this.writeBlockMarkdown(block, undefined, state);
     await this.saveState(state);
     await this.writeGraphFiles(state);
-    await this.audit("directive_added", { blockId: block.id, directiveId: id, specInvalidated });
+    await this.audit("directive_added", { blockId: block.id, directiveId: id, specInvalidated }, context);
 
     return {
       block,
@@ -1374,7 +1445,7 @@ export class PlannerStore {
       markdown: await readIfExists(path.join(this.root, block.dir, "directives.md"))
     };
   }
-  async createSpec(args: { blockId: string; specMarkdown?: string; generatedBy?: string }): Promise<{
+  async createSpec(args: { blockId: string; specMarkdown?: string; generatedBy?: string } & CollaborationContextInput): Promise<{
     block: BlockRecord;
     path: string;
   }> {
@@ -1407,9 +1478,16 @@ export class PlannerStore {
     };
   }
 
-  async approveSpec(args: { blockId: string; approvedBy?: string; notes?: string }): Promise<BlockRecord> {
+  async approveSpec(args: { blockId: string; approvedBy?: string; notes?: string } & CollaborationContextInput): Promise<BlockRecord> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, {
+      role: "reviewer",
+      scope: [block.id],
+      intent: "approve_spec",
+      executionMode: "approve",
+      allowedRoles: ["owner", "reviewer"]
+    });
     const specPath = path.join(this.root, block.dir, "spec.md");
     const spec = await readIfExists(specPath);
     if (spec.trim().length === 0) {
@@ -1418,6 +1496,8 @@ export class PlannerStore {
     validateConcreteSpec(spec, block, requireImplementationTarget(state), approvedDirectivesForBlock(state, block), criteriaForBlock(state, block), pinsRequiredForSpec(state, block));
 
     block.status = this.dependenciesSatisfied(state, block) ? "ready_to_implement" : "spec_approved";
+    block.approved_by = args.approvedBy?.trim() || actorFrom(context);
+    block.updated_by = actorFrom(context);
     block.updated_at = nowIso();
     state.updated_at = block.updated_at;
     await fs.appendFile(
@@ -1427,7 +1507,7 @@ export class PlannerStore {
     );
     await this.writeBlockMarkdown(block, undefined, state);
     await this.saveState(state);
-    await this.audit("spec_approved", { blockId: block.id, approvedBy: args.approvedBy });
+    await this.audit("spec_approved", { blockId: block.id, approvedBy: args.approvedBy ?? actorFrom(context) }, context);
     return block;
   }
 
@@ -1498,6 +1578,9 @@ export class PlannerStore {
         ? [`Language: ${implementationTarget.language}`, `Framework: ${implementationTarget.framework}`].join("\n")
         : "No implementation target set.",
       "",
+      "## Non-Minimal Implementation Requirement",
+      nonMinimalImplementationRequirement(),
+      "",
       "## Block",
       blockMarkdown.trim(),
       "",
@@ -1553,17 +1636,29 @@ export class PlannerStore {
     notes?: string;
     criteriaEvidence?: string;
     markImplemented?: boolean;
-  }): Promise<BlockRecord> {
+  } & CollaborationContextInput): Promise<BlockRecord> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, {
+      role: "implementer",
+      scope: [block.id],
+      intent: "implement",
+      executionMode: args.executionMode ?? "implement",
+      allowedRoles: ["owner", "implementer"]
+    });
     const implementationPath = path.join(this.root, block.dir, "implementation.md");
+    const spec = await readIfExists(path.join(this.root, block.dir, "spec.md"));
     const criteria = criteriaForBlock(state, block);
     const criteriaCoverageText = [args.summary, args.notes ?? "", args.criteriaEvidence ?? "", ...(args.changedFiles ?? [])].join("\n");
     validateCriteriaCoverageText("Implementation record", criteriaCoverageText, criteria);
+    validateNonMinimalOutput("Implementation record", criteriaCoverageText);
+    validateImplementationRecordCoverage("Implementation record", criteriaCoverageText, spec, block, state);
 
     const timestamp = nowIso();
     const entry = [
       `\n## Implementation Record ${timestamp}`,
+      "",
+      `Implemented by: ${actorFrom(context)}`,
       "",
       "### Summary",
       args.summary,
@@ -1586,29 +1681,41 @@ export class PlannerStore {
       "utf8"
     );
     block.status = args.markImplemented === false ? "implementing" : "implemented";
+    block.implemented_by = actorFrom(context);
+    block.updated_by = actorFrom(context);
     block.updated_at = timestamp;
     state.updated_at = timestamp;
     await this.writeBlockMarkdown(block, undefined, state);
     await this.saveState(state);
-    await this.audit("implementation_recorded", { blockId: block.id });
+    await this.audit("implementation_recorded", { blockId: block.id, implementedBy: actorFrom(context) }, context);
     return block;
   }
 
-  async verifyBlock(args: { blockId: string; evidence?: string; criteriaEvidence?: string; verifier?: string }): Promise<BlockRecord> {
+  async verifyBlock(args: { blockId: string; evidence?: string; criteriaEvidence?: string; verifier?: string } & CollaborationContextInput): Promise<BlockRecord> {
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
+    const { context } = resolveCollaborationContext(state, args, {
+      role: "verifier",
+      scope: [block.id],
+      intent: "verify",
+      executionMode: "verify-only",
+      allowedRoles: ["owner", "verifier"]
+    });
     if (block.status !== "implemented" && block.status !== "verified") {
       throw new Error(`Block ${block.id} must be implemented before verification. Current status: ${block.status}.`);
     }
 
+    const spec = await readIfExists(path.join(this.root, block.dir, "spec.md"));
     const criteria = criteriaForBlock(state, block);
     const verificationText = [args.evidence ?? "", args.criteriaEvidence ?? ""].join("\n");
     validateCriteriaCoverageText("Verification evidence", verificationText, criteria);
+    validateNonMinimalOutput("Verification evidence", verificationText);
+    validateVerificationCoverage("Verification evidence", verificationText, spec);
 
     const timestamp = nowIso();
     const entry = [
       `\n## Verification ${timestamp}`,
-      `Verifier: ${args.verifier ?? "user"}`,
+      `Verifier: ${args.verifier ?? actorFrom(context)}`,
       "",
       args.evidence ?? "No additional evidence recorded.",
       "",
@@ -1629,12 +1736,14 @@ export class PlannerStore {
       "utf8"
     );
     block.status = "verified";
+    block.verified_by = args.verifier?.trim() || actorFrom(context);
+    block.updated_by = actorFrom(context);
     block.updated_at = timestamp;
     state.updated_at = timestamp;
     await this.writeBlockMarkdown(block, undefined, state);
     await this.saveState(state);
     await this.writeGraphFiles(state);
-    await this.audit("block_verified", { blockId: block.id });
+    await this.audit("block_verified", { blockId: block.id, verifier: args.verifier ?? actorFrom(context) }, context);
     return block;
   }
   async exportGraph(): Promise<{ graph: ReturnType<PlannerStore["buildGraph"]>; markdown: string }> {
@@ -1711,11 +1820,14 @@ export class PlannerStore {
     parsed.counters.pins ??= 0;
     parsed.counters.criteria ??= 0;
     parsed.counters.designTurns ??= 0;
+    parsed.counters.collaborationContexts ??= 0;
     parsed.directives ??= {};
     parsed.criteria ??= {};
     parsed.pins ??= {};
     parsed.design_turns ??= {};
     parsed.design_sessions ??= {};
+    parsed.actors ??= {};
+    parsed.collaboration_contexts ??= {};
     for (const block of Object.values(parsed.blocks)) {
       block.directive_ids ??= [];
       block.criterion_ids ??= [];
@@ -1726,11 +1838,15 @@ export class PlannerStore {
       pin.label ??= `[${pin.pin_number}]`;
       pin.kind ??= inferPinKind(pin);
       pin.related_files ??= [];
+      pin.created_by ??= "legacy";
+      pin.updated_by ??= pin.created_by;
     }
     for (const criterion of Object.values(parsed.criteria)) {
       criterion.criterion_number ??= numericSuffix(criterion.id) || 1;
       criterion.label ??= `AC-${criterion.criterion_number}`;
       criterion.status ??= "required";
+      criterion.created_by ??= "legacy";
+      criterion.updated_by ??= criterion.created_by;
     }
     parsed.counters.pins = Math.max(parsed.counters.pins, ...Object.values(parsed.pins).map((pin) => pin.pin_number ?? numericSuffix(pin.id)), 0);
     parsed.counters.criteria = Math.max(parsed.counters.criteria, ...Object.values(parsed.criteria).map((criterion) => criterion.criterion_number ?? numericSuffix(criterion.id)), 0);
@@ -1752,7 +1868,7 @@ export class PlannerStore {
     await fs.writeFile(this.statePath(), `${JSON.stringify(state, null, 2)}\n`, "utf8");
   }
 
-  private async createBlock(state: PlannerState, block: PlanBlockInput): Promise<BlockRecord> {
+  private async createBlock(state: PlannerState, block: PlanBlockInput, actor = "local-user"): Promise<BlockRecord> {
     const id = normalizeId(block.id ?? nextId("B", state.counters.blocks + 1));
     if (state.blocks[id]) {
       throw new Error(`Duplicate block id: ${id}`);
@@ -1772,19 +1888,21 @@ export class PlannerStore {
       criterion_ids: [],
       paper_ids: [],
       directive_ids: [],
+      created_by: actor,
+      updated_by: actor,
       created_at: now,
       updated_at: now
     };
 
     state.blocks[id] = record;
     await fs.mkdir(path.join(this.root, record.dir), { recursive: true });
-    const criteria = initialCriteriaForBlock(record, block, state.plan_file, now);
+    const criteria = initialCriteriaForBlock(record, block, state.plan_file, now, actor);
     for (const criterion of criteria) {
       state.criteria[criterion.id] = criterion;
       record.criterion_ids.push(criterion.id);
       state.counters.criteria = Math.max(state.counters.criteria, criterion.criterion_number);
     }
-    for (const pin of initialPinsForBlock(record, block, state.plan_file, now)) {
+    for (const pin of initialPinsForBlock(record, block, state.plan_file, now, actor)) {
       state.pins[pin.id] = pin;
       state.counters.pins = Math.max(state.counters.pins, pin.pin_number);
     }
@@ -1990,7 +2108,12 @@ export class PlannerStore {
           status: block.status,
           depends_on: block.depends_on,
           related_blocks: block.related_blocks,
-          paper_ids: block.paper_ids
+          paper_ids: block.paper_ids,
+          created_by: block.created_by,
+          updated_by: block.updated_by,
+          approved_by: block.approved_by,
+          implemented_by: block.implemented_by,
+          verified_by: block.verified_by
         })),
       edges: Object.values(state.blocks).flatMap((block) => [
         ...block.depends_on.map((target) => ({ from: block.id, to: target, type: "depends_on" })),
@@ -2192,13 +2315,42 @@ export class PlannerStore {
     return path.join(this.plannerDir(), "state.json");
   }
 
-  private async audit(event: string, data: Record<string, unknown>): Promise<void> {
+  private async audit(event: string, data: Record<string, unknown>, context?: CollaborationContextRecord): Promise<void> {
     await fs.mkdir(path.join(this.plannerDir(), "logs"), { recursive: true });
-    const line = JSON.stringify({ timestamp: nowIso(), event, data });
+    const activeContext = context ?? {
+      context_id: "CTX-000",
+      actor: "local-user",
+      role: "owner" as const,
+      scope: ["project"],
+      intent: event,
+      execution_mode: "draft" as const,
+      created_at: nowIso(),
+      warnings: ["No collaboration context was supplied to this internal audit event."]
+    };
+    const line = JSON.stringify({
+      timestamp: nowIso(),
+      event,
+      actor: activeContext.actor,
+      role: activeContext.role,
+      scope: activeContext.scope,
+      intent: activeContext.intent,
+      execution_mode: activeContext.execution_mode,
+      context_id: activeContext.context_id,
+      data
+    });
     await fs.appendFile(path.join(this.plannerDir(), "audit-log.jsonl"), `${line}\n`, "utf8");
   }
 }
 
+function collaborationFields(args: CollaborationContextInput): CollaborationContextInput {
+  return {
+    actor: args.actor,
+    role: args.role,
+    scope: args.scope,
+    intent: args.intent,
+    executionMode: args.executionMode
+  };
+}
 async function exists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
@@ -2484,6 +2636,124 @@ function validateConcreteSpec(markdown: string, block: BlockRecord, target: Impl
   }
 }
 
+
+function nonMinimalImplementationRequirement(): string {
+  return [
+    "Do not create a stub, placeholder, mock-only, toy, partial, demo-only, superficial, TODO-driven, or minimal implementation.",
+    "Implement the complete concrete behavior required by the original plan, block.md, acceptance criteria, pins/checkpoints, approved extracted research, approved implementation directives, approved spec.md, and verification plan.",
+    "If the block cannot be fully implemented, stop and record the exact blocker instead of silently reducing scope."
+  ].join("\n");
+}
+function validateNonMinimalOutput(label: string, markdown: string): void {
+  const trimmed = markdown.trim();
+  if (!trimmed) {
+    return;
+  }
+  if (/\bnot implemented\b/i.test(trimmed)) {
+    throw new Error(`${label} says required behavior is not implemented. Record a blocker instead of claiming completion.`);
+  }
+  const weakPattern = /\b(stub(?:bed)?|placeholder|mock-only|toy|demo-only|minimal(?:ly)?|superficial|TODO|future work|simplified implementation|partial implementation)\b/i;
+  if (!weakPattern.test(trimmed)) {
+    return;
+  }
+  const allowedNegation = /\b(no|not|without|reject(?:ed|s)?|forbid(?:s|den)?|prohibit(?:s|ed)?|avoid(?:s|ed)?|replaced|removed|must not|do not)\b.{0,80}\b(stub(?:bed)?|placeholder|mock-only|toy|demo-only|minimal(?:ly)?|superficial|TODO|future work|simplified implementation|partial implementation)\b/i;
+  if (!allowedNegation.test(trimmed)) {
+    throw new Error(`${label} describes a weak/minimal implementation. Record a blocker instead of claiming completion with stub, placeholder, toy, demo-only, minimal, superficial, TODO, future-work, or partial output.`);
+  }
+}
+function validateImplementationRecordCoverage(label: string, evidenceText: string, spec: string, block: BlockRecord, state: PlannerState): void {
+  const problems: string[] = [];
+  const normalizedEvidence = normalizeCoverageText(evidenceText);
+
+  for (const directive of approvedDirectivesForBlock(state, block)) {
+    if (!normalizedEvidence.includes(normalizeCoverageText(directive.id))) {
+      problems.push(`approved directive ${directive.id}`);
+    }
+  }
+
+  for (const artifact of extractExplicitArtifactTokens(spec)) {
+    if (!coverageContainsToken(normalizedEvidence, artifact)) {
+      problems.push(`declared artifact ${artifact}`);
+    }
+  }
+
+  for (const paperId of paperModelFitPaperIds(spec, block)) {
+    if (!normalizedEvidence.includes(normalizeCoverageText(paperId))) {
+      problems.push(`paper/model fit ${paperId}`);
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new Error(`${label} must cite implementation evidence for every approved directive, explicit artifact, and paper/model fit item. Missing: ${problems.join(", ")}.`);
+  }
+}
+
+function validateVerificationCoverage(label: string, evidenceText: string, spec: string): void {
+  const commands = extractVerificationCommands(spec);
+  if (commands.length === 0) {
+    return;
+  }
+  const normalizedEvidence = normalizeCoverageText(evidenceText);
+  const missing = commands.filter((command) => !coverageContainsToken(normalizedEvidence, command));
+  if (missing.length > 0) {
+    throw new Error(`${label} must cite the result for every verification command from spec.md. Missing: ${missing.join(", ")}.`);
+  }
+}
+
+function paperModelFitPaperIds(spec: string, block: BlockRecord): string[] {
+  const sectionText = extractTopLevelSection(spec, /^##\s+.*paper.*model.*fit.*adapter.*map\s*$/i);
+  if (!sectionText) {
+    return [];
+  }
+  return block.paper_ids.filter((paperId) => Boolean(extractPaperEntry(sectionText, paperId)));
+}
+
+function extractExplicitArtifactTokens(spec: string): string[] {
+  const sections = [
+    extractTopLevelSection(spec, /^##\s+.*(files|artifacts).*(create|modify|change).*$/i),
+    extractTopLevelSection(spec, /^##\s+.*(create|modify|change).*(files|artifacts).*$/i),
+    extractTopLevelSection(spec, /^##\s+.*(artifacts|files).*(remove|delete|replace|deprecate|cleanup).*$/i),
+    extractTopLevelSection(spec, /^##\s+.*(remove|delete|replace|deprecate|cleanup).*(artifacts|files).*$/i)
+  ].filter((section): section is string => Boolean(section));
+  const tokens = sections.flatMap((section) => Array.from(section.matchAll(/`([^`]+)`/g)).map((match) => match[1].trim()))
+    .filter((token) => /[\\/.]|\.[a-z0-9]{1,8}$/i.test(token))
+    .filter((token) => !/^https?:\/\//i.test(token));
+  return uniqueValues(tokens);
+}
+
+function extractVerificationCommands(spec: string): string[] {
+  const sectionText = extractTopLevelSection(spec, /^##\s+.*verification.*$/i);
+  if (!sectionText) {
+    return [];
+  }
+  const backtickCommands = Array.from(sectionText.matchAll(/`([^`]+)`/g))
+    .map((match) => match[1].trim())
+    .filter(isLikelyCommand);
+  if (backtickCommands.length > 0) {
+    return uniqueValues(backtickCommands);
+  }
+
+  const commands = Array.from(sectionText.matchAll(/\b(?:npm\s+(?:run\s+)?[a-z0-9:_-]+|node\s+--test(?:\s+[^.\n]+)?|pytest(?:\s+[^.\n]+)?|python\s+-m\s+pytest(?:\s+[^.\n]+)?|pnpm\s+(?:run\s+)?[a-z0-9:_-]+|yarn\s+(?:run\s+)?[a-z0-9:_-]+)\b/gi))
+    .map((match) => match[0].trim().replace(/[.,;:]+$/g, ""));
+  return uniqueValues(commands);
+}
+
+function isLikelyCommand(value: string): boolean {
+  return /^(npm|pnpm|yarn|node|python|pytest|uv|cargo|go|dotnet|mvn|gradle)\b/i.test(value);
+}
+
+function normalizeCoverageText(value: string): string {
+  return value.toLowerCase().replace(/[`"']/g, "").replace(/\\/g, "/").replace(/\s+/g, " ").trim();
+}
+
+function coverageContainsToken(normalizedEvidence: string, token: string): boolean {
+  const normalizedToken = normalizeCoverageText(token);
+  if (!normalizedToken) {
+    return true;
+  }
+  const basename = normalizedToken.split("/").filter(Boolean).pop() ?? normalizedToken;
+  return normalizedEvidence.includes(normalizedToken) || (basename.length >= 4 && normalizedEvidence.includes(basename));
+}
 function validateDesignPinsInSpec(markdown: string, designPins: PinRecord[], problems: string[]): void {
   if (designPins.length === 0) {
     return;
@@ -2695,7 +2965,7 @@ function numericSuffix(id: string): number {
   return match ? Number.parseInt(match[1], 10) : 0;
 }
 
-function initialCriteriaForBlock(block: BlockRecord, input: PlanBlockInput, planFile: string, timestamp: string): AcceptanceCriterionRecord[] {
+function initialCriteriaForBlock(block: BlockRecord, input: PlanBlockInput, planFile: string, timestamp: string, actor = "local-user"): AcceptanceCriterionRecord[] {
   const sourceBase = input.source_plan_refs?.join(", ") || input.title;
   const criteria = uniqueValues((input.acceptance_criteria && input.acceptance_criteria.length > 0
     ? input.acceptance_criteria
@@ -2725,7 +2995,7 @@ function initialCriteriaForBlock(block: BlockRecord, input: PlanBlockInput, plan
 function criterionId(block: BlockRecord, criterionNumber: number): string {
   return `AC-${block.id.replace(/-/g, "")}-${String(criterionNumber).padStart(3, "0")}`;
 }
-function initialPinsForBlock(block: BlockRecord, input: PlanBlockInput, planFile: string, timestamp: string): PinRecord[] {
+function initialPinsForBlock(block: BlockRecord, input: PlanBlockInput, planFile: string, timestamp: string, actor = "local-user"): PinRecord[] {
   const sourceBase = input.source_plan_refs?.join(", ") || input.title;
   const entries: Array<{ field: string; text: string; sourceRef: string; sourceExcerpt?: string }> = [];
 
@@ -3132,12 +3402,7 @@ function designAnnotationMarkdown(block: BlockRecord, session: DesignSessionReco
 }
 
 function pinsRequiredForSpec(state: PlannerState, block: BlockRecord): PinRecord[] {
-  const finalized = finalizedDesignPinsForBlock(state, block);
-  if (finalized.length > 0) {
-    return finalized;
-  }
-  const planPins = blockPinsForBlock(state, block).filter((pin) => pin.kind === "plan");
-  return planPins.slice(0, 1);
+  return finalizedDesignPinsForBlock(state, block);
 }
 function finalizedDesignPinsForBlock(state: PlannerState, block: BlockRecord): PinRecord[] {
   const session = state.design_sessions[block.id];
@@ -3488,6 +3753,12 @@ function extractKeywords(value: string): string[] {
     .slice(0, 12)
     .map(([word]) => word);
 }
+
+
+
+
+
+
 
 
 

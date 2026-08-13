@@ -1,4 +1,4 @@
-﻿export const BLOCK_STATUSES = [
+export const BLOCK_STATUSES = [
   "created",
   "needs_research",
   "research_attached",
@@ -13,6 +13,41 @@
 ] as const;
 
 export type BlockStatus = (typeof BLOCK_STATUSES)[number];
+
+export const COLLABORATION_ROLES = ["owner", "researcher", "reviewer", "implementer", "verifier"] as const;
+export type CollaborationRole = (typeof COLLABORATION_ROLES)[number];
+
+export const EXECUTION_MODES = ["review-only", "draft", "approve", "implement", "reimplement", "verify-only"] as const;
+export type ExecutionMode = (typeof EXECUTION_MODES)[number];
+
+export type CollaborationScopeInput = string | string[];
+
+export type CollaborationContextInput = {
+  actor?: string;
+  role?: CollaborationRole;
+  scope?: CollaborationScopeInput;
+  intent?: string;
+  executionMode?: ExecutionMode;
+};
+
+export type ActorRecord = {
+  id: string;
+  display_name: string;
+  roles_used: CollaborationRole[];
+  first_seen_at: string;
+  last_seen_at: string;
+};
+
+export type CollaborationContextRecord = {
+  context_id: string;
+  actor: string;
+  role: CollaborationRole;
+  scope: string[];
+  intent: string;
+  execution_mode: ExecutionMode;
+  created_at: string;
+  warnings?: string[];
+};
 
 export type PlanBlockInput = {
   id?: string;
@@ -61,7 +96,12 @@ export type PinKind = "plan" | "criterion" | "evidence" | "design" | "directive"
 
 export type AcceptanceCriterionStatus = "required" | "satisfied" | "deferred" | "non_scope" | "superseded";
 
-export type AcceptanceCriterionRecord = {
+export type AttributionFields = {
+  created_by?: string;
+  updated_by?: string;
+};
+
+export type AcceptanceCriterionRecord = AttributionFields & {
   id: string;
   block_id: string;
   criterion_number: number;
@@ -76,7 +116,7 @@ export type AcceptanceCriterionRecord = {
   updated_at: string;
 };
 
-export type PinRecord = {
+export type PinRecord = AttributionFields & {
   id: string;
   block_id: string;
   pin_number: number;
@@ -100,6 +140,7 @@ export type DesignTurnRecord = {
   related_pin_ids: string[];
   status: DesignDecisionStatus;
   questions: string[];
+  created_by?: string;
   created_at: string;
   updated_at: string;
 };
@@ -111,11 +152,13 @@ export type DesignSessionRecord = {
   turn_ids: string[];
   finalized_at?: string;
   finalized_by?: string;
+  created_by?: string;
+  updated_by?: string;
   created_at: string;
   updated_at: string;
 };
 
-export type BlockRecord = {
+export type BlockRecord = AttributionFields & {
   id: string;
   title: string;
   slug: string;
@@ -127,6 +170,9 @@ export type BlockRecord = {
   criterion_ids: string[];
   paper_ids: string[];
   directive_ids: string[];
+  approved_by?: string;
+  implemented_by?: string;
+  verified_by?: string;
   created_at: string;
   updated_at: string;
 };
@@ -140,6 +186,7 @@ export type DirectiveRecord = {
   source_file?: string;
   source_evidence?: string;
   inferred_implementation: string;
+  proposed_by?: string;
   approved_by?: string;
   created_at: string;
   updated_at: string;
@@ -163,6 +210,9 @@ export type PaperRecord = {
   relevant_sections: string[];
   discovery_source: "user_upload" | "codex_online" | "manual_reference";
   relevance_score?: number;
+  added_by?: string;
+  extracted_by?: string;
+  approved_by?: string;
   created_at: string;
   updated_at: string;
 };
@@ -179,8 +229,11 @@ export type PlannerState = {
     pins: number;
     criteria: number;
     designTurns: number;
+    collaborationContexts: number;
   };
   implementation_target?: ImplementationTarget;
+  actors: Record<string, ActorRecord>;
+  collaboration_contexts: Record<string, CollaborationContextRecord>;
   blocks: Record<string, BlockRecord>;
   papers: Record<string, PaperRecord>;
   directives: Record<string, DirectiveRecord>;
@@ -195,8 +248,3 @@ export type BlockMarkdownMeta = BlockRecord & {
 };
 
 export type ToolResultData = Record<string, unknown> | unknown[] | null;
-
-
-
-
-

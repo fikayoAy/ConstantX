@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { PlannerStore } from "./storage.js";
-import { BLOCK_STATUSES } from "./types.js";
+import { BLOCK_STATUSES, COLLABORATION_ROLES, EXECUTION_MODES } from "./types.js";
 import type { ToolResultData } from "./types.js";
 import { toJsonText } from "./utils.js";
 
@@ -33,6 +33,15 @@ const evidenceType = z.enum([
 const designDecisionStatus = z.enum(["open", "candidate", "approved", "rejected"]);
 const implementationContextMode = z.enum(["implement", "reimplement"]).optional()
   .describe("Default implement only allows ready blocks. Use reimplement only when the user explicitly requests reimplementation of an implemented or verified block.");
+const collaborationRole = z.enum(COLLABORATION_ROLES);
+const executionMode = z.enum(EXECUTION_MODES);
+const collaborationInput = {
+  actor: z.string().min(1).optional().describe("Person, agent, or service responsible for this action. Defaults to local-user when omitted."),
+  role: collaborationRole.optional().describe("Collaboration role for this action: owner, researcher, reviewer, implementer, or verifier."),
+  scope: z.union([z.string(), z.array(z.string())]).optional().describe("Allowed scope for this action, for example project, B-001, or an artifact path."),
+  intent: z.string().min(1).optional().describe("What the actor is trying to do in this action."),
+  executionMode: executionMode.optional().describe("How far this action may go: review-only, draft, approve, implement, reimplement, or verify-only.")
+};
 
 const evidenceReferenceSchema = z.object({
   title: z.string(),
@@ -108,6 +117,7 @@ export function createPlannerServer(): McpServer {
         "Blocks must represent actual decomposed parts of the supplied plan, not generic project phases, and each written block must carry original-plan acceptance criteria.",
         "Before creating specs or implementing blocks, set the project implementation target with language and framework.",
         "Do not implement a block until planner.prepare_implementation_context succeeds in strict mode and criteria coverage evidence can be recorded.",
+        "ConstantX is not a scaffold generator: implementations must not be stub, placeholder, toy, demo-only, mock-only, minimal, superficial, TODO-driven, or partial when the approved block artifacts require concrete behavior.",
         "When extracting research, store only block-specific information and preserve evidence references.",
         "For online evidence, prepare search queries, search primary sources or official references, add useful evidence references, extract block-specific evidence, create spec.md, then implement from the approved spec.",
         "Prefer the five user-facing workflow command families for normal use: workflow.start_project, workflow.write_blocks, workflow.refine, workflow.gather_evidence, and workflow.implement. Lower-level workflow and planner tools remain for backward-compatible or advanced stage control."
@@ -122,6 +132,7 @@ export function createPlannerServer(): McpServer {
       description: "Consolidated stage 1: create a planner project, ingest the plan, set language/framework, and propose blocks without writing them.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         planPath: z.string().optional(),
         content: z.string().optional(),
         planFileName: z.string().optional(),
@@ -142,6 +153,7 @@ export function createPlannerServer(): McpServer {
       description: "Backward-compatible stage 2 alias: write approved plan-derived blocks, create block folders, generate inline [n] block pins plus pins.md, and export the graph. Prefer workflow.write_blocks for normal use.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blocks: z.array(planBlockSchema).optional(),
         maxBlocks: z.number().int().min(1).max(200).optional(),
         preserveSections: z.boolean().optional(),
@@ -158,6 +170,7 @@ export function createPlannerServer(): McpServer {
       description: "Five-command stage 2: write approved plan-derived blocks, derive original-plan acceptance criteria, generate inline [n] references in block.md, create criteria.md, criteria-diff.md, pins.md for each block, and export the graph. Stops before refinement/evidence/spec/implementation.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blocks: z.array(planBlockSchema).optional(),
         maxBlocks: z.number().int().min(1).max(200).optional(),
         preserveSections: z.boolean().optional(),
@@ -171,9 +184,10 @@ export function createPlannerServer(): McpServer {
     "workflow.refine",
     {
       title: "Refine",
-      description: "Five-command refinement family: refine all written blocks before evidence, record block-level discussion against [n] pins, or finalize a block design session before spec/code. Never gathers evidence or implements.",
+      description: "Five-command refinement family: refine all written blocks before evidence, automatically create/update annotation-<BLOCK_ID>.md and design-session.md for block-level refinement against [n] pins, or finalize a block design session before spec/code. Never gathers evidence or implements.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId: z.string().optional(),
         focus: z.string().optional(),
         userNote: z.string().optional(),
@@ -195,9 +209,10 @@ export function createPlannerServer(): McpServer {
     "workflow.implement",
     {
       title: "Implement",
-      description: "Five-command implementation family: with specMarkdown it creates concrete spec.md only when acceptance criteria are mapped; without specMarkdown it approves reviewed spec if needed, prepares strict context, then records and verifies implementation only when implementation evidence and criteria coverage are supplied.",
+      description: "Five-command implementation family: with specMarkdown it creates concrete spec.md only when acceptance criteria and non-minimal implementation requirements are mapped; without specMarkdown it approves reviewed spec if needed, prepares strict context, then records and verifies implementation only when concrete implementation evidence and criteria coverage are supplied.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         specMarkdown: z.string().optional(),
         generatedBy: z.string().optional(),
@@ -221,6 +236,7 @@ export function createPlannerServer(): McpServer {
       description: "Consolidated stage 3: prepare broad online evidence search, optionally attach evidence references/files, and optionally store block-specific extracted evidence. Does not approve or implement.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         references: z.array(evidenceReferenceSchema).optional(),
         extractionMarkdown: z.string().optional(),
@@ -237,6 +253,7 @@ export function createPlannerServer(): McpServer {
       description: "Backward-compatible design stage alias: apply provided annotations/directives, approve extracted evidence, and optionally create spec.md. Prefer workflow.refine and workflow.implement for normal use.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         annotations: z.array(workflowAnnotationSchema).optional(),
         directives: z.array(workflowDirectiveSchema).optional(),
@@ -256,6 +273,7 @@ export function createPlannerServer(): McpServer {
       description: "Internal/backward-compatible refinement tool for one block. Reuses existing block pins and appends evidence/directive/spec pins when needed. Does not approve, create specs, or implement.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         focus: z.string().optional()
       }
@@ -270,6 +288,7 @@ export function createPlannerServer(): McpServer {
       description: "Internal session tool for Codex to append a substantive user design decision/question to annotation-<BLOCK_ID>.md and design-session.md against inferred pins. Does not approve, create specs, or implement.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         userNote: z.string().min(20),
         agentInterpretation: z.string().optional(),
@@ -288,6 +307,7 @@ export function createPlannerServer(): McpServer {
       description: "Finalize approved design-session decisions into implementation directives, approve research if ready, and optionally create concrete spec.md. Stops before spec approval and implementation.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         directives: z.array(workflowDesignDirectiveSchema).optional(),
         approvedBy: z.string().optional(),
@@ -302,9 +322,10 @@ export function createPlannerServer(): McpServer {
     "workflow.implement_and_verify_block",
     {
       title: "Implement And Verify Block",
-      description: "Backward-compatible implementation stage alias: approve reviewed spec if needed, prepare strict implementation context, then record and verify only after Codex supplies implementation evidence. Prefer workflow.implement for normal use.",
+      description: "Backward-compatible implementation stage alias: approve reviewed spec if needed, prepare strict implementation context, then record and verify only after Codex supplies concrete non-minimal implementation evidence. Prefer workflow.implement for normal use.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         approvedBy: z.string().optional(),
         approvalNotes: z.string().optional(),
@@ -326,10 +347,11 @@ export function createPlannerServer(): McpServer {
       description: "Create the markdown-backed planner directory structure and initial state.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         planFileName: z.string().optional().describe("Plan filename. Defaults to system-plan.md.")
       }
     },
-    async ({ projectPath: pathArg, planFileName }) => ok(await new PlannerStore(pathArg).createProject(planFileName))
+    async (args) => ok(await new PlannerStore(args.projectPath).createProject(args.planFileName, args))
   );
 
   server.registerTool(
@@ -339,6 +361,7 @@ export function createPlannerServer(): McpServer {
       description: "Write or import a markdown system plan into the planner project.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         content: z.string().optional(),
         planPath: z.string().optional(),
         planFileName: z.string().optional(),
@@ -355,12 +378,13 @@ export function createPlannerServer(): McpServer {
       description: "Set the project implementation language and framework that all generated specs and strict implementation contexts must use.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         language: z.string().min(1),
         framework: z.string().min(1)
       }
     },
-    async ({ projectPath: pathArg, language, framework }) =>
-      ok(await new PlannerStore(pathArg).setImplementationTarget({ language, framework }))
+    async (args) =>
+      ok(await new PlannerStore(args.projectPath).setImplementationTarget(args))
   );
 
   server.registerTool(
@@ -385,6 +409,7 @@ export function createPlannerServer(): McpServer {
       description: "Propose or write plan-derived implementation blocks. Defaults to merged blocks with maxBlocks=12; pass preserveSections=true to keep every source heading as its own block.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blocks: z.array(planBlockSchema).optional(),
         maxBlocks: z.number().int().min(1).max(200).optional(),
         preserveSections: z.boolean().optional(),
@@ -417,6 +442,7 @@ export function createPlannerServer(): McpServer {
       description: "Read a block package: block markdown, attached papers, extracted research, and implementation notes.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId
       },
       annotations: {
@@ -433,6 +459,7 @@ export function createPlannerServer(): McpServer {
       description: "Read the exact target file and block package context before Codex annotates block.md, extracted-research.md, spec.md, implementation.md, or an implementation source file. This is read-only and must not approve, create specs, or implement.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         targetFile,
         topic: annotationTopic,
@@ -454,6 +481,7 @@ export function createPlannerServer(): McpServer {
       description: "Append one dated annotation section to a validated target file inside the planner project. This does not change block status, approve research/specs, create specs, record implementation, or modify any file except the target file.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         targetFile,
         topic: annotationTopic,
@@ -474,6 +502,7 @@ export function createPlannerServer(): McpServer {
       description: "Store an approved user implementation directive for a block. The user gives a natural instruction, and Codex must infer the concrete implementation relevance from block.md, papers.md, extracted-research.md, and spec.md before calling this tool. Adding a directive invalidates an existing spec/implementation status and returns the block to research_approved so spec.md must be recreated.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         instruction: directiveInstruction,
         inferredImplementation,
@@ -493,6 +522,7 @@ export function createPlannerServer(): McpServer {
       description: "List approved implementation directives, optionally only for one block.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId: z.string().optional()
       },
       annotations: {
@@ -509,6 +539,7 @@ export function createPlannerServer(): McpServer {
       description: "Read directives.md and structured approved implementation directives for one block.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId
       },
       annotations: {
@@ -525,6 +556,7 @@ export function createPlannerServer(): McpServer {
       description: "Update block metadata or body, including dependency and related-block cross references.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         title: z.string().optional(),
         status: z.enum(BLOCK_STATUSES).optional(),
@@ -545,6 +577,7 @@ export function createPlannerServer(): McpServer {
       description: "Attach a research paper or paper text to a specific block.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         paperPath: z.string().optional(),
         sourceUrl: z.string().optional(),
@@ -574,6 +607,7 @@ export function createPlannerServer(): McpServer {
       description: "Attach a Codex-discovered online paper reference to a specific block without requiring a local PDF.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         title: z.string(),
         sourceUrl: z.string(),
@@ -599,6 +633,7 @@ export function createPlannerServer(): McpServer {
       description: "List all papers or the papers attached to one block.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId: z.string().optional()
       },
       annotations: {
@@ -615,6 +650,7 @@ export function createPlannerServer(): McpServer {
       description: "Return the block and attached-paper context Codex should use before writing block-specific extraction.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId
       },
       annotations: {
@@ -631,6 +667,7 @@ export function createPlannerServer(): McpServer {
       description: "Generate block-specific online paper search queries and instructions for Codex to find relevant primary papers.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId
       },
       annotations: {
@@ -647,6 +684,7 @@ export function createPlannerServer(): McpServer {
       description: "Store block-specific extracted research markdown. If omitted, creates a structured extraction template.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         extractionMarkdown: z.string().optional(),
         generatedBy: z.string().optional()
@@ -662,6 +700,7 @@ export function createPlannerServer(): McpServer {
       description: "Approve extracted research for a block and make it eligible for implementation if dependencies are done.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         approvedBy: z.string().optional(),
         notes: z.string().optional()
@@ -674,9 +713,10 @@ export function createPlannerServer(): McpServer {
     "planner.create_spec",
     {
       title: "Create Block Spec",
-      description: "Store a concrete spec.md after research approval. The server rejects placeholder or underspecified specs and enforces implementation target, approved directives, artifact scope, verification, traceability, and per-paper/model implementation fit.",
+      description: "Store a concrete spec.md after research approval. The server rejects placeholder, minimal, or underspecified specs and enforces implementation target, approved directives, finalized design pins, artifact scope, non-minimal implementation requirements, verification, traceability, and per-paper/model implementation fit.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         specMarkdown: z.string().optional(),
         generatedBy: z.string().optional()
@@ -689,9 +729,10 @@ export function createPlannerServer(): McpServer {
     "planner.approve_spec",
     {
       title: "Approve Block Spec",
-      description: "Approve spec.md and make the block eligible for implementation if dependencies are done. The server rejects placeholder or underspecified specs.",
+      description: "Approve spec.md and make the block eligible for implementation if dependencies are done. The server rejects placeholder, minimal, or underspecified specs and requires non-minimal implementation requirements, finalized design pins, directives, artifact scope, verification, and paper/model fit coverage.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         approvedBy: z.string().optional(),
         notes: z.string().optional()
@@ -719,9 +760,10 @@ export function createPlannerServer(): McpServer {
     "planner.prepare_implementation_context",
     {
       title: "Prepare Implementation Context",
-      description: "Return the approved block package Codex should implement from. Strict mode enforces approval, dependency, and implementation-target gates. Pass mode=reimplement only when the user explicitly asks to reimplement an already implemented or verified block.",
+      description: "Return the approved block package Codex should implement from, including the non-minimal implementation requirement. Strict mode enforces approval, dependency, and implementation-target gates. Pass mode=reimplement only when the user explicitly asks to reimplement an already implemented or verified block.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         strict: z.boolean().optional(),
         mode: implementationContextMode
@@ -741,6 +783,7 @@ export function createPlannerServer(): McpServer {
       description: "Record what Codex implemented for a block and move the block to implemented by default.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         summary: z.string(),
         changedFiles: stringList,
@@ -759,6 +802,7 @@ export function createPlannerServer(): McpServer {
       description: "Mark an implemented block as verified and record verification evidence.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         blockId,
         evidence: z.string().optional(),
         criteriaEvidence: z.string().optional(),
@@ -790,6 +834,7 @@ export function createPlannerServer(): McpServer {
       description: "After all blocks are implemented, gather specs and implementation notes so Codex can translate the plan records into normal source-code files and tests.",
       inputSchema: {
         projectPath,
+        ...collaborationInput,
         strict: z.boolean().optional()
       },
       annotations: {
@@ -815,6 +860,10 @@ function ok(data: ToolResultData): CallToolResult {
     }
   };
 }
+
+
+
+
 
 
 

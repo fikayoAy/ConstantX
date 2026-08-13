@@ -52,7 +52,7 @@ When the discussion is done:
 Use ConstantX. Finalize the refinement for block <BLOCK_ID> in project <PROJECT_PATH>. Convert approved decisions into implementation directives, approve evidence if ready, create spec.md, and show it for review. Do not approve spec or implement.
 ```
 
-This family is where annotations and implementation directives are handled. The user can talk normally or provide an `annotation-B-001.md` style note; Codex should keep adding the relevant context to the design record internally.
+This family is where annotations and implementation directives are handled. When `workflow.refine` is called with a `blockId`, ConstantX automatically creates or updates `annotation-<BLOCK_ID>.md` and `design-session.md`. The user can talk normally or provide an `annotation-B-001.md` style note; Codex should record substantive decisions through this same `workflow.refine` family instead of requiring separate user-facing annotation commands.
 
 ## 4. Gather Evidence
 
@@ -66,7 +66,7 @@ If evidence creates new checkpoints, the MCP appends them to the same `pins.md` 
 
 ## 5. Implement
 
-To create the reviewed spec from approved design/evidence, the spec must map every original-plan acceptance criterion from `criteria.md`:
+To create the reviewed spec from approved design/evidence, the spec must map every original-plan acceptance criterion from `criteria.md` and include a Non-Minimal Implementation Requirement section:
 
 ```text
 Use ConstantX. Create spec.md for block <BLOCK_ID> in project <PROJECT_PATH> from block.md, pins.md, papers.md, extracted-research.md, approved implementation directives, and the approved implementation target. Do not approve spec or implement.
@@ -78,7 +78,7 @@ To implement after reviewing the spec:
 Use ConstantX. Approve spec, implement, record, and verify block <BLOCK_ID> in project <PROJECT_PATH>.
 ```
 
-This is the only family that writes implementation code. It approves the reviewed spec if needed, prepares strict implementation context, implements only that block, records changed files, requires criteria coverage evidence, runs verification, updates `criteria-diff.md`, and marks the block verified.
+This is the only family that writes implementation code. It approves the reviewed spec if needed, prepares strict implementation context, implements only that block, records changed files, requires criteria coverage evidence, rejects weak/minimal/stub-style implementation records, requires implementation evidence for approved directives, explicit spec artifacts, and paper/model fit items, requires verification evidence for every command in the spec verification plan, updates `criteria-diff.md`, and marks the block verified.
 
 Use reimplementation only when you intentionally want to redo a completed block:
 

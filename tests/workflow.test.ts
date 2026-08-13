@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -336,7 +336,7 @@ test("planner MCP server supports the full research-gated block workflow", async
       blockId: "B-001",
       summary: "Implemented source document intake traceability and satisfied AC-1 for source plan reference preservation.",
       changedFiles: ["src/storage.ts"],
-      criteriaEvidence: "AC-1 / AC-B001-001 satisfied: the implementation preserves the source plan reference criterion through block package records and storage updates."
+      criteriaEvidence: "AC-1 / AC-B001-001 satisfied: the implementation preserves the source plan reference criterion through block package records and storage updates. It honors directive D-001 and implements the paper/model fit obligations from P-001 and P-002."
     });
     assert.equal(implemented.status, "implemented");
 
@@ -360,7 +360,7 @@ test("planner MCP server supports the full research-gated block workflow", async
     const verified = await call(client, "planner.verify_block", {
       projectPath,
       blockId: "B-001",
-      evidence: "End-to-end MCP workflow test passed and verified AC-1 source plan reference preservation.",
+      evidence: "End-to-end MCP workflow test passed and verified AC-1 source plan reference preservation. Verification command `npm run build` passed. Verification command `node --test dist/tests` passed.",
       criteriaEvidence: "AC-1 / AC-B001-001 verified: tests exercised the block package source reference workflow end to end.",
       verifier: "node:test"
     });
@@ -406,12 +406,12 @@ test("planner MCP server supports the full research-gated block workflow", async
       blockId: "B-002",
       summary: "Implemented research evidence mapping and satisfied AC-1 for block-specific evidence linkage.",
       changedFiles: ["src/storage.ts"],
-      criteriaEvidence: "AC-1 / AC-B002-001 satisfied: implementation keeps extracted research block-specific and evidence-linked."
+      criteriaEvidence: "AC-1 / AC-B002-001 satisfied: implementation keeps extracted research block-specific and evidence-linked and implements the paper/model fit obligation from P-003."
     });
     await call(client, "planner.verify_block", {
       projectPath,
       blockId: "B-002",
-      evidence: "Dependent block verification passed and verified AC-1 block-specific evidence linkage.",
+      evidence: "Dependent block verification passed and verified AC-1 block-specific evidence linkage. Verification command `npm run build` passed. Verification command `node --test dist/tests` passed.",
       criteriaEvidence: "AC-1 / AC-B002-001 verified: dependent workflow preserved block-specific extraction and evidence linkage."
     });
     const finalCodeContext = await call(client, "planner.prepare_final_code_context", { projectPath });
@@ -558,15 +558,31 @@ test("consolidated workflow tools support the five-command path", async () => {
     });
     assert.equal(implementationGate.approvedSpec.status, "ready_to_implement");
     assert.match(implementationGate.implementationContext.context, /Implementation Context For B-001/);
+    assert.match(implementationGate.implementationContext.context, /Non-Minimal Implementation Requirement/);
     assert.match(implementationGate.nextActions.join("\n"), /Codex must implement only this block/);
+
+    const weakImplementation = await client.callTool({
+      name: "workflow.implement",
+      arguments: {
+        projectPath,
+        blockId: "B-001",
+        implementationSummary: "Implemented a minimal placeholder for AC-1 source reference determinism.",
+        changedFiles: ["src/intake.py"],
+        criteriaEvidence: "AC-1 / AC-B001-001 satisfied: source reference determinism was mentioned in the placeholder implementation for P-001.",
+        verificationEvidence: "Unit tests passed for deterministic source intake and AC-1 source reference determinism. Verification command `npm run build` passed. Verification command `node --test dist/tests` passed.",
+        verifier: "node:test"
+      }
+    });
+    assert.equal("isError" in weakImplementation ? weakImplementation.isError : false, true);
+    assert.match(getText(weakImplementation), /weak\/minimal implementation/);
 
     const verified = await call(client, "workflow.implement", {
       projectPath,
       blockId: "B-001",
       implementationSummary: "Implemented deterministic source intake and satisfied AC-1 source reference determinism.",
       changedFiles: ["src/intake.py"],
-      criteriaEvidence: "AC-1 / AC-B001-001 satisfied and verified: deterministic source intake preserves explicit source references for the block.",
-      verificationEvidence: "Unit tests passed for deterministic source intake and AC-1 source reference determinism.",
+      criteriaEvidence: "AC-1 / AC-B001-001 satisfied and verified: deterministic source intake preserves explicit source references for the block and implements the paper/model fit obligation from P-001.",
+      verificationEvidence: "Unit tests passed for deterministic source intake and AC-1 source reference determinism. Verification command `npm run build` passed. Verification command `node --test dist/tests` passed.",
       verifier: "node:test"
     });
     assert.equal(verified.implementation.status, "implemented");
@@ -652,7 +668,7 @@ test("block design sessions generate pins, record decisions, and finalize into d
       generatedBy: "node:test"
     });
 
-    const session = await call(client, "workflow.start_block_design_session", {
+    const session = await call(client, "workflow.refine", {
       projectPath,
       blockId: "B-001",
       focus: "Convert user redesign notes into directives before spec generation."
@@ -663,7 +679,7 @@ test("block design sessions generate pins, record decisions, and finalize into d
     assert.match(session.files.annotation, /annotation-B-001\.md/);
 
     const approvedPinId = session.pins[0].id;
-    const turn = await call(client, "workflow.record_block_design_turn", {
+    const turn = await call(client, "workflow.refine", {
       projectPath,
       blockId: "B-001",
       userNote: "Use the pinned design-session evidence to force spec generation to cite the original plan checkpoint and prevent generic implementation drift.",
@@ -715,6 +731,123 @@ test("block design sessions generate pins, record decisions, and finalize into d
   }
 });
 
+
+test("collaboration context records actor role scope and graph attribution", async () => {
+  const projectPath = path.join(".test-output", `collaboration-${process.pid}-${Date.now()}`);
+  await fs.mkdir(".test-output", { recursive: true });
+
+  const client = new Client({ name: "planner-collaboration-test-client", version: "0.1.0" });
+  const transport = new StdioClientTransport({
+    command: process.execPath,
+    args: ["dist/src/index.js"],
+    cwd: process.cwd(),
+    stderr: "pipe"
+  });
+
+  try {
+    await client.connect(transport);
+
+    await call(client, "workflow.start_project", {
+      projectPath,
+      content: "# Collaboration Plan\n\n## Intake\nCreate one traceable block.",
+      planFileName: "system-plan.md",
+      language: "TypeScript",
+      framework: "Node.js",
+      maxBlocks: 1,
+      actor: "ayode",
+      role: "owner",
+      scope: "project",
+      intent: "start_project",
+      executionMode: "draft"
+    });
+
+    const written = await call(client, "workflow.write_blocks", {
+      projectPath,
+      actor: "fikayo",
+      role: "reviewer",
+      scope: "project",
+      intent: "write_blocks",
+      executionMode: "approve",
+      blocks: [
+        {
+          id: "B-001",
+          title: "Intake",
+          purpose: "Create one traceable block.",
+          implementation_criteria: ["The block records collaboration attribution."]
+        }
+      ]
+    });
+    assert.equal(written.blocks[0].created_by, "fikayo");
+
+    const state = JSON.parse(await fs.readFile(path.join(projectPath, ".planner", "state.json"), "utf8"));
+    assert.ok(state.actors.ayode);
+    assert.ok(state.actors.fikayo);
+    assert.equal(state.blocks["B-001"].created_by, "fikayo");
+    assert.equal(state.blocks["B-001"].updated_by, "fikayo");
+
+    const auditLines = (await fs.readFile(path.join(projectPath, ".planner", "audit-log.jsonl"), "utf8"))
+      .trim()
+      .split(/\r?\n/)
+      .map((line) => JSON.parse(line));
+    assert.ok(auditLines.some((entry) => entry.event === "project_created" && entry.actor === "ayode" && entry.role === "owner"));
+    assert.ok(auditLines.some((entry) => entry.event === "plan_decomposed" && entry.actor === "fikayo" && entry.role === "reviewer"));
+
+    await call(client, "workflow.gather_evidence", {
+      projectPath,
+      blockId: "B-001",
+      actor: "researcher-one",
+      role: "researcher",
+      scope: "B-001",
+      intent: "gather_evidence",
+      executionMode: "draft",
+      references: [
+        {
+          title: "Collaboration Evidence",
+          sourceUrl: "https://example.com/evidence",
+          evidenceType: "official_doc",
+          relevant_sections: ["attribution"]
+        }
+      ],
+      extractionMarkdown: "# Extracted Research\n\n## Relevant Claims\n- Collaboration attribution must stay block-specific."
+    });
+
+    await call(client, "workflow.refine", {
+      projectPath,
+      blockId: "B-001",
+      actor: "ayode",
+      role: "owner",
+      scope: "B-001",
+      intent: "refine_design",
+      executionMode: "review-only",
+      userNote: "Keep collaboration attribution visible in the block refinement session before generating any implementation spec."
+    });
+
+    const evidenceState = JSON.parse(await fs.readFile(path.join(projectPath, ".planner", "state.json"), "utf8"));
+    assert.equal(evidenceState.papers["P-001"].added_by, "researcher-one");
+    const turnId = Object.keys(evidenceState.design_turns)[0];
+    assert.equal(evidenceState.design_turns[turnId].created_by, "ayode");
+
+    const graph = await call(client, "planner.export_graph", { projectPath });
+    assert.equal(graph.graph.blocks[0].created_by, "fikayo");
+
+    const rejected = await client.callTool({
+      name: "workflow.write_blocks",
+      arguments: {
+        projectPath,
+        actor: "research-person",
+        role: "researcher",
+        scope: "project",
+        blocks: [{ id: "B-002", title: "Invalid Role" }],
+        replace: true
+      }
+    });
+    assert.equal("isError" in rejected ? rejected.isError : false, true);
+    assert.match(getText(rejected), /Role researcher cannot perform intent write_blocks/);
+  } finally {
+    await client.close();
+  }
+});
+
 function concreteSpecWithDesignPins(blockId: string, title: string, objective: string, paperIds: string[], directiveIds: string[], pinIds: string[]): string {
   return concreteSpec(blockId, title, objective, paperIds, directiveIds).replace(
     "## Acceptance Criteria",
@@ -736,6 +869,9 @@ function concreteSpec(blockId: string, title: string, objective: string, paperId
     "## Concrete Implementation Requirements",
     objective,
     "The implementation must preserve stable block ids, source references, and evidence links. It must turn the approved research into explicit implementation behavior rather than generic project scaffolding. It must be deterministic for the same input markdown and stored state.",
+    "",
+    "## Non-Minimal Implementation Requirement",
+    "Do not create stub, placeholder, mock-only, toy, demo-only, minimal, superficial, TODO-driven, or partial behavior. Implement the complete concrete behavior required by the original plan, block.md, criteria.md, pins.md, papers.md, extracted-research.md, directives.md, annotation files, design-session decisions, spec.md, and verification plan. If the full block cannot be implemented, stop and record the blocker instead of silently reducing scope.",
     "",
     "## Interfaces And Data Contracts",
     "Expose persisted markdown artifacts with stable paths, JSON state records with block id, status, dependency references, research references, and implementation records. Inputs are projectPath, blockId, markdown content, source references, and approved reviewer metadata. Outputs are updated state.json, block markdown files, graph exports, and implementation context strings.",

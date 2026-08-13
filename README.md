@@ -1,14 +1,14 @@
 # ConstantX
-
-`ConstantX` is an opt-in MCP workflow for Codex. It turns a markdown system plan into traceable implementation blocks, gathers block-specific evidence, supports user-guided redesign before specs, and gates code implementation behind approved research, approved specs, and strict implementation context.
+<p align="center">
+  <img src="assets/logo.png" alt="ConstantX logo" width="180" />
+</p>
+ConstantX is an opt-in MCP workflow for Codex. It turns a markdown system plan into traceable implementation blocks, gathers block-specific evidence, supports user-guided redesign before specs, and gates code implementation behind approved research, approved specs, and strict implementation context.
 
 Use it from Codex only when your prompt starts like this:
 
 ```text
 Use ConstantX. <workflow action>
 ```
-
-![ConstantX hero](assets/ChatGPT%20Image%20Jul%2023%2C%202026%2C%2001_54_24%20PM.png)
 
 ## Documentation
 
@@ -26,10 +26,10 @@ Use ConstantX. <workflow action>
 - Stores each block as markdown artifacts for acceptance criteria, criteria diffs, evidence, pins, design sessions, directives, specs, and implementation records.
 - Lets Codex gather broad evidence: papers, official docs, repositories, datasets, benchmarks, model cards, API docs, implementation examples, user files, and local project files.
 - Creates original-plan acceptance criteria upfront, embeds them in each block, and pins them with inline `[n]` checkpoints backed by `criteria.md`, `criteria-diff.md`, and `pins.md`.
-- Converts approved design decisions into implementation directives and concrete specs before implementation.
-- Preserves strict gates so implementation starts only after approved research, approved spec, dependencies, strict implementation context, and criteria coverage evidence.
+- Converts approved design decisions into implementation directives and concrete specs before implementation, with block refinement automatically recorded in `annotation-<BLOCK_ID>.md` and `design-session.md`.
+- Preserves strict gates so implementation starts only after approved research, approved spec, dependencies, strict implementation context, criteria coverage evidence, and non-minimal implementation requirements.
 
-![Five-command MCP workflow from plan to verified implementation](assets/ChatGPT%20Image%20Aug%204%2C%202026%2C%2004_28_04%20AM.png)
+![Five-command MCP workflow from plan to verified implementation](assets/plan.png)
 
 ## Quick Start
 
@@ -52,6 +52,35 @@ Add the MCP server to Codex:
 ```
 
 Then restart Codex.
+
+## Collaboration Context
+
+ConstantX workflow commands accept optional collaboration context so audit logs, planner state, and graph output can show who performed each action and what scope was allowed.
+
+```text
+Actor: <NAME>
+Role: owner | researcher | reviewer | implementer | verifier
+Scope: project | B-001 | B-001, B-002 | artifact: <PATH>
+Intent: <WHAT YOU ARE DOING>
+Execution mode: review-only | draft | approve | implement | reimplement | verify-only
+```
+
+Example:
+
+```text
+Use ConstantX. Refine block B-001 in project <PROJECT_PATH>.
+
+Actor: ayode
+Role: owner
+Scope: B-001
+Intent: refine design before spec generation
+Execution mode: review-only
+
+I want to decide whether this block should use SAM 2 or Mask2Former.
+Do not create the spec or implement yet.
+```
+
+If no actor is supplied, ConstantX records the action as `local-user` for backward compatibility. Role and scope gates reject invalid write actions where collaboration context is provided. See [Multi-User Collaboration Provenance](docs/multi-user-collaboration-plan.md).
 
 ## Main Prompt Shape
 

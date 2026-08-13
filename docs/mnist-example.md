@@ -1,6 +1,6 @@
 # MNIST Worked Example
 
-![MNIST worked example flow](../assets/mnist-flow.svg)
+![MNIST worked example flow](../assets/mnist-flow.png)
 
 This repo includes a complete Python/PyTorch MNIST example in [`../mnist_folder`](../mnist_folder).
 
