@@ -1,4 +1,4 @@
-﻿# deep_learning_auto_research
+﻿# ConstantX
 
 `deep_learning_auto_research` is an opt-in MCP workflow for Codex. It turns a markdown system plan into traceable implementation blocks, gathers block-specific evidence, supports user-guided redesign before specs, and gates code implementation behind approved research, approved specs, and strict implementation context.
 
