@@ -6,7 +6,7 @@ import { createPlannerServer } from "./server.js";
 import { configuredAllowedProjectRoots } from "./utils.js";
 
 const SERVICE_NAME = "ConstantX";
-const SERVICE_VERSION = "0.1.3";
+const SERVICE_VERSION = "0.1.4";
 const startedAt = new Date();
 
 async function main(): Promise<void> {

@@ -1,7 +1,7 @@
 # ConstantX
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/fikayoAy/deep-learning-auto-research/main/ConstantX/assets/logo.png" alt="ConstantX logo" width="180" />
+  <img src="assets/logo.png" alt="ConstantX logo" width="180" />
 </p>
 
 ConstantX is an opt-in MCP workflow for coding agents. It turns a markdown system plan into traceable implementation blocks, gathers block-specific evidence, supports user-guided redesign before specs, and gates code implementation behind approved evidence, approved specs, strict implementation context, and verification.
@@ -34,7 +34,7 @@ ConstantX is not a general auto-run coding assistant. It is a staged engineering
 - Converts approved design decisions into implementation directives and concrete specs before implementation, with block refinement automatically recorded in `annotation-<BLOCK_ID>.md` and `design-session.md`.
 - Preserves strict gates so implementation starts only after approved evidence, approved spec, dependencies, strict implementation context, criteria coverage evidence, and non-minimal implementation requirements.
 
-![Five-command MCP workflow from plan to verified implementation](https://raw.githubusercontent.com/fikayoAy/deep-learning-auto-research/main/ConstantX/assets/plan.png)
+![Five-command MCP workflow from plan to verified implementation](assets/plan.png)
 
 ## VS Code Setup
 
