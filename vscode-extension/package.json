@@ -2,8 +2,8 @@
     "name":  "constantx-vscode",
     "displayName":  "ConstantX",
     "description":  "VS Code connector and status panel for the ConstantX MCP engineering workflow.",
-    "version":  "0.1.0",
-    "publisher":  "constantx",
+    "version":  "0.1.3",
+    "publisher":  "ConstantAx",
     "engines":  {
                     "vscode":  "^1.90.0"
                 },
@@ -11,12 +11,14 @@
                        "Other"
                    ],
     "activationEvents":  [
+                             "onStartupFinished",
                              "onCommand:constantx.startRuntime",
                              "onCommand:constantx.stopRuntime",
                              "onCommand:constantx.checkRuntime",
                              "onCommand:constantx.connectProvider",
                              "onCommand:constantx.openWorkflowPrompts",
                              "onCommand:constantx.openStatusPanel",
+                             "onCommand:constantx.openRuntimeLogs",
                              "onCommand:constantx.firstRunSetup",
                              "onCommand:constantx.healthCheck"
                          ],
@@ -54,6 +56,10 @@
                                          {
                                              "command":  "constantx.healthCheck",
                                              "title":  "ConstantX: Health Check"
+                                         },
+                                         {
+                                             "command":  "constantx.openRuntimeLogs",
+                                             "title":  "ConstantX: Open Runtime Logs"
                                          }
                                      ],
                         "configuration":  {
@@ -73,13 +79,29 @@
                                                                                                "type":  "string",
                                                                                                "default":  "",
                                                                                                "description":  "Planner project path for the status panel. Defaults to the active workspace folder."
-                                                                                           }
+                                                                                           },
+                                                                 "constantx.rootPath":  {
+                                                                                            "type":  "string",
+                                                                                            "default":  "",
+                                                                                            "description":  "Optional path to a ConstantX MCP server repository. Leave empty to use the bundled server inside the extension."
+                                                                                        },
+                                                                 "constantx.nodePath":  {
+                                                                                            "type":  "string",
+                                                                                            "default":  "",
+                                                                                            "description":  "Optional Node.js executable used to start the ConstantX HTTP MCP runtime. Leave empty to use VS Code/Electron as Node."
+                                                                                        },
+                                                                 "constantx.autoStart":  {
+                                                                                             "type":  "boolean",
+                                                                                             "default":  true,
+                                                                                             "description":  "Automatically start and supervise the shared ConstantX HTTP MCP runtime when VS Code starts."
+                                                                                         }
                                                              }
                                           }
                     },
     "scripts":  {
-                    "check":  "node --check src/extension.js \u0026\u0026 node --test tests/status-data.test.js",
-                    "package":  "vsce package --out ../dist-vsix/constantx-vscode-0.1.0.vsix"
+                    "check":  "node --check src/extension.js \u0026\u0026 node --check src/runtime-manager.js \u0026\u0026 node --test tests/status-data.test.js tests/runtime-manager.test.js",
+                    "package":  "node scripts/bundle-server.js \u0026\u0026 vsce package --out ../dist-vsix/constantx-vscode-0.1.3.vsix",
+                    "bundle-server":  "node scripts/bundle-server.js"
                 },
     "license":  "MIT",
     "devDependencies":  {
@@ -88,7 +110,7 @@
     "icon":  "assets/icon.png",
     "repository":  {
                        "type":  "git",
-                       "url":  "https://github.com/\u003cOWNER\u003e/\u003cREPO\u003e.git"
+                       "url":  "https://github.com/fikayoAy/deep-learning-auto-research.git"
                    },
     "keywords":  [
                      "mcp",

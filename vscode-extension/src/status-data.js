@@ -72,26 +72,84 @@ function collectRunPaths(runDir) {
 }
 
 function providerConfig(provider, endpoint) {
+  if (provider === "codex") {
+    return {
+      format: "toml",
+      extension: "toml",
+      text: [
+        "[mcp_servers.ConstantX]",
+        `url = \"${endpoint}\"`,
+        "enabled = true",
+        ""
+      ].join("\n")
+    };
+  }
+
   const config = {
     mcpServers: {
       ConstantX: {
-        type: "streamable-http",
+        type: provider === "claude" ? "http" : "streamable-http",
         url: endpoint
       }
     }
   };
   if (provider === "stdio") {
-    return {
-      mcpServers: {
-        ConstantX: {
-          type: "stdio",
-          command: "node",
-          args: ["<ABSOLUTE_PATH_TO_CONSTANTX>/dist/src/index.js"]
-        }
-      }
+    config.mcpServers.ConstantX = {
+      type: "stdio",
+      command: "node",
+      args: ["<ABSOLUTE_PATH_TO_CONSTANTX>/dist/src/index.js"]
     };
   }
-  return config;
+  return {
+    format: "json",
+    extension: "json",
+    text: `${JSON.stringify(config, null, 2)}\n`,
+    data: config
+  };
+}
+function analyzeCodexConfig(text, endpoint) {
+  const source = String(text || "");
+  const sectionPattern = /^\s*\[mcp_servers\.ConstantX\]\s*$/gm;
+  const sections = [...source.matchAll(sectionPattern)];
+  const sectionCount = sections.length;
+  const configuredUrl = extractCodexConstantXUrl(source, sections[0]?.index);
+  return {
+    exists: source.length > 0,
+    sectionCount,
+    duplicate: sectionCount > 1,
+    configuredUrl,
+    urlMatches: configuredUrl === endpoint,
+    hasEnabled: sectionCount > 0 && /enabled\s*=\s*true/.test(source.slice(sections[0].index, nextTomlSectionIndex(source, sections[0].index + 1)))
+  };
+}
+
+function mergeCodexConfig(text, endpoint) {
+  const source = String(text || "").trimEnd();
+  const analysis = analyzeCodexConfig(source, endpoint);
+  const block = ["[mcp_servers.ConstantX]", `url = "${endpoint}"`, "enabled = true"].join("\n");
+  if (analysis.duplicate) {
+    throw new Error("Duplicate [mcp_servers.ConstantX] sections found. Remove duplicates before updating automatically.");
+  }
+  if (analysis.sectionCount === 0) {
+    return `${source}${source ? "\n\n" : ""}${block}\n`;
+  }
+  const start = source.search(/^\s*\[mcp_servers\.ConstantX\]\s*$/m);
+  const end = nextTomlSectionIndex(source, start + 1);
+  const before = source.slice(0, start).trimEnd();
+  const after = source.slice(end).trimStart();
+  return `${before}${before ? "\n\n" : ""}${block}${after ? `\n\n${after}` : ""}\n`;
+}
+
+function extractCodexConstantXUrl(source, sectionStart) {
+  if (sectionStart === undefined) return undefined;
+  const section = source.slice(sectionStart, nextTomlSectionIndex(source, sectionStart + 1));
+  return section.match(/url\s*=\s*"([^"]+)"/)?.[1];
+}
+
+function nextTomlSectionIndex(source, start) {
+  const rest = source.slice(start);
+  const match = rest.match(/^\s*\[[^\]]+\]\s*$/m);
+  return match && match.index !== undefined ? start + match.index : source.length;
 }
 
 function statusTone(status) {
@@ -108,5 +166,7 @@ module.exports = {
   latestByTimestamp,
   readStatusData,
   providerConfig,
-  statusTone
+  statusTone,
+  analyzeCodexConfig,
+  mergeCodexConfig
 };

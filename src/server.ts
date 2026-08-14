@@ -6,7 +6,7 @@ import { BLOCK_STATUSES, COLLABORATION_ROLES, EXECUTION_MODES } from "./types.js
 import type { ToolResultData } from "./types.js";
 import { toJsonText } from "./utils.js";
 
-const projectPath = z.string().optional().describe("Project directory relative to the MCP server working directory.");
+const projectPath = z.string().optional().describe("Project directory. Relative paths resolve from the MCP server working directory; absolute paths must be inside a configured ConstantX allowed project root.");
 const blockId = z.string().describe("Block id such as B-001.");
 const targetFile = z.string().min(1).describe("Target file to annotate. May be absolute inside projectPath or relative to projectPath.");
 const annotationMarkdown = z.string().min(1).describe("Concrete annotation body derived from the selected source/excerpt. The tool wraps it in a dated Annotation section.");
