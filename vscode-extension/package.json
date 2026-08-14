@@ -2,7 +2,7 @@
     "name": "constantx-vscode",
     "displayName": "ConstantX",
     "description": "VS Code connector and status panel for the ConstantX MCP engineering workflow.",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "publisher": "ConstantAx",
     "engines": {
         "vscode": "^1.90.0"
@@ -100,7 +100,7 @@
     },
     "scripts": {
         "check": "node --check src/extension.js && node --check src/runtime-manager.js && node --test tests/status-data.test.js tests/runtime-manager.test.js",
-        "package": "node scripts/bundle-server.js && vsce package --baseImagesUrl https://raw.githubusercontent.com/fikayoAy/deep-learning-auto-research/main/ConstantX --out ../dist-vsix/constantx-vscode-0.1.4.vsix",
+        "package": "node scripts/bundle-server.js && vsce package --baseImagesUrl https://raw.githubusercontent.com/fikayoAy/ConstantX/main --out ../dist-vsix/constantx-vscode-0.1.5.vsix",
         "bundle-server": "node scripts/bundle-server.js"
     },
     "license": "MIT",
@@ -110,7 +110,7 @@
     "icon": "assets/icon.png",
     "repository": {
         "type": "git",
-        "url": "https://github.com/fikayoAy/deep-learning-auto-research.git"
+        "url": "https://github.com/fikayoAy/ConstantX.git"
     },
     "keywords": [
         "mcp",

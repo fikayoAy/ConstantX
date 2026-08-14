@@ -16,14 +16,14 @@ ConstantX is not a general auto-run coding assistant. It is a staged engineering
 
 ## Documentation
 
-- [Installation](https://github.com/fikayoAy/deep-learning-auto-research/blob/main/ConstantX/docs/installation.md)
-- [Codex Opt-In Setup](https://github.com/fikayoAy/deep-learning-auto-research/blob/main/ConstantX/docs/codex-opt-in.md)
-- [Workflow Commands](https://github.com/fikayoAy/deep-learning-auto-research/blob/main/ConstantX/docs/workflow-commands.md)
-- [Block Design Sessions](https://github.com/fikayoAy/deep-learning-auto-research/blob/main/ConstantX/docs/block-design-sessions.md)
-- [Project Layout](https://github.com/fikayoAy/deep-learning-auto-research/blob/main/ConstantX/docs/project-layout.md)
-- [Shared Runtime And WSL2](https://github.com/fikayoAy/deep-learning-auto-research/blob/main/ConstantX/docs/runtime-wsl2.md)
-- [Rules And Troubleshooting](https://github.com/fikayoAy/deep-learning-auto-research/blob/main/ConstantX/docs/rules-and-troubleshooting.md)
-- [MNIST Worked Example](https://github.com/fikayoAy/deep-learning-auto-research/blob/main/ConstantX/docs/mnist-example.md)
+- [Installation](https://github.com/fikayoAy/ConstantX/blob/main/docs/installation.md)
+- [Codex Opt-In Setup](https://github.com/fikayoAy/ConstantX/blob/main/docs/codex-opt-in.md)
+- [Workflow Commands](https://github.com/fikayoAy/ConstantX/blob/main/docs/workflow-commands.md)
+- [Block Design Sessions](https://github.com/fikayoAy/ConstantX/blob/main/docs/block-design-sessions.md)
+- [Project Layout](https://github.com/fikayoAy/ConstantX/blob/main/docs/project-layout.md)
+- [Shared Runtime And WSL2](https://github.com/fikayoAy/ConstantX/blob/main/docs/runtime-wsl2.md)
+- [Rules And Troubleshooting](https://github.com/fikayoAy/ConstantX/blob/main/docs/rules-and-troubleshooting.md)
+- [MNIST Worked Example](https://github.com/fikayoAy/ConstantX/blob/main/docs/mnist-example.md)
 
 ## What It Does
 
@@ -110,7 +110,7 @@ When `workflow.refine` targets a block, ConstantX creates or updates:
 - `design-session.md`
 - approved implementation directives when the session is finalized
 
-Use this when you need the implementation to follow your intended direction before any code is generated. Full guide: [Block Design Sessions](https://github.com/fikayoAy/deep-learning-auto-research/blob/main/ConstantX/docs/block-design-sessions.md).
+Use this when you need the implementation to follow your intended direction before any code is generated. Full guide: [Block Design Sessions](https://github.com/fikayoAy/ConstantX/blob/main/docs/block-design-sessions.md).
 
 ## Implementation Rules
 

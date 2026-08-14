@@ -22,14 +22,14 @@ test("HTTP runtime exposes health and MCP tools", async () => {
     await waitForHealth(port);
     const health = await (await fetch(`http://127.0.0.1:${port}/health`)).json();
     assert.equal(health.service, "ConstantX");
-    assert.equal(health.version, "0.1.4");
+    assert.equal(health.version, "0.1.5");
     assert.equal(health.endpoint, `http://127.0.0.1:${port}/mcp`);
     assert.equal(health.pid, child.pid);
 
     const getMcp = await fetch(`http://127.0.0.1:${port}/mcp`);
     assert.equal(getMcp.status, 405);
 
-    const client = new Client({ name: "constantx-http-test", version: "0.1.4" });
+    const client = new Client({ name: "constantx-http-test", version: "0.1.5" });
     const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`));
     await client.connect(transport);
     const tools = await client.listTools();
