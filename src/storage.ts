@@ -4,6 +4,9 @@ import { blockDirectoryName, decomposePlanText } from "./decompose.js";
 import type { DecomposeOptions } from "./decompose.js";
 import { parseMarkdownDocument, section, stringifyMarkdownDocument } from "./markdown.js";
 import { actorFrom, collaborationSummary, resolveCollaborationContext } from "./collaboration.js";
+import { loadConstantXConfig } from "./config.js";
+import { runImplementationJob } from "./runtime/job-runner.js";
+import { applyRuntimePatch, inspectRuntimeRun, rerunRuntimeVerification } from "./runtime/run-controls.js";
 import type {
   AcceptanceCriterionRecord,
   CollaborationContextInput,
@@ -306,7 +309,32 @@ export class PlannerStore {
     criteriaEvidence?: string;
     verificationEvidence?: string;
     verifier?: string;
+      localProjectFallbackApproved?: boolean;
+    runtimeAction?: "inspect-run" | "apply-patch" | "rerun-verification";
+    runId?: string;
+    applyPatchApproved?: boolean;
   } & CollaborationContextInput): Promise<unknown> {
+    if (args.runtimeAction) {
+      const runId = args.runId?.trim();
+      if (!runId) {
+        throw new Error("runtimeAction requires runId.");
+      }
+      if (args.runtimeAction === "inspect-run") {
+        return inspectRuntimeRun(this.root, this.plannerDir(), runId);
+      }
+      if (args.runtimeAction === "apply-patch") {
+        const result = await applyRuntimePatch(this.root, this.plannerDir(), runId, args.applyPatchApproved === true);
+        await this.audit("runtime_patch_apply", { runId, applied: result.applied, patchPath: result.patchPath });
+        return result;
+      }
+      if (args.runtimeAction === "rerun-verification") {
+        const { config } = await loadConstantXConfig(this.root);
+        const result = await rerunRuntimeVerification(this.root, this.plannerDir(), runId, config);
+        await this.audit("runtime_verification_rerun", { runId, rerunId: result.rerunId, status: result.status });
+        return result;
+      }
+    }
+
     if (args.specMarkdown) {
       const state = await this.loadState();
       const block = this.requireBlock(state, args.blockId);
@@ -342,7 +370,8 @@ export class PlannerStore {
       implementationNotes: args.implementationNotes,
       criteriaEvidence: args.criteriaEvidence,
       verificationEvidence: args.verificationEvidence,
-      verifier: args.verifier
+      verifier: args.verifier,
+      localProjectFallbackApproved: args.localProjectFallbackApproved
     });
   }
   async gatherEvidence(args: {
@@ -769,13 +798,36 @@ export class PlannerStore {
     criteriaEvidence?: string;
     verificationEvidence?: string;
     verifier?: string;
+      localProjectFallbackApproved?: boolean;
+    runtimeAction?: "inspect-run" | "apply-patch" | "rerun-verification";
+    runId?: string;
+    applyPatchApproved?: boolean;
   }): Promise<{
     approvedSpec?: BlockRecord;
     implementationContext: Awaited<ReturnType<PlannerStore["prepareImplementationContext"]>>;
+    runtimeJob?: Awaited<ReturnType<typeof runImplementationJob>>;
     implementation?: BlockRecord;
     verification?: BlockRecord;
     nextActions: string[];
   }> {
+    if (args.runtimeAction) {
+      const runId = args.runId?.trim();
+      if (!runId) {
+        throw new Error("runtimeAction requires runId.");
+      }
+      if (args.runtimeAction === "inspect-run") {
+        return inspectRuntimeRun(this.root, this.plannerDir(), runId) as unknown as Awaited<ReturnType<PlannerStore["implementAndVerifyBlock"]>>;
+      }
+      if (args.runtimeAction === "apply-patch") {
+        const result = await applyRuntimePatch(this.root, this.plannerDir(), runId, args.applyPatchApproved === true);
+        await this.audit("runtime_patch_apply", { runId, applied: result.applied, patchPath: result.patchPath });
+        return result as unknown as Awaited<ReturnType<PlannerStore["implementAndVerifyBlock"]>>;
+      }
+      const { config } = await loadConstantXConfig(this.root);
+      const result = await rerunRuntimeVerification(this.root, this.plannerDir(), runId, config);
+      await this.audit("runtime_verification_rerun", { runId, rerunId: result.rerunId, status: result.status });
+      return result as unknown as Awaited<ReturnType<PlannerStore["implementAndVerifyBlock"]>>;
+    }
     const state = await this.loadState();
     const block = this.requireBlock(state, args.blockId);
     let approvedSpec: BlockRecord | undefined;
@@ -795,14 +847,35 @@ export class PlannerStore {
     const implementationContext = await this.prepareImplementationContext(block.id, true, args.mode ?? "implement");
 
     if (!args.implementationSummary || !args.changedFiles || args.changedFiles.length === 0 || !args.verificationEvidence) {
+      const { config } = await loadConstantXConfig(this.root);
+      const runtimeJob = await runImplementationJob({
+        projectRoot: this.root,
+        plannerRoot: this.plannerDir(),
+        blockId: block.id,
+        implementationContext: implementationContext.context,
+        config,
+        localProjectFallbackApproved: args.localProjectFallbackApproved
+      });
       return {
         approvedSpec,
         implementationContext,
-        nextActions: [
-          "Codex must implement only this block from the strict implementation context.",
-          "After code changes, run verification commands.",
-          "Call this workflow stage again with implementationSummary, changedFiles, criteriaEvidence, verificationEvidence, and verifier."
-        ]
+        runtimeJob,
+        nextActions: runtimeJob.status === "waiting_for_fallback_approval"
+          ? [
+              runtimeJob.fallbackPrompt ?? "Approve local-project fallback before execution.",
+              "If you accept the weaker local-project fallback for this project/run, call workflow.implement again with localProjectFallbackApproved=true.",
+              "Do not present local-project fallback as equivalent to WSL2 isolation."
+            ]
+          : runtimeJob.status === "completed"
+            ? [
+                "Review the exported patch, logs, changed files, and verification evidence in the persistent run directory.",
+                "Call workflow.implement again with implementationSummary, changedFiles, criteriaEvidence, verificationEvidence, and verifier so ConstantX can record and verify the block against the existing gates."
+              ]
+            : [
+                "Codex must implement only this block from the strict implementation context.",
+                "Runtime records have been created under .planner/persistent/runs and .planner/runs.jsonl.",
+                "If execution.implementationCommands is empty, implement from the returned context and call workflow.implement again with implementationSummary, changedFiles, criteriaEvidence, verificationEvidence, and verifier."
+              ]
       };
     }
 

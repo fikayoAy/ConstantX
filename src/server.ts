@@ -224,7 +224,11 @@ export function createPlannerServer(): McpServer {
         implementationNotes: z.string().optional(),
         criteriaEvidence: z.string().optional(),
         verificationEvidence: z.string().optional(),
-        verifier: z.string().optional()
+        verifier: z.string().optional(),
+        localProjectFallbackApproved: z.boolean().optional().describe("Explicitly approve local-project fallback when WSL2 is unavailable or not selected. This is less isolated than WSL2."),
+        runtimeAction: z.enum(["inspect-run", "apply-patch", "rerun-verification"]).optional().describe("Internal runtime control action under workflow.implement."),
+        runId: z.string().optional().describe("Runtime run id for inspect/apply/rerun actions."),
+        applyPatchApproved: z.boolean().optional().describe("Explicit approval to apply the exported final.patch to the real project.")
       }
     },
     async (args) => ok(await new PlannerStore(args.projectPath).implement(args) as ToolResultData)
@@ -335,7 +339,11 @@ export function createPlannerServer(): McpServer {
         implementationNotes: z.string().optional(),
         criteriaEvidence: z.string().optional(),
         verificationEvidence: z.string().optional(),
-        verifier: z.string().optional()
+        verifier: z.string().optional(),
+        localProjectFallbackApproved: z.boolean().optional().describe("Explicitly approve local-project fallback when WSL2 is unavailable or not selected. This is less isolated than WSL2."),
+        runtimeAction: z.enum(["inspect-run", "apply-patch", "rerun-verification"]).optional().describe("Internal runtime control action under workflow.implement."),
+        runId: z.string().optional().describe("Runtime run id for inspect/apply/rerun actions."),
+        applyPatchApproved: z.boolean().optional().describe("Explicit approval to apply the exported final.patch to the real project.")
       }
     },
     async (args) => ok(await new PlannerStore(args.projectPath).implementAndVerifyBlock(args))

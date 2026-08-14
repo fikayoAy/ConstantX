@@ -1,0 +1,100 @@
+{
+    "name":  "constantx-vscode",
+    "displayName":  "ConstantX",
+    "description":  "VS Code connector and status panel for the ConstantX MCP engineering workflow.",
+    "version":  "0.1.0",
+    "publisher":  "constantx",
+    "engines":  {
+                    "vscode":  "^1.90.0"
+                },
+    "categories":  [
+                       "Other"
+                   ],
+    "activationEvents":  [
+                             "onCommand:constantx.startRuntime",
+                             "onCommand:constantx.stopRuntime",
+                             "onCommand:constantx.checkRuntime",
+                             "onCommand:constantx.connectProvider",
+                             "onCommand:constantx.openWorkflowPrompts",
+                             "onCommand:constantx.openStatusPanel",
+                             "onCommand:constantx.firstRunSetup",
+                             "onCommand:constantx.healthCheck"
+                         ],
+    "main":  "./src/extension.js",
+    "contributes":  {
+                        "commands":  [
+                                         {
+                                             "command":  "constantx.startRuntime",
+                                             "title":  "ConstantX: Start Runtime"
+                                         },
+                                         {
+                                             "command":  "constantx.stopRuntime",
+                                             "title":  "ConstantX: Stop Runtime"
+                                         },
+                                         {
+                                             "command":  "constantx.checkRuntime",
+                                             "title":  "ConstantX: Check Runtime"
+                                         },
+                                         {
+                                             "command":  "constantx.connectProvider",
+                                             "title":  "ConstantX: Connect Provider"
+                                         },
+                                         {
+                                             "command":  "constantx.openWorkflowPrompts",
+                                             "title":  "ConstantX: Open Workflow Prompts"
+                                         },
+                                         {
+                                             "command":  "constantx.openStatusPanel",
+                                             "title":  "ConstantX: Open Status Panel"
+                                         },
+                                         {
+                                             "command":  "constantx.firstRunSetup",
+                                             "title":  "ConstantX: First Run Setup"
+                                         },
+                                         {
+                                             "command":  "constantx.healthCheck",
+                                             "title":  "ConstantX: Health Check"
+                                         }
+                                     ],
+                        "configuration":  {
+                                              "title":  "ConstantX",
+                                              "properties":  {
+                                                                 "constantx.host":  {
+                                                                                        "type":  "string",
+                                                                                        "default":  "127.0.0.1",
+                                                                                        "description":  "Host for the shared ConstantX HTTP MCP runtime."
+                                                                                    },
+                                                                 "constantx.port":  {
+                                                                                        "type":  "number",
+                                                                                        "default":  4317,
+                                                                                        "description":  "Port for the shared ConstantX HTTP MCP runtime."
+                                                                                    },
+                                                                 "constantx.projectPath":  {
+                                                                                               "type":  "string",
+                                                                                               "default":  "",
+                                                                                               "description":  "Planner project path for the status panel. Defaults to the active workspace folder."
+                                                                                           }
+                                                             }
+                                          }
+                    },
+    "scripts":  {
+                    "check":  "node --check src/extension.js \u0026\u0026 node --test tests/status-data.test.js",
+                    "package":  "vsce package --out ../dist-vsix/constantx-vscode-0.1.0.vsix"
+                },
+    "license":  "MIT",
+    "devDependencies":  {
+                            "@vscode/vsce":  "^3.2.2"
+                        },
+    "icon":  "assets/icon.png",
+    "repository":  {
+                       "type":  "git",
+                       "url":  "https://github.com/\u003cOWNER\u003e/\u003cREPO\u003e.git"
+                   },
+    "keywords":  [
+                     "mcp",
+                     "codex",
+                     "constantx",
+                     "agent-workflow",
+                     "verification"
+                 ]
+}

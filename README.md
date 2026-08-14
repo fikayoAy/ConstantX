@@ -16,6 +16,9 @@ Use ConstantX. <workflow action>
 - [Codex Opt-In Setup](docs/codex-opt-in.md)
 - [Project Layout](docs/project-layout.md)
 - [Workflow Commands](docs/workflow-commands.md)
+- [Shared Runtime And WSL2](docs/runtime-wsl2.md)
+- [VS Code Extension](docs/vscode-extension.md)
+- [Release Checklist](docs/release.md)
 - [Block Design Sessions](docs/block-design-sessions.md)
 - [Rules And Troubleshooting](docs/rules-and-troubleshooting.md)
 - [MNIST Worked Example](docs/mnist-example.md)
@@ -53,6 +56,12 @@ Add the MCP server to Codex:
 
 Then restart Codex.
 
+
+## Runtime Execution
+
+`workflow.implement` now creates persistent run/job records and can execute configured implementation and verification commands in a copied runtime workspace. WSL2 is the preferred v1 runtime, with distro detection across all installed WSL distros. If WSL2 is unavailable, ConstantX asks for explicit local-project fallback approval because it is less isolated.
+
+See [Shared Runtime And WSL2](docs/runtime-wsl2.md) for config, HTTP MCP mode, logs, patches, and fallback behavior.
 ## Collaboration Context
 
 ConstantX workflow commands accept optional collaboration context so audit logs, planner state, and graph output can show who performed each action and what scope was allowed.

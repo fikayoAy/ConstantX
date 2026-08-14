@@ -407,3 +407,39 @@ complex dashboard
 13. Add basic status panel.
 14. Add tests for config, WSL detection, local-project fallback prompts, job records, patch export, and workflow.implement.
 ```
+## Implementation Status
+
+- [x] Config loader for `deep-research.config.json` and `constantx.config.json`.
+- [x] Persistent and ephemeral storage layout under `.planner/`.
+- [x] Run and job records in `.planner/runs.jsonl`, `.planner/jobs.jsonl`, and `.planner/persistent/runs/<RUN_ID>/`.
+- [x] WSL distro detection that does not assume Ubuntu.
+- [x] Explicit local-project fallback prompt and approval flag.
+- [x] Runtime abstraction with local-project and WSL2 implementations.
+- [x] Single project/block lock for implementation jobs.
+- [x] Verification command execution from project config.
+- [x] Patch export to `.planner/persistent/runs/<RUN_ID>/patches/final.patch`.
+- [x] `workflow.implement` orchestration hook without adding a sixth workflow family.
+- [x] Shared Streamable HTTP MCP mode with stdio fallback preserved.
+- [x] VS Code extension skeleton.
+- [x] VS Code command: `ConstantX: Start Runtime`.
+- [x] VS Code command: `ConstantX: Stop Runtime`.
+- [x] VS Code command: `ConstantX: Check Runtime`.
+- [x] VS Code command: `ConstantX: Connect Provider`.
+- [x] VS Code command: `ConstantX: Open Workflow Prompts`.
+- [x] VS Code command: `ConstantX: Open Status Panel`.
+- [x] Status panel Webview for latest `.planner/runs.jsonl`, `.planner/jobs.jsonl`, logs, verification files, changed files, and patch paths.
+- [x] Status panel visual theme using a stylish terminal-inspired layout with ConstantX green and purple status accents.
+- [x] Status panel actions: refresh, open patch, open logs, open verification, copy run id, and copy patch path.
+- [x] VS Code runtime launcher for `node dist/src/index.js --http`.
+- [x] Provider MCP config generator for Codex, Claude, and generic MCP clients using `http://127.0.0.1:4317/mcp`.
+- [x] VS Code extension build and validation tests.
+- [x] Safe exported-patch review/apply support under `workflow.implement` without adding a sixth workflow family.
+- [x] Failed-job inspection support.
+- [x] Verification rerun support for failed or stale runtime jobs.
+## Packaging Status
+
+- [x] VS Code extension packaging metadata, icon, README, LICENSE, and `.vscodeignore`.
+- [x] Installable VSIX build script: `npm --prefix vscode-extension run package`.
+- [x] First-run setup command for build, runtime start, provider config generation, prompt opening, status panel, and health report.
+- [x] Health-check command for Node, MCP entrypoint, HTTP runtime, planner state, config, and WSL distro detection.
+- [x] Provider-specific generated install notes without silently overwriting user provider config files.
