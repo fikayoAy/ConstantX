@@ -10,6 +10,13 @@ Use it from Codex only when your prompt starts like this:
 Use ConstantX. <workflow action>
 ```
 
+## Install From VS Code Marketplace
+
+Open VS Code, go to **Extensions**, search for **ConstantX MCP**, and install the extension published by **ConstantAx**.
+
+Marketplace extension name: **ConstantX MCP**  
+Extension ID: `ConstantAx.constantx`
+
 ## Watch It Work
 
 ### Installation Walkthrough
