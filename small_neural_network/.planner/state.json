@@ -1,0 +1,3476 @@
+{
+  "version": 1,
+  "plan_file": "system-plan.md",
+  "created_at": "2026-08-15T00:50:20.348Z",
+  "updated_at": "2026-08-15T01:10:12.859Z",
+  "counters": {
+    "blocks": 3,
+    "papers": 21,
+    "directives": 0,
+    "pins": 34,
+    "criteria": 10,
+    "designTurns": 0,
+    "collaborationContexts": 44
+  },
+  "actors": {
+    "Codex": {
+      "id": "Codex",
+      "display_name": "Codex",
+      "roles_used": [
+        "owner",
+        "researcher",
+        "implementer",
+        "verifier"
+      ],
+      "first_seen_at": "2026-08-15T00:50:20.348Z",
+      "last_seen_at": "2026-08-15T01:10:12.855Z"
+    },
+    "local-user": {
+      "id": "local-user",
+      "display_name": "local-user",
+      "roles_used": [
+        "owner",
+        "reviewer"
+      ],
+      "first_seen_at": "2026-08-15T00:50:20.361Z",
+      "last_seen_at": "2026-08-15T01:01:49.033Z"
+    }
+  },
+  "collaboration_contexts": {
+    "CTX-001": {
+      "context_id": "CTX-001",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "project"
+      ],
+      "intent": "Start ConstantX project from plan.md, set implementation target, and propose no more than 3 blocks without writing block artifacts.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:50:20.348Z"
+    },
+    "CTX-002": {
+      "context_id": "CTX-002",
+      "actor": "local-user",
+      "role": "owner",
+      "scope": [
+        "project"
+      ],
+      "intent": "ingest_plan",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:50:20.361Z",
+      "warnings": [
+        "No Actor was provided. Recorded as local-user. For collaboration, include Actor and Role."
+      ]
+    },
+    "CTX-003": {
+      "context_id": "CTX-003",
+      "actor": "local-user",
+      "role": "owner",
+      "scope": [
+        "project"
+      ],
+      "intent": "set_implementation_target",
+      "execution_mode": "approve",
+      "created_at": "2026-08-15T00:50:20.367Z",
+      "warnings": [
+        "No Actor was provided. Recorded as local-user. For collaboration, include Actor and Role."
+      ]
+    },
+    "CTX-004": {
+      "context_id": "CTX-004",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "project"
+      ],
+      "intent": "Write the user-approved proposed blocks from the ingested plan, including original-plan acceptance criteria and block metadata.",
+      "execution_mode": "approve",
+      "created_at": "2026-08-15T00:50:49.565Z"
+    },
+    "CTX-005": {
+      "context_id": "CTX-005",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Attach online/local references and extract only B-001-specific evidence for Goal / Model Scope. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:06.181Z"
+    },
+    "CTX-006": {
+      "context_id": "CTX-006",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Attach online/local references and extract only B-001-specific evidence for Goal / Model Scope. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:06.193Z"
+    },
+    "CTX-007": {
+      "context_id": "CTX-007",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Attach online/local references and extract only B-001-specific evidence for Goal / Model Scope. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:06.208Z"
+    },
+    "CTX-008": {
+      "context_id": "CTX-008",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Attach online/local references and extract only B-001-specific evidence for Goal / Model Scope. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:06.215Z"
+    },
+    "CTX-009": {
+      "context_id": "CTX-009",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Attach online/local references and extract only B-001-specific evidence for Goal / Model Scope. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:06.219Z"
+    },
+    "CTX-010": {
+      "context_id": "CTX-010",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Attach online/local references and extract only B-001-specific evidence for Goal / Model Scope. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:06.225Z"
+    },
+    "CTX-011": {
+      "context_id": "CTX-011",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Attach online/local references and extract only B-001-specific evidence for Goal / Model Scope. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:06.235Z"
+    },
+    "CTX-012": {
+      "context_id": "CTX-012",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Attach online/local references and extract only B-002-specific evidence for implementation expectations and acceptance criteria. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:42.593Z"
+    },
+    "CTX-013": {
+      "context_id": "CTX-013",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Attach online/local references and extract only B-002-specific evidence for implementation expectations and acceptance criteria. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:42.604Z"
+    },
+    "CTX-014": {
+      "context_id": "CTX-014",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Attach online/local references and extract only B-002-specific evidence for implementation expectations and acceptance criteria. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:42.616Z"
+    },
+    "CTX-015": {
+      "context_id": "CTX-015",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Attach online/local references and extract only B-002-specific evidence for implementation expectations and acceptance criteria. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:42.620Z"
+    },
+    "CTX-016": {
+      "context_id": "CTX-016",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Attach online/local references and extract only B-002-specific evidence for implementation expectations and acceptance criteria. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:42.626Z"
+    },
+    "CTX-017": {
+      "context_id": "CTX-017",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Attach online/local references and extract only B-002-specific evidence for implementation expectations and acceptance criteria. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:42.634Z"
+    },
+    "CTX-018": {
+      "context_id": "CTX-018",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Attach online/local references and extract only B-002-specific evidence for implementation expectations and acceptance criteria. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:42.645Z"
+    },
+    "CTX-019": {
+      "context_id": "CTX-019",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Attach online/local references and extract only B-002-specific evidence for implementation expectations and acceptance criteria. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:42.650Z"
+    },
+    "CTX-020": {
+      "context_id": "CTX-020",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Attach online/local references and extract only B-002-specific evidence for implementation expectations and acceptance criteria. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:53:42.655Z"
+    },
+    "CTX-021": {
+      "context_id": "CTX-021",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Attach online/local references and extract only B-003-specific evidence for non-goals and verification commands. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:54:13.647Z"
+    },
+    "CTX-022": {
+      "context_id": "CTX-022",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Attach online/local references and extract only B-003-specific evidence for non-goals and verification commands. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:54:13.655Z"
+    },
+    "CTX-023": {
+      "context_id": "CTX-023",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Attach online/local references and extract only B-003-specific evidence for non-goals and verification commands. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:54:13.661Z"
+    },
+    "CTX-024": {
+      "context_id": "CTX-024",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Attach online/local references and extract only B-003-specific evidence for non-goals and verification commands. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:54:13.666Z"
+    },
+    "CTX-025": {
+      "context_id": "CTX-025",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Attach online/local references and extract only B-003-specific evidence for non-goals and verification commands. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:54:13.671Z"
+    },
+    "CTX-026": {
+      "context_id": "CTX-026",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Attach online/local references and extract only B-003-specific evidence for non-goals and verification commands. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:54:13.682Z"
+    },
+    "CTX-027": {
+      "context_id": "CTX-027",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Attach online/local references and extract only B-003-specific evidence for non-goals and verification commands. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:54:13.696Z"
+    },
+    "CTX-028": {
+      "context_id": "CTX-028",
+      "actor": "Codex",
+      "role": "researcher",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Attach online/local references and extract only B-003-specific evidence for non-goals and verification commands. Do not approve or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:54:13.702Z"
+    },
+    "CTX-029": {
+      "context_id": "CTX-029",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Start required ConstantX design session before draft spec creation.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:56:09.226Z"
+    },
+    "CTX-030": {
+      "context_id": "CTX-030",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Finalize B-001 design session enough to create draft spec.md only. Do not approve spec or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:56:40.869Z"
+    },
+    "CTX-031": {
+      "context_id": "CTX-031",
+      "actor": "local-user",
+      "role": "reviewer",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "approve_research",
+      "execution_mode": "approve",
+      "created_at": "2026-08-15T00:56:40.879Z",
+      "warnings": [
+        "No Actor was provided. Recorded as local-user. For collaboration, include Actor and Role."
+      ]
+    },
+    "CTX-032": {
+      "context_id": "CTX-032",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Create concrete draft spec.md for B-001 only. Do not approve spec or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:57:26.160Z"
+    },
+    "CTX-033": {
+      "context_id": "CTX-033",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Create concrete draft spec.md for B-001 only. Do not approve spec or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:58:27.288Z"
+    },
+    "CTX-034": {
+      "context_id": "CTX-034",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Create concrete draft spec.md for B-001 only. Do not approve spec or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:59:28.197Z"
+    },
+    "CTX-035": {
+      "context_id": "CTX-035",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Start required ConstantX design session before draft spec creation.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T00:59:38.670Z"
+    },
+    "CTX-036": {
+      "context_id": "CTX-036",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Create concrete draft spec.md for B-002 only. Do not approve spec or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T01:00:43.531Z"
+    },
+    "CTX-037": {
+      "context_id": "CTX-037",
+      "actor": "local-user",
+      "role": "reviewer",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "approve_research",
+      "execution_mode": "approve",
+      "created_at": "2026-08-15T01:00:43.544Z",
+      "warnings": [
+        "No Actor was provided. Recorded as local-user. For collaboration, include Actor and Role."
+      ]
+    },
+    "CTX-038": {
+      "context_id": "CTX-038",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Start required ConstantX design session before draft spec creation.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T01:00:51.802Z"
+    },
+    "CTX-039": {
+      "context_id": "CTX-039",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "Create concrete draft spec.md for B-003 only. Do not approve spec or implement.",
+      "execution_mode": "draft",
+      "created_at": "2026-08-15T01:01:49.021Z"
+    },
+    "CTX-040": {
+      "context_id": "CTX-040",
+      "actor": "local-user",
+      "role": "reviewer",
+      "scope": [
+        "B-003"
+      ],
+      "intent": "approve_research",
+      "execution_mode": "approve",
+      "created_at": "2026-08-15T01:01:49.033Z",
+      "warnings": [
+        "No Actor was provided. Recorded as local-user. For collaboration, include Actor and Role."
+      ]
+    },
+    "CTX-041": {
+      "context_id": "CTX-041",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Approve B-001 spec as requested before strict implementation context and implementation.",
+      "execution_mode": "approve",
+      "created_at": "2026-08-15T01:02:28.310Z"
+    },
+    "CTX-042": {
+      "context_id": "CTX-042",
+      "actor": "Codex",
+      "role": "implementer",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Record implemented B-001 code after strict implementation context and verification command runs.",
+      "execution_mode": "implement",
+      "created_at": "2026-08-15T01:09:41.381Z"
+    },
+    "CTX-043": {
+      "context_id": "CTX-043",
+      "actor": "Codex",
+      "role": "verifier",
+      "scope": [
+        "B-001"
+      ],
+      "intent": "Verify B-001 after implementation and test/command evidence.",
+      "execution_mode": "verify-only",
+      "created_at": "2026-08-15T01:10:05.768Z"
+    },
+    "CTX-044": {
+      "context_id": "CTX-044",
+      "actor": "Codex",
+      "role": "owner",
+      "scope": [
+        "B-002"
+      ],
+      "intent": "Approve B-002 spec as requested before strict implementation context and implementation recording.",
+      "execution_mode": "approve",
+      "created_at": "2026-08-15T01:10:12.855Z"
+    }
+  },
+  "blocks": {
+    "B-001": {
+      "id": "B-001",
+      "title": "Goal / Model Scope",
+      "slug": "goal-model-scope",
+      "dir": "blocks/B-001-goal-model-scope",
+      "status": "verified",
+      "depends_on": [],
+      "related_blocks": [
+        "B-002"
+      ],
+      "source_plan_refs": [
+        "system-plan.md:L5-L28"
+      ],
+      "criterion_ids": [
+        "AC-B001-001",
+        "AC-B001-002",
+        "AC-B001-003",
+        "AC-B001-004",
+        "AC-B001-005",
+        "AC-B001-006",
+        "AC-B001-007",
+        "AC-B001-008",
+        "AC-B001-009",
+        "AC-B001-010"
+      ],
+      "paper_ids": [
+        "P-001",
+        "P-002",
+        "P-003",
+        "P-004",
+        "P-005",
+        "P-006"
+      ],
+      "directive_ids": [],
+      "created_by": "Codex",
+      "updated_by": "Codex",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "approved_by": "local-user",
+      "implemented_by": "Codex",
+      "verified_by": "Codex"
+    },
+    "B-002": {
+      "id": "B-002",
+      "title": "Implementation Expectations / Acceptance Criteria",
+      "slug": "implementation-expectations-acceptance-criteria",
+      "dir": "blocks/B-002-implementation-expectations-acceptance-criteria",
+      "status": "ready_to_implement",
+      "depends_on": [
+        "B-001"
+      ],
+      "related_blocks": [
+        "B-001",
+        "B-003"
+      ],
+      "source_plan_refs": [
+        "system-plan.md:L29-L49"
+      ],
+      "criterion_ids": [
+        "AC-B002-001",
+        "AC-B002-002",
+        "AC-B002-003",
+        "AC-B002-004",
+        "AC-B002-005",
+        "AC-B002-006",
+        "AC-B002-007",
+        "AC-B002-008",
+        "AC-B002-009"
+      ],
+      "paper_ids": [
+        "P-007",
+        "P-008",
+        "P-009",
+        "P-010",
+        "P-011",
+        "P-012",
+        "P-013",
+        "P-014"
+      ],
+      "directive_ids": [],
+      "created_by": "Codex",
+      "updated_by": "Codex",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T01:10:12.857Z",
+      "approved_by": "local-user"
+    },
+    "B-003": {
+      "id": "B-003",
+      "title": "Non-Goals / Verification",
+      "slug": "non-goals-verification",
+      "dir": "blocks/B-003-non-goals-verification",
+      "status": "spec_created",
+      "depends_on": [
+        "B-002"
+      ],
+      "related_blocks": [
+        "B-002"
+      ],
+      "source_plan_refs": [
+        "system-plan.md:L50-L66"
+      ],
+      "criterion_ids": [
+        "AC-B003-001",
+        "AC-B003-002",
+        "AC-B003-003",
+        "AC-B003-004",
+        "AC-B003-005",
+        "AC-B003-006",
+        "AC-B003-007"
+      ],
+      "paper_ids": [
+        "P-015",
+        "P-016",
+        "P-017",
+        "P-018",
+        "P-019",
+        "P-020",
+        "P-021"
+      ],
+      "directive_ids": [],
+      "created_by": "Codex",
+      "updated_by": "local-user",
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T01:01:49.058Z",
+      "approved_by": "local-user"
+    }
+  },
+  "papers": {
+    "P-001": {
+      "id": "P-001",
+      "evidence_type": "local_project_file",
+      "title": "User plan: Addition Neural Network Plan",
+      "source_path": "C:\\Users\\ayode\\small_neural_network\\plan.md",
+      "stored_path": "papers/P-001-user-plan-addition-neural-network-plan.md",
+      "attached_to": [
+        "B-001"
+      ],
+      "notes": "Defines B-001 scope: two integer inputs, range 0..100, target sum, small feed-forward neural network, dataset/training/evaluation/inference/save requirements.",
+      "relevant_sections": [
+        "Goal",
+        "Requirements",
+        "Model Scope"
+      ],
+      "discovery_source": "user_upload",
+      "relevance_score": 1,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:06.183Z",
+      "updated_at": "2026-08-15T00:53:06.183Z"
+    },
+    "P-002": {
+      "id": "P-002",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Datasets & DataLoaders tutorial",
+      "source_url": "https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html",
+      "attached_to": [
+        "B-001"
+      ],
+      "notes": "Supports representing generated examples as samples with labels/targets and wrapping them in DataLoader for batching and optional shuffling.",
+      "relevant_sections": [
+        "Datasets & DataLoaders",
+        "Creating a Custom Dataset",
+        "Preparing your data for training with DataLoaders"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.9,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:06.193Z",
+      "updated_at": "2026-08-15T00:53:06.193Z"
+    },
+    "P-003": {
+      "id": "P-003",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Build the Neural Network tutorial",
+      "source_url": "https://docs.pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html",
+      "attached_to": [
+        "B-001"
+      ],
+      "notes": "Supports using nn.Module or nn.Sequential with Linear and ReLU layers for a feed-forward model that maps input tensors to outputs.",
+      "relevant_sections": [
+        "Define the Class",
+        "Model Layers",
+        "nn.Linear",
+        "nn.ReLU",
+        "nn.Sequential"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.9,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:06.208Z",
+      "updated_at": "2026-08-15T00:53:06.208Z"
+    },
+    "P-004": {
+      "id": "P-004",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Linear API reference",
+      "source_url": "https://docs.pytorch.org/docs/stable/generated/torch.nn.Linear.html",
+      "attached_to": [
+        "B-001"
+      ],
+      "notes": "Defines affine layer behavior and input/output shape contract needed for two inputs and one predicted scalar output.",
+      "relevant_sections": [
+        "Linear",
+        "Shape"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.85,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:06.215Z",
+      "updated_at": "2026-08-15T00:53:06.215Z"
+    },
+    "P-005": {
+      "id": "P-005",
+      "evidence_type": "official_doc",
+      "title": "PyTorch MSELoss API reference",
+      "source_url": "https://docs.pytorch.org/docs/stable/generated/torch.nn.MSELoss.html",
+      "attached_to": [
+        "B-001"
+      ],
+      "notes": "Supports treating addition as a scalar regression problem with mean squared prediction error.",
+      "relevant_sections": [
+        "MSELoss"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.8,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:06.219Z",
+      "updated_at": "2026-08-15T00:53:06.219Z"
+    },
+    "P-006": {
+      "id": "P-006",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Saving and Loading Models tutorial",
+      "source_url": "https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html",
+      "attached_to": [
+        "B-001"
+      ],
+      "notes": "Supports saving trained model weights as a reusable artifact and restoring them for inference.",
+      "relevant_sections": [
+        "Save/Load state_dict",
+        "Saving & Loading Model for Inference"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.85,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:06.225Z",
+      "updated_at": "2026-08-15T00:53:06.225Z"
+    },
+    "P-007": {
+      "id": "P-007",
+      "evidence_type": "local_project_file",
+      "title": "User plan: Addition Neural Network Plan",
+      "source_path": "C:\\Users\\ayode\\small_neural_network\\plan.md",
+      "stored_path": "papers/P-007-user-plan-addition-neural-network-plan.md",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Defines B-002 implementation deliverables: dataset generation, model definition, training loop, evaluation metrics, save/load, inference entry point, and tests.",
+      "relevant_sections": [
+        "Implementation Expectations",
+        "Acceptance Criteria"
+      ],
+      "discovery_source": "user_upload",
+      "relevance_score": 1,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:42.595Z",
+      "updated_at": "2026-08-15T00:53:42.595Z"
+    },
+    "P-008": {
+      "id": "P-008",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Datasets & DataLoaders tutorial",
+      "source_url": "https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Supports concrete dataset generation/storage contracts and DataLoader batching for training and evaluation.",
+      "relevant_sections": [
+        "Creating a Custom Dataset",
+        "Preparing your data for training with DataLoaders",
+        "Iterate through the DataLoader"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.9,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:42.605Z",
+      "updated_at": "2026-08-15T00:53:42.605Z"
+    },
+    "P-009": {
+      "id": "P-009",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Build the Neural Network tutorial",
+      "source_url": "https://docs.pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Supports implementing a model class with `forward`, `nn.Linear`, `nn.ReLU`, and `nn.Sequential` components.",
+      "relevant_sections": [
+        "Define the Class",
+        "Model Layers"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.85,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:42.616Z",
+      "updated_at": "2026-08-15T00:53:42.616Z"
+    },
+    "P-010": {
+      "id": "P-010",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Optimizing Model Parameters tutorial",
+      "source_url": "https://docs.pytorch.org/tutorials/beginner/basics/optimization_tutorial.html",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Supports training-loop responsibilities: compute prediction/loss, backpropagate, optimizer step, zero gradients, and separate evaluation loop.",
+      "relevant_sections": [
+        "Optimizer",
+        "Full Implementation",
+        "train_loop",
+        "test_loop"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.95,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:42.620Z",
+      "updated_at": "2026-08-15T00:53:42.620Z"
+    },
+    "P-011": {
+      "id": "P-011",
+      "evidence_type": "official_doc",
+      "title": "PyTorch MSELoss API reference",
+      "source_url": "https://docs.pytorch.org/docs/stable/generated/torch.nn.MSELoss.html",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Supports evaluation metrics based on prediction error for scalar regression.",
+      "relevant_sections": [
+        "MSELoss"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.9,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:42.626Z",
+      "updated_at": "2026-08-15T00:53:42.626Z"
+    },
+    "P-012": {
+      "id": "P-012",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Saving and Loading Models tutorial",
+      "source_url": "https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Supports save/load implementation and inference restoration behavior.",
+      "relevant_sections": [
+        "Save/Load state_dict",
+        "Saving & Loading Model for Inference"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.95,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:42.634Z",
+      "updated_at": "2026-08-15T00:53:42.634Z"
+    },
+    "P-013": {
+      "id": "P-013",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Reproducibility note",
+      "source_url": "https://docs.pytorch.org/docs/stable/notes/randomness.html",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Supports setting deterministic seeds for repeatable tests and development runs, without promising cross-platform bit-for-bit reproducibility.",
+      "relevant_sections": [
+        "Controlling sources of randomness",
+        "PyTorch random number generator"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.75,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:42.645Z",
+      "updated_at": "2026-08-15T00:53:42.645Z"
+    },
+    "P-014": {
+      "id": "P-014",
+      "evidence_type": "official_doc",
+      "title": "pytest invocation documentation",
+      "source_url": "https://docs.pytest.org/en/stable/how-to/usage.html",
+      "attached_to": [
+        "B-002"
+      ],
+      "notes": "Supports providing tests that can be run from the command line for dataset, model, training, save/load, and inference behavior.",
+      "relevant_sections": [
+        "How to invoke pytest",
+        "Calling pytest through python -m pytest"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.8,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:53:42.650Z",
+      "updated_at": "2026-08-15T00:53:42.650Z"
+    },
+    "P-015": {
+      "id": "P-015",
+      "evidence_type": "local_project_file",
+      "title": "User plan: Addition Neural Network Plan",
+      "source_path": "C:\\Users\\ayode\\small_neural_network\\plan.md",
+      "stored_path": "papers/P-015-user-plan-addition-neural-network-plan.md",
+      "attached_to": [
+        "B-003"
+      ],
+      "notes": "Defines B-003 non-goals and required commands for tests, training, evaluation, and sample inference.",
+      "relevant_sections": [
+        "Non-Goals",
+        "Verification"
+      ],
+      "discovery_source": "user_upload",
+      "relevance_score": 1,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:54:13.651Z",
+      "updated_at": "2026-08-15T00:54:13.651Z"
+    },
+    "P-016": {
+      "id": "P-016",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Optimizing Model Parameters tutorial",
+      "source_url": "https://docs.pytorch.org/tutorials/beginner/basics/optimization_tutorial.html",
+      "attached_to": [
+        "B-003"
+      ],
+      "notes": "Supports separating train and evaluation flows for command-level verification.",
+      "relevant_sections": [
+        "Full Implementation",
+        "train_loop",
+        "test_loop"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.85,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:54:13.655Z",
+      "updated_at": "2026-08-15T00:54:13.655Z"
+    },
+    "P-017": {
+      "id": "P-017",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Saving and Loading Models tutorial",
+      "source_url": "https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html",
+      "attached_to": [
+        "B-003"
+      ],
+      "notes": "Supports verification that trained artifacts can be loaded for inference commands.",
+      "relevant_sections": [
+        "Saving & Loading Model for Inference"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.8,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:54:13.661Z",
+      "updated_at": "2026-08-15T00:54:13.661Z"
+    },
+    "P-018": {
+      "id": "P-018",
+      "evidence_type": "official_doc",
+      "title": "PyTorch no_grad API reference",
+      "source_url": "https://docs.pytorch.org/docs/stable/generated/torch.no_grad.html",
+      "attached_to": [
+        "B-003"
+      ],
+      "notes": "Supports inference/evaluation commands running without gradient calculation.",
+      "relevant_sections": [
+        "no_grad"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.75,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:54:13.666Z",
+      "updated_at": "2026-08-15T00:54:13.666Z"
+    },
+    "P-019": {
+      "id": "P-019",
+      "evidence_type": "official_doc",
+      "title": "pytest invocation documentation",
+      "source_url": "https://docs.pytest.org/en/stable/how-to/usage.html",
+      "attached_to": [
+        "B-003"
+      ],
+      "notes": "Supports providing a test command for project verification.",
+      "relevant_sections": [
+        "How to invoke pytest",
+        "Calling pytest through python -m pytest"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.85,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:54:13.671Z",
+      "updated_at": "2026-08-15T00:54:13.671Z"
+    },
+    "P-020": {
+      "id": "P-020",
+      "evidence_type": "official_doc",
+      "title": "Python argparse documentation",
+      "source_url": "https://docs.python.org/3/library/argparse.html",
+      "attached_to": [
+        "B-003"
+      ],
+      "notes": "Supports command-line entry points for train, evaluate, and infer scripts without a web UI.",
+      "relevant_sections": [
+        "ArgumentParser",
+        "Command-line parsing"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.8,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:54:13.682Z",
+      "updated_at": "2026-08-15T00:54:13.682Z"
+    },
+    "P-021": {
+      "id": "P-021",
+      "evidence_type": "official_doc",
+      "title": "PyTorch Reproducibility note",
+      "source_url": "https://docs.pytorch.org/docs/stable/notes/randomness.html",
+      "attached_to": [
+        "B-003"
+      ],
+      "notes": "Supports development/test stability for verification runs without optimizing for production-scale determinism or performance.",
+      "relevant_sections": [
+        "Controlling sources of randomness"
+      ],
+      "discovery_source": "codex_online",
+      "relevance_score": 0.65,
+      "added_by": "Codex",
+      "created_at": "2026-08-15T00:54:13.696Z",
+      "updated_at": "2026-08-15T00:54:13.696Z"
+    }
+  },
+  "directives": {},
+  "criteria": {
+    "AC-B001-001": {
+      "id": "AC-B001-001",
+      "block_id": "B-001",
+      "criterion_number": 1,
+      "label": "AC-1",
+      "status": "satisfied",
+      "text": "Generate or load a training dataset of integer addition examples.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[1]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B001-002": {
+      "id": "AC-B001-002",
+      "block_id": "B-001",
+      "criterion_number": 2,
+      "label": "AC-2",
+      "status": "satisfied",
+      "text": "Represent each example as two input numbers and one target sum.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[2]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B001-003": {
+      "id": "AC-B001-003",
+      "block_id": "B-001",
+      "criterion_number": 3,
+      "label": "AC-3",
+      "status": "satisfied",
+      "text": "Train a small neural network on the generated dataset.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[3]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B001-004": {
+      "id": "AC-B001-004",
+      "block_id": "B-001",
+      "criterion_number": 4,
+      "label": "AC-4",
+      "status": "satisfied",
+      "text": "Evaluate the model on unseen addition examples.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[4]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B001-005": {
+      "id": "AC-B001-005",
+      "block_id": "B-001",
+      "criterion_number": 5,
+      "label": "AC-5",
+      "status": "satisfied",
+      "text": "Provide a simple inference function or script that accepts two numbers and returns the predicted sum.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[5]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B001-006": {
+      "id": "AC-B001-006",
+      "block_id": "B-001",
+      "criterion_number": 6,
+      "label": "AC-6",
+      "status": "satisfied",
+      "text": "Save the trained model artifact so it can be reused without retraining every time.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[6]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B001-007": {
+      "id": "AC-B001-007",
+      "block_id": "B-001",
+      "criterion_number": 7,
+      "label": "AC-7",
+      "status": "satisfied",
+      "text": "Inputs: two integers a and b.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[7]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B001-008": {
+      "id": "AC-B001-008",
+      "block_id": "B-001",
+      "criterion_number": 8,
+      "label": "AC-8",
+      "status": "satisfied",
+      "text": "Range: 0 <= a <= 100 and 0 <= b <= 100.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[8]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B001-009": {
+      "id": "AC-B001-009",
+      "block_id": "B-001",
+      "criterion_number": 9,
+      "label": "AC-9",
+      "status": "satisfied",
+      "text": "Output: predicted value of a + b.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[9]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B001-010": {
+      "id": "AC-B001-010",
+      "block_id": "B-001",
+      "criterion_number": 10,
+      "label": "AC-10",
+      "status": "satisfied",
+      "text": "Model type: small feed-forward neural network.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[10]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T01:10:05.769Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B002-001": {
+      "id": "AC-B002-001",
+      "block_id": "B-002",
+      "criterion_number": 1,
+      "label": "AC-1",
+      "status": "required",
+      "text": "Model save/load support.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[1]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B002-002": {
+      "id": "AC-B002-002",
+      "block_id": "B-002",
+      "criterion_number": 2,
+      "label": "AC-2",
+      "status": "required",
+      "text": "Tests that verify the model pipeline and basic prediction behavior.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[2]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B002-003": {
+      "id": "AC-B002-003",
+      "block_id": "B-002",
+      "criterion_number": 3,
+      "label": "AC-3",
+      "status": "required",
+      "text": "The dataset generator creates valid addition pairs and target sums.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[3]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B002-004": {
+      "id": "AC-B002-004",
+      "block_id": "B-002",
+      "criterion_number": 4,
+      "label": "AC-4",
+      "status": "required",
+      "text": "The model can be trained without errors.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[4]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B002-005": {
+      "id": "AC-B002-005",
+      "block_id": "B-002",
+      "criterion_number": 5,
+      "label": "AC-5",
+      "status": "required",
+      "text": "Evaluation reports prediction error on held-out samples.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[5]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B002-006": {
+      "id": "AC-B002-006",
+      "block_id": "B-002",
+      "criterion_number": 6,
+      "label": "AC-6",
+      "status": "required",
+      "text": "The saved model can be loaded for inference.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[6]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B002-007": {
+      "id": "AC-B002-007",
+      "block_id": "B-002",
+      "criterion_number": 7,
+      "label": "AC-7",
+      "status": "required",
+      "text": "The inference function returns predictions close to the true sum for examples inside the supported range.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[7]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B002-008": {
+      "id": "AC-B002-008",
+      "block_id": "B-002",
+      "criterion_number": 8,
+      "label": "AC-8",
+      "status": "required",
+      "text": "Tests cover dataset generation, model shape, training execution, save/load, and inference.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[8]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B002-009": {
+      "id": "AC-B002-009",
+      "block_id": "B-002",
+      "criterion_number": 9,
+      "label": "AC-9",
+      "status": "required",
+      "text": "The implementation must include:",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[9]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B003-001": {
+      "id": "AC-B003-001",
+      "block_id": "B-003",
+      "criterion_number": 1,
+      "label": "AC-1",
+      "status": "required",
+      "text": "Do not build a large language model.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[1]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B003-002": {
+      "id": "AC-B003-002",
+      "block_id": "B-003",
+      "criterion_number": 2,
+      "label": "AC-2",
+      "status": "required",
+      "text": "Do not support arbitrary symbolic math.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[2]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B003-003": {
+      "id": "AC-B003-003",
+      "block_id": "B-003",
+      "criterion_number": 3,
+      "label": "AC-3",
+      "status": "required",
+      "text": "Do not build a web UI.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[3]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B003-004": {
+      "id": "AC-B003-004",
+      "block_id": "B-003",
+      "criterion_number": 4,
+      "label": "AC-4",
+      "status": "required",
+      "text": "Do not optimize for production-scale training.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[4]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B003-005": {
+      "id": "AC-B003-005",
+      "block_id": "B-003",
+      "criterion_number": 5,
+      "label": "AC-5",
+      "status": "required",
+      "text": "Do not use placeholder or mock training code.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[5]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B003-006": {
+      "id": "AC-B003-006",
+      "block_id": "B-003",
+      "criterion_number": 6,
+      "label": "AC-6",
+      "status": "required",
+      "text": "Run inference for a sample addition problem.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[6]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "AC-B003-007": {
+      "id": "AC-B003-007",
+      "block_id": "B-003",
+      "criterion_number": 7,
+      "label": "AC-7",
+      "status": "required",
+      "text": "The project should provide commands to:",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[7]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    }
+  },
+  "pins": {
+    "PIN-B001-001": {
+      "id": "PIN-B001-001",
+      "block_id": "B-001",
+      "pin_number": 1,
+      "label": "[1]",
+      "kind": "plan",
+      "title": "Create a simple, testable neural network project that accepts two numbers as input and predicts their sum.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Purpose",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Create a simple, testable neural network project that accepts two numbers as input and predicts their sum.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-002": {
+      "id": "PIN-B001-002",
+      "block_id": "B-001",
+      "pin_number": 2,
+      "label": "[2]",
+      "kind": "plan",
+      "title": "Cover source section: Goal",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[1]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Cover source section: Goal",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-003": {
+      "id": "PIN-B001-003",
+      "block_id": "B-001",
+      "pin_number": 3,
+      "label": "[3]",
+      "kind": "plan",
+      "title": "Cover source section: Requirements",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[2]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Cover source section: Requirements",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-004": {
+      "id": "PIN-B001-004",
+      "block_id": "B-001",
+      "pin_number": 4,
+      "label": "[4]",
+      "kind": "plan",
+      "title": "Cover source section: Model Scope",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[3]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Cover source section: Model Scope",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-005": {
+      "id": "PIN-B001-005",
+      "block_id": "B-001",
+      "pin_number": 5,
+      "label": "[5]",
+      "kind": "plan",
+      "title": "Generate or load a training dataset of integer addition examples.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[4]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Generate or load a training dataset of integer addition examples.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-006": {
+      "id": "PIN-B001-006",
+      "block_id": "B-001",
+      "pin_number": 6,
+      "label": "[6]",
+      "kind": "plan",
+      "title": "Represent each example as two input numbers and one target sum.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[5]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Represent each example as two input numbers and one target sum.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-007": {
+      "id": "PIN-B001-007",
+      "block_id": "B-001",
+      "pin_number": 7,
+      "label": "[7]",
+      "kind": "plan",
+      "title": "Train a small neural network on the generated dataset.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[6]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Train a small neural network on the generated dataset.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-008": {
+      "id": "PIN-B001-008",
+      "block_id": "B-001",
+      "pin_number": 8,
+      "label": "[8]",
+      "kind": "plan",
+      "title": "Evaluate the model on unseen addition examples.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[7]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Evaluate the model on unseen addition examples.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-009": {
+      "id": "PIN-B001-009",
+      "block_id": "B-001",
+      "pin_number": 9,
+      "label": "[9]",
+      "kind": "plan",
+      "title": "Provide a simple inference function or script that accepts two numbers and returns the predicted sum.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[8]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Provide a simple inference function or script that accepts two numbers and returns the predicted sum.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-010": {
+      "id": "PIN-B001-010",
+      "block_id": "B-001",
+      "pin_number": 10,
+      "label": "[10]",
+      "kind": "plan",
+      "title": "Save the trained model artifact so it can be reused without retraining every time.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[9]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Save the trained model artifact so it can be reused without retraining every time.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-011": {
+      "id": "PIN-B001-011",
+      "block_id": "B-001",
+      "pin_number": 11,
+      "label": "[11]",
+      "kind": "plan",
+      "title": "Inputs: two integers `a` and `b`.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[10]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Inputs: two integers `a` and `b`.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-012": {
+      "id": "PIN-B001-012",
+      "block_id": "B-001",
+      "pin_number": 12,
+      "label": "[12]",
+      "kind": "plan",
+      "title": "Range: `0 <= a <= 100` and `0 <= b <= 100`.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Responsibilities[11]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Range: `0 <= a <= 100` and `0 <= b <= 100`.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-013": {
+      "id": "PIN-B001-013",
+      "block_id": "B-001",
+      "pin_number": 13,
+      "label": "[13]",
+      "kind": "plan",
+      "title": "Outputs from prerequisite blocks and referenced source-plan sections",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Inputs[1]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Outputs from prerequisite blocks and referenced source-plan sections",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-014": {
+      "id": "PIN-B001-014",
+      "block_id": "B-001",
+      "pin_number": 14,
+      "label": "[14]",
+      "kind": "plan",
+      "title": "Block-specific implementation artifacts defined by spec.md",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Outputs[1]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Block-specific implementation artifacts defined by spec.md",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-015": {
+      "id": "PIN-B001-015",
+      "block_id": "B-001",
+      "pin_number": 15,
+      "label": "[15]",
+      "kind": "plan",
+      "title": "Which primary papers directly support Goal / Model Scope?",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Research Questions[1]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Which primary papers directly support Goal / Model Scope?",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-016": {
+      "id": "PIN-B001-016",
+      "block_id": "B-001",
+      "pin_number": 16,
+      "label": "[16]",
+      "kind": "plan",
+      "title": "What methods, representations, losses, or constraints from those papers should be implemented for these source sections?",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Research Questions[2]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "What methods, representations, losses, or constraints from those papers should be implemented for these source sections?",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-017": {
+      "id": "PIN-B001-017",
+      "block_id": "B-001",
+      "pin_number": 17,
+      "label": "[17]",
+      "kind": "plan",
+      "title": "What failure modes or evaluation criteria from the papers apply to this block?",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Research Questions[3]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "What failure modes or evaluation criteria from the papers apply to this block?",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-018": {
+      "id": "PIN-B001-018",
+      "block_id": "B-001",
+      "pin_number": 18,
+      "label": "[18]",
+      "kind": "criterion",
+      "title": "Generate or load a training dataset of integer addition examples.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[1]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Generate or load a training dataset of integer addition examples.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-019": {
+      "id": "PIN-B001-019",
+      "block_id": "B-001",
+      "pin_number": 19,
+      "label": "[19]",
+      "kind": "criterion",
+      "title": "Represent each example as two input numbers and one target sum.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[2]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Represent each example as two input numbers and one target sum.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-020": {
+      "id": "PIN-B001-020",
+      "block_id": "B-001",
+      "pin_number": 20,
+      "label": "[20]",
+      "kind": "criterion",
+      "title": "Train a small neural network on the generated dataset.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[3]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Train a small neural network on the generated dataset.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-021": {
+      "id": "PIN-B001-021",
+      "block_id": "B-001",
+      "pin_number": 21,
+      "label": "[21]",
+      "kind": "criterion",
+      "title": "Evaluate the model on unseen addition examples.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[4]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Evaluate the model on unseen addition examples.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-022": {
+      "id": "PIN-B001-022",
+      "block_id": "B-001",
+      "pin_number": 22,
+      "label": "[22]",
+      "kind": "criterion",
+      "title": "Provide a simple inference function or script that accepts two numbers and returns the predicted sum.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[5]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Provide a simple inference function or script that accepts two numbers and returns the predicted sum.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-023": {
+      "id": "PIN-B001-023",
+      "block_id": "B-001",
+      "pin_number": 23,
+      "label": "[23]",
+      "kind": "criterion",
+      "title": "Save the trained model artifact so it can be reused without retraining every time.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[6]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Save the trained model artifact so it can be reused without retraining every time.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-024": {
+      "id": "PIN-B001-024",
+      "block_id": "B-001",
+      "pin_number": 24,
+      "label": "[24]",
+      "kind": "criterion",
+      "title": "Inputs: two integers a and b.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[7]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Inputs: two integers a and b.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-025": {
+      "id": "PIN-B001-025",
+      "block_id": "B-001",
+      "pin_number": 25,
+      "label": "[25]",
+      "kind": "criterion",
+      "title": "Range: 0 <= a <= 100 and 0 <= b <= 100.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[8]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Range: 0 <= a <= 100 and 0 <= b <= 100.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-026": {
+      "id": "PIN-B001-026",
+      "block_id": "B-001",
+      "pin_number": 26,
+      "label": "[26]",
+      "kind": "criterion",
+      "title": "Output: predicted value of a + b.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[9]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Output: predicted value of a + b.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-027": {
+      "id": "PIN-B001-027",
+      "block_id": "B-001",
+      "pin_number": 27,
+      "label": "[27]",
+      "kind": "criterion",
+      "title": "Model type: small feed-forward neural network.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Acceptance Criteria[10]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Model type: small feed-forward neural network.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-028": {
+      "id": "PIN-B001-028",
+      "block_id": "B-001",
+      "pin_number": 28,
+      "label": "[28]",
+      "kind": "plan",
+      "title": "Goal / Model Scope has a concrete spec.md derived from block.md, papers.md, and extracted-research.md.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Implementation Criteria[1]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Goal / Model Scope has a concrete spec.md derived from block.md, papers.md, and extracted-research.md.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-029": {
+      "id": "PIN-B001-029",
+      "block_id": "B-001",
+      "pin_number": 29,
+      "label": "[29]",
+      "kind": "plan",
+      "title": "Inputs and outputs are represented in normal source-code types or interfaces.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Implementation Criteria[2]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Inputs and outputs are represented in normal source-code types or interfaces.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-030": {
+      "id": "PIN-B001-030",
+      "block_id": "B-001",
+      "pin_number": 30,
+      "label": "[30]",
+      "kind": "plan",
+      "title": "Implementation preserves traceability to the referenced source-plan sections.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Implementation Criteria[3]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Implementation preserves traceability to the referenced source-plan sections.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-031": {
+      "id": "PIN-B001-031",
+      "block_id": "B-001",
+      "pin_number": 31,
+      "label": "[31]",
+      "kind": "plan",
+      "title": "Verification covers the block responsibilities and any dependency contracts.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L5-L28 > Implementation Criteria[4]",
+      "source_excerpt": "Source reference: system-plan.md:L5-L28\n\nIncluded source sections:\n- Goal\n- Requirements\n- Model Scope",
+      "checkpoint": "Verification covers the block responsibilities and any dependency contracts.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.565Z",
+      "updated_at": "2026-08-15T00:50:49.565Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-001": {
+      "id": "PIN-B002-001",
+      "block_id": "B-002",
+      "pin_number": 1,
+      "label": "[1]",
+      "kind": "plan",
+      "title": "The implementation must include: - Dataset generation code.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Purpose",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "The implementation must include: - Dataset generation code.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-002": {
+      "id": "PIN-B002-002",
+      "block_id": "B-002",
+      "pin_number": 2,
+      "label": "[2]",
+      "kind": "plan",
+      "title": "Cover source section: Implementation Expectations",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[1]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Cover source section: Implementation Expectations",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-003": {
+      "id": "PIN-B002-003",
+      "block_id": "B-002",
+      "pin_number": 3,
+      "label": "[3]",
+      "kind": "plan",
+      "title": "Cover source section: Acceptance Criteria",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[2]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Cover source section: Acceptance Criteria",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-004": {
+      "id": "PIN-B002-004",
+      "block_id": "B-002",
+      "pin_number": 4,
+      "label": "[4]",
+      "kind": "plan",
+      "title": "Dataset generation code.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[3]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Dataset generation code.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-005": {
+      "id": "PIN-B002-005",
+      "block_id": "B-002",
+      "pin_number": 5,
+      "label": "[5]",
+      "kind": "plan",
+      "title": "Model definition code.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[4]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Model definition code.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-006": {
+      "id": "PIN-B002-006",
+      "block_id": "B-002",
+      "pin_number": 6,
+      "label": "[6]",
+      "kind": "plan",
+      "title": "Training loop.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[5]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Training loop.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-007": {
+      "id": "PIN-B002-007",
+      "block_id": "B-002",
+      "pin_number": 7,
+      "label": "[7]",
+      "kind": "plan",
+      "title": "Evaluation metrics.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[6]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Evaluation metrics.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-008": {
+      "id": "PIN-B002-008",
+      "block_id": "B-002",
+      "pin_number": 8,
+      "label": "[8]",
+      "kind": "plan",
+      "title": "Model save/load support.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[7]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Model save/load support.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-009": {
+      "id": "PIN-B002-009",
+      "block_id": "B-002",
+      "pin_number": 9,
+      "label": "[9]",
+      "kind": "plan",
+      "title": "Inference entry point.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[8]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Inference entry point.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-010": {
+      "id": "PIN-B002-010",
+      "block_id": "B-002",
+      "pin_number": 10,
+      "label": "[10]",
+      "kind": "plan",
+      "title": "Tests that verify the model pipeline and basic prediction behavior.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[9]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Tests that verify the model pipeline and basic prediction behavior.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-011": {
+      "id": "PIN-B002-011",
+      "block_id": "B-002",
+      "pin_number": 11,
+      "label": "[11]",
+      "kind": "plan",
+      "title": "The dataset generator creates valid addition pairs and target sums.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Responsibilities[10]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "The dataset generator creates valid addition pairs and target sums.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-012": {
+      "id": "PIN-B002-012",
+      "block_id": "B-002",
+      "pin_number": 12,
+      "label": "[12]",
+      "kind": "plan",
+      "title": "Outputs from prerequisite blocks and referenced source-plan sections",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Inputs[1]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Outputs from prerequisite blocks and referenced source-plan sections",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-013": {
+      "id": "PIN-B002-013",
+      "block_id": "B-002",
+      "pin_number": 13,
+      "label": "[13]",
+      "kind": "plan",
+      "title": "Block-specific implementation artifacts defined by spec.md",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Outputs[1]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Block-specific implementation artifacts defined by spec.md",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-014": {
+      "id": "PIN-B002-014",
+      "block_id": "B-002",
+      "pin_number": 14,
+      "label": "[14]",
+      "kind": "plan",
+      "title": "Which primary papers directly support Implementation Expectations / Acceptance Criteria?",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Research Questions[1]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Which primary papers directly support Implementation Expectations / Acceptance Criteria?",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-015": {
+      "id": "PIN-B002-015",
+      "block_id": "B-002",
+      "pin_number": 15,
+      "label": "[15]",
+      "kind": "plan",
+      "title": "What methods, representations, losses, or constraints from those papers should be implemented for these source sections?",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Research Questions[2]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "What methods, representations, losses, or constraints from those papers should be implemented for these source sections?",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-016": {
+      "id": "PIN-B002-016",
+      "block_id": "B-002",
+      "pin_number": 16,
+      "label": "[16]",
+      "kind": "plan",
+      "title": "What failure modes or evaluation criteria from the papers apply to this block?",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Research Questions[3]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "What failure modes or evaluation criteria from the papers apply to this block?",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-017": {
+      "id": "PIN-B002-017",
+      "block_id": "B-002",
+      "pin_number": 17,
+      "label": "[17]",
+      "kind": "criterion",
+      "title": "Model save/load support.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[1]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Model save/load support.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-018": {
+      "id": "PIN-B002-018",
+      "block_id": "B-002",
+      "pin_number": 18,
+      "label": "[18]",
+      "kind": "criterion",
+      "title": "Tests that verify the model pipeline and basic prediction behavior.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[2]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Tests that verify the model pipeline and basic prediction behavior.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-019": {
+      "id": "PIN-B002-019",
+      "block_id": "B-002",
+      "pin_number": 19,
+      "label": "[19]",
+      "kind": "criterion",
+      "title": "The dataset generator creates valid addition pairs and target sums.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[3]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "The dataset generator creates valid addition pairs and target sums.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-020": {
+      "id": "PIN-B002-020",
+      "block_id": "B-002",
+      "pin_number": 20,
+      "label": "[20]",
+      "kind": "criterion",
+      "title": "The model can be trained without errors.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[4]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "The model can be trained without errors.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-021": {
+      "id": "PIN-B002-021",
+      "block_id": "B-002",
+      "pin_number": 21,
+      "label": "[21]",
+      "kind": "criterion",
+      "title": "Evaluation reports prediction error on held-out samples.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[5]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Evaluation reports prediction error on held-out samples.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-022": {
+      "id": "PIN-B002-022",
+      "block_id": "B-002",
+      "pin_number": 22,
+      "label": "[22]",
+      "kind": "criterion",
+      "title": "The saved model can be loaded for inference.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[6]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "The saved model can be loaded for inference.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-023": {
+      "id": "PIN-B002-023",
+      "block_id": "B-002",
+      "pin_number": 23,
+      "label": "[23]",
+      "kind": "criterion",
+      "title": "The inference function returns predictions close to the true sum for examples inside the supported range.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[7]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "The inference function returns predictions close to the true sum for examples inside the supported range.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-024": {
+      "id": "PIN-B002-024",
+      "block_id": "B-002",
+      "pin_number": 24,
+      "label": "[24]",
+      "kind": "criterion",
+      "title": "Tests cover dataset generation, model shape, training execution, save/load, and inference.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[8]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Tests cover dataset generation, model shape, training execution, save/load, and inference.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-025": {
+      "id": "PIN-B002-025",
+      "block_id": "B-002",
+      "pin_number": 25,
+      "label": "[25]",
+      "kind": "criterion",
+      "title": "The implementation must include:",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Acceptance Criteria[9]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "The implementation must include:",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-026": {
+      "id": "PIN-B002-026",
+      "block_id": "B-002",
+      "pin_number": 26,
+      "label": "[26]",
+      "kind": "plan",
+      "title": "Implementation Expectations / Acceptance Criteria has a concrete spec.md derived from block.md, papers.md, and extracted-research.md.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Implementation Criteria[1]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Implementation Expectations / Acceptance Criteria has a concrete spec.md derived from block.md, papers.md, and extracted-research.md.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-027": {
+      "id": "PIN-B002-027",
+      "block_id": "B-002",
+      "pin_number": 27,
+      "label": "[27]",
+      "kind": "plan",
+      "title": "Inputs and outputs are represented in normal source-code types or interfaces.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Implementation Criteria[2]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Inputs and outputs are represented in normal source-code types or interfaces.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-028": {
+      "id": "PIN-B002-028",
+      "block_id": "B-002",
+      "pin_number": 28,
+      "label": "[28]",
+      "kind": "plan",
+      "title": "Implementation preserves traceability to the referenced source-plan sections.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Implementation Criteria[3]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Implementation preserves traceability to the referenced source-plan sections.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-029": {
+      "id": "PIN-B002-029",
+      "block_id": "B-002",
+      "pin_number": 29,
+      "label": "[29]",
+      "kind": "plan",
+      "title": "Verification covers the block responsibilities and any dependency contracts.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L29-L49 > Implementation Criteria[4]",
+      "source_excerpt": "Source reference: system-plan.md:L29-L49\n\nIncluded source sections:\n- Implementation Expectations\n- Acceptance Criteria",
+      "checkpoint": "Verification covers the block responsibilities and any dependency contracts.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.583Z",
+      "updated_at": "2026-08-15T00:50:49.583Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-001": {
+      "id": "PIN-B003-001",
+      "block_id": "B-003",
+      "pin_number": 1,
+      "label": "[1]",
+      "kind": "plan",
+      "title": "- Do not build a large language model.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Purpose",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "- Do not build a large language model.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-002": {
+      "id": "PIN-B003-002",
+      "block_id": "B-003",
+      "pin_number": 2,
+      "label": "[2]",
+      "kind": "plan",
+      "title": "Cover source section: Non-Goals",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[1]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Cover source section: Non-Goals",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-003": {
+      "id": "PIN-B003-003",
+      "block_id": "B-003",
+      "pin_number": 3,
+      "label": "[3]",
+      "kind": "plan",
+      "title": "Cover source section: Verification",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[2]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Cover source section: Verification",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-004": {
+      "id": "PIN-B003-004",
+      "block_id": "B-003",
+      "pin_number": 4,
+      "label": "[4]",
+      "kind": "plan",
+      "title": "Do not build a large language model.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[3]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not build a large language model.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-005": {
+      "id": "PIN-B003-005",
+      "block_id": "B-003",
+      "pin_number": 5,
+      "label": "[5]",
+      "kind": "plan",
+      "title": "Do not support arbitrary symbolic math.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[4]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not support arbitrary symbolic math.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-006": {
+      "id": "PIN-B003-006",
+      "block_id": "B-003",
+      "pin_number": 6,
+      "label": "[6]",
+      "kind": "plan",
+      "title": "Do not build a web UI.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[5]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not build a web UI.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-007": {
+      "id": "PIN-B003-007",
+      "block_id": "B-003",
+      "pin_number": 7,
+      "label": "[7]",
+      "kind": "plan",
+      "title": "Do not optimize for production-scale training.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[6]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not optimize for production-scale training.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-008": {
+      "id": "PIN-B003-008",
+      "block_id": "B-003",
+      "pin_number": 8,
+      "label": "[8]",
+      "kind": "plan",
+      "title": "Do not use placeholder or mock training code.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[7]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not use placeholder or mock training code.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-009": {
+      "id": "PIN-B003-009",
+      "block_id": "B-003",
+      "pin_number": 9,
+      "label": "[9]",
+      "kind": "plan",
+      "title": "Run tests.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[8]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Run tests.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-010": {
+      "id": "PIN-B003-010",
+      "block_id": "B-003",
+      "pin_number": 10,
+      "label": "[10]",
+      "kind": "plan",
+      "title": "Train the model.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[9]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Train the model.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-011": {
+      "id": "PIN-B003-011",
+      "block_id": "B-003",
+      "pin_number": 11,
+      "label": "[11]",
+      "kind": "plan",
+      "title": "Evaluate the model.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Responsibilities[10]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Evaluate the model.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-012": {
+      "id": "PIN-B003-012",
+      "block_id": "B-003",
+      "pin_number": 12,
+      "label": "[12]",
+      "kind": "plan",
+      "title": "Outputs from prerequisite blocks and referenced source-plan sections",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Inputs[1]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Outputs from prerequisite blocks and referenced source-plan sections",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-013": {
+      "id": "PIN-B003-013",
+      "block_id": "B-003",
+      "pin_number": 13,
+      "label": "[13]",
+      "kind": "plan",
+      "title": "Block-specific implementation artifacts defined by spec.md",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Outputs[1]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Block-specific implementation artifacts defined by spec.md",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-014": {
+      "id": "PIN-B003-014",
+      "block_id": "B-003",
+      "pin_number": 14,
+      "label": "[14]",
+      "kind": "plan",
+      "title": "Which primary papers directly support Non-Goals / Verification?",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Research Questions[1]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Which primary papers directly support Non-Goals / Verification?",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-015": {
+      "id": "PIN-B003-015",
+      "block_id": "B-003",
+      "pin_number": 15,
+      "label": "[15]",
+      "kind": "plan",
+      "title": "What methods, representations, losses, or constraints from those papers should be implemented for these source sections?",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Research Questions[2]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "What methods, representations, losses, or constraints from those papers should be implemented for these source sections?",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-016": {
+      "id": "PIN-B003-016",
+      "block_id": "B-003",
+      "pin_number": 16,
+      "label": "[16]",
+      "kind": "plan",
+      "title": "What failure modes or evaluation criteria from the papers apply to this block?",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Research Questions[3]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "What failure modes or evaluation criteria from the papers apply to this block?",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-017": {
+      "id": "PIN-B003-017",
+      "block_id": "B-003",
+      "pin_number": 17,
+      "label": "[17]",
+      "kind": "criterion",
+      "title": "Do not build a large language model.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[1]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not build a large language model.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-018": {
+      "id": "PIN-B003-018",
+      "block_id": "B-003",
+      "pin_number": 18,
+      "label": "[18]",
+      "kind": "criterion",
+      "title": "Do not support arbitrary symbolic math.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[2]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not support arbitrary symbolic math.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-019": {
+      "id": "PIN-B003-019",
+      "block_id": "B-003",
+      "pin_number": 19,
+      "label": "[19]",
+      "kind": "criterion",
+      "title": "Do not build a web UI.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[3]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not build a web UI.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-020": {
+      "id": "PIN-B003-020",
+      "block_id": "B-003",
+      "pin_number": 20,
+      "label": "[20]",
+      "kind": "criterion",
+      "title": "Do not optimize for production-scale training.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[4]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not optimize for production-scale training.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-021": {
+      "id": "PIN-B003-021",
+      "block_id": "B-003",
+      "pin_number": 21,
+      "label": "[21]",
+      "kind": "criterion",
+      "title": "Do not use placeholder or mock training code.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[5]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Do not use placeholder or mock training code.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-022": {
+      "id": "PIN-B003-022",
+      "block_id": "B-003",
+      "pin_number": 22,
+      "label": "[22]",
+      "kind": "criterion",
+      "title": "Run inference for a sample addition problem.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[6]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Run inference for a sample addition problem.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-023": {
+      "id": "PIN-B003-023",
+      "block_id": "B-003",
+      "pin_number": 23,
+      "label": "[23]",
+      "kind": "criterion",
+      "title": "The project should provide commands to:",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Acceptance Criteria[7]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "The project should provide commands to:",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-024": {
+      "id": "PIN-B003-024",
+      "block_id": "B-003",
+      "pin_number": 24,
+      "label": "[24]",
+      "kind": "plan",
+      "title": "Non-Goals / Verification has a concrete spec.md derived from block.md, papers.md, and extracted-research.md.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Implementation Criteria[1]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Non-Goals / Verification has a concrete spec.md derived from block.md, papers.md, and extracted-research.md.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-025": {
+      "id": "PIN-B003-025",
+      "block_id": "B-003",
+      "pin_number": 25,
+      "label": "[25]",
+      "kind": "plan",
+      "title": "Inputs and outputs are represented in normal source-code types or interfaces.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Implementation Criteria[2]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Inputs and outputs are represented in normal source-code types or interfaces.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-026": {
+      "id": "PIN-B003-026",
+      "block_id": "B-003",
+      "pin_number": 26,
+      "label": "[26]",
+      "kind": "plan",
+      "title": "Implementation preserves traceability to the referenced source-plan sections.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Implementation Criteria[3]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Implementation preserves traceability to the referenced source-plan sections.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-027": {
+      "id": "PIN-B003-027",
+      "block_id": "B-003",
+      "pin_number": 27,
+      "label": "[27]",
+      "kind": "plan",
+      "title": "Verification covers the block responsibilities and any dependency contracts.",
+      "source_file": "system-plan.md",
+      "source_ref": "system-plan.md:L50-L66 > Implementation Criteria[4]",
+      "source_excerpt": "Source reference: system-plan.md:L50-L66\n\nIncluded source sections:\n- Non-Goals\n- Verification",
+      "checkpoint": "Verification covers the block responsibilities and any dependency contracts.",
+      "related_files": [
+        "system-plan.md",
+        "block.md"
+      ],
+      "created_at": "2026-08-15T00:50:49.591Z",
+      "updated_at": "2026-08-15T00:50:49.591Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-032": {
+      "id": "PIN-B001-032",
+      "block_id": "B-001",
+      "pin_number": 32,
+      "label": "[32]",
+      "kind": "evidence",
+      "title": "Block-specific extracted evidence",
+      "source_file": "extracted-research.md",
+      "source_ref": "Extracted evidence for active block",
+      "source_excerpt": "# Extracted Research For B-001 Goal / Model Scope\n\n## Scope Evidence From User Plan\n- The local plan is the controlling source for this block. It requires a simple project that accepts two numbers and predicts their sum, generates or loads integer-addition training data, represents each example as two inputs and one target sum, trains and evaluates a small neural network, exposes inference, and saves a trained artifact.\n- B-001 must preserve the supported input contract: exactly two integers `a` and `b`, each in the inclusive range `0 <= value <= 100`; output is the predicted value of `a + b`.\n- B-001 must constrain model architecture to a small feed-forward neural network. Evidence does not support expanding scope to symbolic math, web UI, or larger sequence/LLM architectures.\n\n## Representation Evidence\n- PyTorch `Dataset`/`DataLoader` guidance supports separating sample storage from m...",
+      "checkpoint": "Use extracted-research.md only for evidence that is specific to this block and cite this pin in the spec when the evidence affects implementation.",
+      "related_files": [
+        "extracted-research.md",
+        "papers.md",
+        "spec.md"
+      ],
+      "created_at": "2026-08-15T00:53:06.236Z",
+      "updated_at": "2026-08-15T00:53:06.236Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-030": {
+      "id": "PIN-B002-030",
+      "block_id": "B-002",
+      "pin_number": 30,
+      "label": "[30]",
+      "kind": "evidence",
+      "title": "Block-specific extracted evidence",
+      "source_file": "extracted-research.md",
+      "source_ref": "Extracted evidence for active block",
+      "source_excerpt": "# Extracted Research For B-002 Implementation Expectations / Acceptance Criteria\n\n## Scope Evidence From User Plan\n- The local plan requires concrete implementation artifacts: dataset generation code, model definition code, training loop, evaluation metrics, model save/load support, inference entry point, and tests.\n- Acceptance criteria require that generated examples are valid, training runs without errors, evaluation reports held-out prediction error, saved models can be loaded, inference returns predictions close to true sums inside the supported range, and tests cover the full pipeline.\n\n## Dataset Generation Evidence\n- PyTorch `Dataset` guidance supports a dataset object that returns one feature/target sample from `__getitem__` and reports length with `__len__`.\n- For this block, dataset generation should create valid pairs `(a, b)` within the supported range and a target `a + b`....",
+      "checkpoint": "Use extracted-research.md only for evidence that is specific to this block and cite this pin in the spec when the evidence affects implementation.",
+      "related_files": [
+        "extracted-research.md",
+        "papers.md",
+        "spec.md"
+      ],
+      "created_at": "2026-08-15T00:53:42.657Z",
+      "updated_at": "2026-08-15T00:53:42.657Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-028": {
+      "id": "PIN-B003-028",
+      "block_id": "B-003",
+      "pin_number": 28,
+      "label": "[28]",
+      "kind": "evidence",
+      "title": "Block-specific extracted evidence",
+      "source_file": "extracted-research.md",
+      "source_ref": "Extracted evidence for active block",
+      "source_excerpt": "# Extracted Research For B-003 Non-Goals / Verification\n\n## Scope Evidence From User Plan\n- The local plan is the controlling source for B-003. It explicitly excludes a large language model, arbitrary symbolic math, web UI, production-scale training optimization, and placeholder/mock training code.\n- The plan requires project commands to run tests, train the model, evaluate the model, and run inference for a sample addition problem.\n\n## Non-Goal Evidence\n- B-003 evidence supports keeping the implementation as a local Python/PyTorch project with command-line workflows. No attached evidence supports adding a web server, web UI, LLM, transformer, symbolic algebra engine, or distributed/production training stack.\n- The PyTorch train/eval loop evidence is sufficient for a small supervised regression project; production-scale concerns such as distributed training, accelerator optimization, or...",
+      "checkpoint": "Use extracted-research.md only for evidence that is specific to this block and cite this pin in the spec when the evidence affects implementation.",
+      "related_files": [
+        "extracted-research.md",
+        "papers.md",
+        "spec.md"
+      ],
+      "created_at": "2026-08-15T00:54:13.703Z",
+      "updated_at": "2026-08-15T00:54:13.703Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B001-034": {
+      "id": "PIN-B001-034",
+      "block_id": "B-001",
+      "pin_number": 34,
+      "label": "[34]",
+      "kind": "evidence",
+      "title": "Attached evidence references",
+      "source_file": "papers.md",
+      "source_ref": "P-001, P-002, P-003, P-004, P-005, P-006",
+      "source_excerpt": "# Papers For B-001 Goal / Model Scope\n\n## P-001 User plan: Addition Neural Network Plan\n\nCitation: TBD\nDiscovery source: user_upload\nSource URL: N/A\nStored path: papers/P-001-user-plan-addition-neural-network-plan.md\nSource path: C:\\Users\\ayode\\small_neural_network\\plan.md\nAuthors: TBD\nYear: TBD\nVenue: TBD\nDOI: N/A\narXiv: N/A\nRelevance score: 1\n\n### Abstract\nTBD\n\n### Relevance Notes\nDefines B-001 scope: two integer inputs, range 0..100, target sum, small feed-forward neural network, dataset/training/evaluation/inference/save requirements.\n\n### Relevant Sections\n- Goal\n- Requirements\n- Model Scope\n\n## P-002 PyTorch Datasets & DataLoaders tutorial\n\nCitation: TBD\nDiscovery source: codex_online\nSource URL: https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html\nStored path: Reference only\nSource path: N/A\nAuthors: TBD\nYear: TBD\nVenue: TBD\nDOI: N/A\narXiv: N/A\nRelevance score: 0....",
+      "checkpoint": "Attached evidence must map to an implementation role, processing step, consumed/produced records, provenance, confidence handling, and boundaries before implementation.",
+      "related_files": [
+        "papers.md",
+        "extracted-research.md",
+        "spec.md"
+      ],
+      "created_at": "2026-08-15T00:56:09.233Z",
+      "updated_at": "2026-08-15T00:56:09.233Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B002-032": {
+      "id": "PIN-B002-032",
+      "block_id": "B-002",
+      "pin_number": 32,
+      "label": "[32]",
+      "kind": "evidence",
+      "title": "Attached evidence references",
+      "source_file": "papers.md",
+      "source_ref": "P-007, P-008, P-009, P-010, P-011, P-012, P-013, P-014",
+      "source_excerpt": "# Papers For B-002 Implementation Expectations / Acceptance Criteria\n\n## P-007 User plan: Addition Neural Network Plan\n\nCitation: TBD\nDiscovery source: user_upload\nSource URL: N/A\nStored path: papers/P-007-user-plan-addition-neural-network-plan.md\nSource path: C:\\Users\\ayode\\small_neural_network\\plan.md\nAuthors: TBD\nYear: TBD\nVenue: TBD\nDOI: N/A\narXiv: N/A\nRelevance score: 1\n\n### Abstract\nTBD\n\n### Relevance Notes\nDefines B-002 implementation deliverables: dataset generation, model definition, training loop, evaluation metrics, save/load, inference entry point, and tests.\n\n### Relevant Sections\n- Implementation Expectations\n- Acceptance Criteria\n\n## P-008 PyTorch Datasets & DataLoaders tutorial\n\nCitation: TBD\nDiscovery source: codex_online\nSource URL: https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html\nStored path: Reference only\nSource path: N/A\nAuthors: TBD\nYear: TBD\nV...",
+      "checkpoint": "Attached evidence must map to an implementation role, processing step, consumed/produced records, provenance, confidence handling, and boundaries before implementation.",
+      "related_files": [
+        "papers.md",
+        "extracted-research.md",
+        "spec.md"
+      ],
+      "created_at": "2026-08-15T00:59:38.683Z",
+      "updated_at": "2026-08-15T00:59:38.683Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    },
+    "PIN-B003-030": {
+      "id": "PIN-B003-030",
+      "block_id": "B-003",
+      "pin_number": 30,
+      "label": "[30]",
+      "kind": "evidence",
+      "title": "Attached evidence references",
+      "source_file": "papers.md",
+      "source_ref": "P-015, P-016, P-017, P-018, P-019, P-020, P-021",
+      "source_excerpt": "# Papers For B-003 Non-Goals / Verification\n\n## P-015 User plan: Addition Neural Network Plan\n\nCitation: TBD\nDiscovery source: user_upload\nSource URL: N/A\nStored path: papers/P-015-user-plan-addition-neural-network-plan.md\nSource path: C:\\Users\\ayode\\small_neural_network\\plan.md\nAuthors: TBD\nYear: TBD\nVenue: TBD\nDOI: N/A\narXiv: N/A\nRelevance score: 1\n\n### Abstract\nTBD\n\n### Relevance Notes\nDefines B-003 non-goals and required commands for tests, training, evaluation, and sample inference.\n\n### Relevant Sections\n- Non-Goals\n- Verification\n\n## P-016 PyTorch Optimizing Model Parameters tutorial\n\nCitation: TBD\nDiscovery source: codex_online\nSource URL: https://docs.pytorch.org/tutorials/beginner/basics/optimization_tutorial.html\nStored path: Reference only\nSource path: N/A\nAuthors: TBD\nYear: TBD\nVenue: TBD\nDOI: N/A\narXiv: N/A\nRelevance score: 0.85\n\n### Abstract\nTBD\n\n### Relevance Notes\nSuppor...",
+      "checkpoint": "Attached evidence must map to an implementation role, processing step, consumed/produced records, provenance, confidence handling, and boundaries before implementation.",
+      "related_files": [
+        "papers.md",
+        "extracted-research.md",
+        "spec.md"
+      ],
+      "created_at": "2026-08-15T01:00:51.822Z",
+      "updated_at": "2026-08-15T01:00:51.822Z",
+      "created_by": "legacy",
+      "updated_by": "legacy"
+    }
+  },
+  "design_turns": {},
+  "design_sessions": {
+    "B-001": {
+      "block_id": "B-001",
+      "status": "finalized",
+      "pin_ids": [
+        "PIN-B001-001",
+        "PIN-B001-002",
+        "PIN-B001-003",
+        "PIN-B001-004",
+        "PIN-B001-005",
+        "PIN-B001-006",
+        "PIN-B001-007",
+        "PIN-B001-008",
+        "PIN-B001-009",
+        "PIN-B001-010",
+        "PIN-B001-011",
+        "PIN-B001-012",
+        "PIN-B001-013",
+        "PIN-B001-014",
+        "PIN-B001-015",
+        "PIN-B001-016",
+        "PIN-B001-017",
+        "PIN-B001-018",
+        "PIN-B001-019",
+        "PIN-B001-020",
+        "PIN-B001-021",
+        "PIN-B001-022",
+        "PIN-B001-023",
+        "PIN-B001-024",
+        "PIN-B001-025",
+        "PIN-B001-026",
+        "PIN-B001-027",
+        "PIN-B001-028",
+        "PIN-B001-029",
+        "PIN-B001-030",
+        "PIN-B001-031",
+        "PIN-B001-032",
+        "PIN-B001-034"
+      ],
+      "turn_ids": [],
+      "created_by": "Codex",
+      "updated_by": "Codex",
+      "created_at": "2026-08-15T00:56:09.233Z",
+      "updated_at": "2026-08-15T00:59:28.197Z",
+      "finalized_at": "2026-08-15T00:59:28.197Z",
+      "finalized_by": "Codex"
+    },
+    "B-002": {
+      "block_id": "B-002",
+      "status": "finalized",
+      "pin_ids": [
+        "PIN-B002-001",
+        "PIN-B002-002",
+        "PIN-B002-003",
+        "PIN-B002-004",
+        "PIN-B002-005",
+        "PIN-B002-006",
+        "PIN-B002-007",
+        "PIN-B002-008",
+        "PIN-B002-009",
+        "PIN-B002-010",
+        "PIN-B002-011",
+        "PIN-B002-012",
+        "PIN-B002-013",
+        "PIN-B002-014",
+        "PIN-B002-015",
+        "PIN-B002-016",
+        "PIN-B002-017",
+        "PIN-B002-018",
+        "PIN-B002-019",
+        "PIN-B002-020",
+        "PIN-B002-021",
+        "PIN-B002-022",
+        "PIN-B002-023",
+        "PIN-B002-024",
+        "PIN-B002-025",
+        "PIN-B002-026",
+        "PIN-B002-027",
+        "PIN-B002-028",
+        "PIN-B002-029",
+        "PIN-B002-030",
+        "PIN-B002-032"
+      ],
+      "turn_ids": [],
+      "created_by": "Codex",
+      "updated_by": "Codex",
+      "created_at": "2026-08-15T00:59:38.683Z",
+      "updated_at": "2026-08-15T01:00:43.531Z",
+      "finalized_at": "2026-08-15T01:00:43.531Z",
+      "finalized_by": "Codex"
+    },
+    "B-003": {
+      "block_id": "B-003",
+      "status": "finalized",
+      "pin_ids": [
+        "PIN-B003-001",
+        "PIN-B003-002",
+        "PIN-B003-003",
+        "PIN-B003-004",
+        "PIN-B003-005",
+        "PIN-B003-006",
+        "PIN-B003-007",
+        "PIN-B003-008",
+        "PIN-B003-009",
+        "PIN-B003-010",
+        "PIN-B003-011",
+        "PIN-B003-012",
+        "PIN-B003-013",
+        "PIN-B003-014",
+        "PIN-B003-015",
+        "PIN-B003-016",
+        "PIN-B003-017",
+        "PIN-B003-018",
+        "PIN-B003-019",
+        "PIN-B003-020",
+        "PIN-B003-021",
+        "PIN-B003-022",
+        "PIN-B003-023",
+        "PIN-B003-024",
+        "PIN-B003-025",
+        "PIN-B003-026",
+        "PIN-B003-027",
+        "PIN-B003-028",
+        "PIN-B003-030"
+      ],
+      "turn_ids": [],
+      "created_by": "Codex",
+      "updated_by": "Codex",
+      "created_at": "2026-08-15T01:00:51.822Z",
+      "updated_at": "2026-08-15T01:01:49.021Z",
+      "finalized_at": "2026-08-15T01:01:49.021Z",
+      "finalized_by": "Codex"
+    }
+  },
+  "implementation_target": {
+    "language": "Python",
+    "framework": "pytorch"
+  }
+}

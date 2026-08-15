@@ -1,0 +1,106 @@
+{
+  "blocks": [
+    {
+      "id": "B-001",
+      "title": "Goal / Model Scope",
+      "status": "verified",
+      "depends_on": [],
+      "related_blocks": [
+        "B-002"
+      ],
+      "paper_ids": [
+        "P-001",
+        "P-002",
+        "P-003",
+        "P-004",
+        "P-005",
+        "P-006"
+      ],
+      "created_by": "Codex",
+      "updated_by": "Codex",
+      "approved_by": "local-user",
+      "implemented_by": "Codex",
+      "verified_by": "Codex"
+    },
+    {
+      "id": "B-002",
+      "title": "Implementation Expectations / Acceptance Criteria",
+      "status": "spec_created",
+      "depends_on": [
+        "B-001"
+      ],
+      "related_blocks": [
+        "B-001",
+        "B-003"
+      ],
+      "paper_ids": [
+        "P-007",
+        "P-008",
+        "P-009",
+        "P-010",
+        "P-011",
+        "P-012",
+        "P-013",
+        "P-014"
+      ],
+      "created_by": "Codex",
+      "updated_by": "local-user",
+      "approved_by": "local-user"
+    },
+    {
+      "id": "B-003",
+      "title": "Non-Goals / Verification",
+      "status": "spec_created",
+      "depends_on": [
+        "B-002"
+      ],
+      "related_blocks": [
+        "B-002"
+      ],
+      "paper_ids": [
+        "P-015",
+        "P-016",
+        "P-017",
+        "P-018",
+        "P-019",
+        "P-020",
+        "P-021"
+      ],
+      "created_by": "Codex",
+      "updated_by": "local-user",
+      "approved_by": "local-user"
+    }
+  ],
+  "edges": [
+    {
+      "from": "B-001",
+      "to": "B-002",
+      "type": "related_to"
+    },
+    {
+      "from": "B-002",
+      "to": "B-001",
+      "type": "depends_on"
+    },
+    {
+      "from": "B-002",
+      "to": "B-001",
+      "type": "related_to"
+    },
+    {
+      "from": "B-002",
+      "to": "B-003",
+      "type": "related_to"
+    },
+    {
+      "from": "B-003",
+      "to": "B-002",
+      "type": "depends_on"
+    },
+    {
+      "from": "B-003",
+      "to": "B-002",
+      "type": "related_to"
+    }
+  ]
+}

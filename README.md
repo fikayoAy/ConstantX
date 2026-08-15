@@ -2,13 +2,58 @@
 <p align="center">
   <img src="assets/logo.png" alt="ConstantX logo" width="180" />
 </p>
-ConstantX is an opt-in MCP workflow for Codex. It turns a markdown system plan into traceable implementation blocks, gathers block-specific evidence, supports user-guided redesign before specs, and gates code implementation behind approved research, approved specs, and strict implementation context.
+ConstantX is an MCP engineering workflow that turns a markdown plan into small, inspectable implementation blocks, gathers block-specific evidence, lets you refine the design before code, and gates implementation behind approved specs, verification, and traceable project files.
 
 Use it from Codex only when your prompt starts like this:
 
 ```text
 Use ConstantX. <workflow action>
 ```
+
+## Watch It Work
+
+### Installation Walkthrough
+
+Installing the ConstantX VS Code extension, starting the shared MCP runtime, and connecting the tool for use from an agent.
+
+<video src="assets/installation.mp4" controls width="100%">
+  Your browser does not support embedded video. Open `assets/installation.mp4` instead.
+</video>
+
+[Open installation walkthrough](assets/installation.mp4)
+
+### Workflow In Practice
+
+Using ConstantX on a real plan so the agent decomposes the work, writes block files, gathers evidence, and moves through the gated workflow.
+
+<video src="assets/workflow_overview%20.mp4" controls width="100%">
+  Your browser does not support embedded video. Open `assets/workflow_overview .mp4` instead.
+</video>
+
+[Open workflow video](<assets/workflow_overview .mp4>)
+
+## Example: Small Neural Network
+
+The [small neural network example](small_neural_network/) shows the workflow in practice. A short markdown plan is converted into a managed project for a PyTorch addition model, with source code, tests, artifacts, planner state, evidence, and block files kept inspectable.
+
+ConstantX breaks the example into focused blocks instead of one large generated implementation:
+
+| Block | Purpose |
+| --- | --- |
+| [`B-001`](small_neural_network/blocks/B-001-goal-model-scope/) | Defines the addition task, model scope, dataset range, and supported inputs. |
+| [`B-002`](small_neural_network/blocks/B-002-implementation-expectations-acceptance-criteria/) | Captures implementation expectations and acceptance criteria for training, evaluation, save/load, and inference. |
+| [`B-003`](small_neural_network/blocks/B-003-non-goals-verification/) | Records non-goals, verification requirements, tests, and scope guardrails. |
+
+The final project includes a runnable [`addition_nn`](small_neural_network/addition_nn/) package and [`tests`](small_neural_network/tests/) so the generated work can be inspected, tested, and traced back to the original plan.
+
+## Why The File Breakdown Matters
+
+ConstantX takes a large markdown plan and breaks it into small, inspectable files instead of leaving the model to work from one huge prompt or one large generated artifact.
+
+Each block becomes a managed folder with focused markdown artifacts such as `block.md`, `criteria.md`, `criteria-diff.md`, `pins.md`, `papers.md`, `extracted-research.md`, `annotation-<BLOCK_ID>.md`, `design-session.md`, `directives.md`, `spec.md`, and `implementation.md`.
+
+That structure makes the workflow easier to review because every stage has a small surface area: the original plan is traceable, block responsibilities are explicit, evidence stays block-specific, user design decisions are recorded, specs are concrete, and implementation only starts after the relevant files have been approved.
+The resulting implementations are also split into focused scripts, making them easier to inspect instead of being stuffed into one or two large blobs of code.
 
 ## Documentation
 

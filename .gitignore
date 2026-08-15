@@ -6,3 +6,7 @@ dist/
 npm-debug.log*
 dist-vsix/
 vscode-extension/server/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.pt
