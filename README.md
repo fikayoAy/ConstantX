@@ -16,21 +16,13 @@ Use ConstantX. <workflow action>
 
 Installing the ConstantX VS Code extension, starting the shared MCP runtime, and connecting the tool for use from an agent.
 
-<video src="assets/installation.mp4" controls width="100%">
-  Your browser does not support embedded video. Open `assets/installation.mp4` instead.
-</video>
-
-[Open installation walkthrough](assets/installation.mp4)
+![Installation walkthrough](assets/installation.gif)
 
 ### Workflow In Practice
 
 Using ConstantX on a real plan so the agent decomposes the work, writes block files, gathers evidence, and moves through the gated workflow.
 
-<video src="assets/workflow_overview%20.mp4" controls width="100%">
-  Your browser does not support embedded video. Open `assets/workflow_overview .mp4` instead.
-</video>
-
-[Open workflow video](<assets/workflow_overview .mp4>)
+![Workflow in practice](<assets/workflow_overview .gif>)
 
 ## Example: Small Neural Network
 
