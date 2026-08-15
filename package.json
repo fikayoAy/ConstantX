@@ -1,6 +1,6 @@
 {
     "name": "constantx-mcp",
-    "version": "0.1.5",
+    "version": "0.1.0",
     "description": "Markdown-backed MCP workflow for ConstantX, plan decomposition, and research-approved implementation blocks.",
     "type": "module",
     "scripts": {

@@ -5,7 +5,7 @@ const os = require("node:os");
 const path = require("node:path");
 
 const SERVICE_NAME = "ConstantX";
-const SERVICE_VERSION = "0.1.5";
+const SERVICE_VERSION = "0.1.0";
 const DEFAULT_TIMEOUT_MS = 1200;
 
 function runtimeHome() {

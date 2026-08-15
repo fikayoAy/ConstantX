@@ -14,7 +14,7 @@ This plan upgrades the ConstantX VS Code extension from a command-started helper
 - [x] Add automated tests.
 - [x] Run local packaged-runtime and conflict smoke checks.
 - [ ] Run full clean VS Code / Marketplace release checks.
-- [ ] Publish corrected release as `0.1.5`.
+- [ ] Publish corrected release as `0.1.0`.
 
 ## 1. Runtime Health Endpoints
 

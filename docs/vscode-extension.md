@@ -1,6 +1,6 @@
 # ConstantX VS Code Extension
 
-The ConstantX VS Code extension is the admin and visibility layer for the prompt-first MCP workflow. In `0.1.5`, it starts and supervises the shared local HTTP MCP runtime automatically, using the bundled server inside the extension by default.
+The ConstantX VS Code extension is the admin and visibility layer for the prompt-first MCP workflow. In `0.1.0`, it starts and supervises the shared local HTTP MCP runtime automatically, using the bundled server inside the extension by default.
 
 ## Commands
 
@@ -34,7 +34,7 @@ For normal VSIX or Marketplace installation, leave `constantx.rootPath` empty. T
 ```text
 %LOCALAPPDATA%\ConstantX\runtime.json
 %LOCALAPPDATA%\ConstantX\logs\runtime-<timestamp>.log
-%LOCALAPPDATA%\ConstantX\server\0.1.5\
+%LOCALAPPDATA%\ConstantX\server\0.1.0\
 ```
 
 The runtime is detached from the extension host and runs from the staged `%LOCALAPPDATA%` server copy, so it can survive VS Code reloads without locking the installed extension directory. The active workspace and `constantx.projectPath` are passed as allowed project roots. If a new workspace is not in the running process allowlist, ConstantX safely restarts its verified runtime with the merged roots. Multiple VS Code windows adopt the same healthy runtime instead of launching duplicates. If port `4317` is occupied by another process, ConstantX reports a conflict and refuses to kill it.
@@ -75,7 +75,7 @@ npm --prefix vscode-extension run package
 The package is written to:
 
 ```text
-dist-vsix/constantx-vscode-0.1.5.vsix
+dist-vsix/constantx-vscode-0.1.0.vsix
 ```
 
 ## Validation
