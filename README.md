@@ -143,5 +143,7 @@ Use ConstantX. Start project <PROJECT_PATH> from plan <PLAN_MARKDOWN_PATH> with 
 
 Continue with the five command families in [Workflow Commands](docs/workflow-commands.md). Use [Block Design Sessions](docs/block-design-sessions.md) for the refinement loop before `spec.md` is finalized.
 
+Feel free to open any issues you may encounter and you can also pull requests if you have any contributions
+
 
 
